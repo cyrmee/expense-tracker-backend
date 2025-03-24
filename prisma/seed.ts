@@ -43,19 +43,23 @@ async function main() {
 
   // Create default categories
   const defaultCategories = [
-    { id: 'food', name: 'Food & Dining', icon: '🍔', isDefault: true },
+    { id: 'food', name: 'Food & Dining', icon: '🍴', isDefault: true },
     {
       id: 'transportation',
       name: 'Transportation',
       icon: '🚗',
       isDefault: true,
     },
-    { id: 'shopping', name: 'Shopping', icon: '🛍️', isDefault: true },
+    { id: 'housing', name: 'Housing', icon: '🏠', isDefault: true },
+    { id: 'utilities', name: 'Utilities', icon: '⚡', isDefault: true },
+    { id: 'internet', name: 'Internet', icon: '📶', isDefault: true },
+    { id: 'subscriptions', name: 'Subscriptions', icon: '🔄', isDefault: true },
     { id: 'entertainment', name: 'Entertainment', icon: '🎬', isDefault: true },
-    { id: 'utilities', name: 'Utilities', icon: '💡', isDefault: true },
-    { id: 'health', name: 'Health & Medical', icon: '🏥', isDefault: true },
-    { id: 'education', name: 'Education', icon: '📚', isDefault: true },
-    { id: 'travel', name: 'Travel', icon: '✈️', isDefault: true },
+    { id: 'shopping', name: 'Shopping', icon: '🛍️', isDefault: true },
+    { id: 'health', name: 'Health & Fitness', icon: '❤️', isDefault: true },
+    { id: 'education', name: 'Education', icon: '🎓', isDefault: true },
+    { id: 'gifts', name: 'Gifts & Donations', icon: '🎁', isDefault: true },
+    { id: 'travel', name: 'Travel & Vacation', icon: '✈️', isDefault: true },
   ];
 
   for (const category of defaultCategories) {
@@ -66,18 +70,7 @@ async function main() {
     });
   }
 
-  // Create user-specific custom categories
-  const customCategory1 = await prisma.category.create({
-    data: {
-      id: `gift-${user1.id}`,
-      name: 'Gifts',
-      icon: '🎁',
-      isDefault: false,
-      userId: user1.id,
-    },
-  });
-
-  const customCategory2 = await prisma.category.create({
+  const customCategory = await prisma.category.create({
     data: {
       id: `hobby-${user2.id}`,
       name: 'Hobbies',
@@ -218,7 +211,7 @@ async function main() {
       amount: 89.99,
       date: lastMonth,
       notes: 'Art supplies',
-      categoryId: customCategory2.id,
+      categoryId: customCategory.id,
       moneySourceId: user2Cash.id,
       userId: user2.id,
     },
