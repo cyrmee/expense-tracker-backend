@@ -1,0 +1,9 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Force batch scripts to use CRLF
+*.{cmd,[cC][mM][dD]} text eol=crlf
+*.{bat,[bB][aA][tT]} text eol=crlf
+
+# Force bash scripts to use LF
+*.sh text eol=lf

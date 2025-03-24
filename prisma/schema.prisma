@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+  seed     = "ts-node prisma/seed.ts"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String           @id @default(uuid())
+  email                String           @unique
+  username             String           @unique // Added username for @mentions
+  name                 String
+  hash                 String
+  profilePicture       String?
+  isVerified           Boolean          @default(false)
+  isActive             Boolean          @default(true)
+  failedLoginAttempts  Int              @default(0)
+  lastLoginAt          DateTime?
+  twoFactorEnabled     Boolean          @default(true)
+  twoFactorSecret      String?
+  twoFactorBackupCodes String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  expenses             Expense[]
+  categories           Category[]
+  moneySources         MoneySource[]
+  balanceHistories     BalanceHistory[]
+  appSettings          AppSettings?
+
+  @@index([email])
+  @@index([username])
+}
+
+model Expense {
+  id            String      @id @default(uuid())
+  amount        Float
+  date          DateTime
+  notes         String?
+  // Relationships
+  category      Category    @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  moneySource   MoneySource @relation(fields: [moneySourceId], references: [id])
+  moneySourceId String
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([date])
+}
+
+model Category {
+  // Using custom strings for IDs (e.g., "food", "transportation")
+  id        String    @id
+  name      String
+  icon      String
+  isDefault Boolean
+  // Optional association to a user (for user-specific custom categories)
+  user      User?     @relation(fields: [userId], references: [id])
+  userId    String?
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model MoneySource {
+  // Using custom strings for IDs (e.g., "cash", "bank")
+  id               String           @id
+  name             String
+  balance          Float
+  currency         String
+  icon             String
+  isDefault        Boolean
+  initialBalance   Float
+  budget           Float
+  expenses         Expense[]
+  balanceHistories BalanceHistory[]
+  // Optional association to a user (for user-specific money sources)
+  user             User?            @relation(fields: [userId], references: [id])
+  userId           String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([userId])
+}
+
+model BalanceHistory {
+  id            String      @id @default(uuid())
+  date          DateTime
+  balance       Float
+  currency      String
+  moneySource   MoneySource @relation(fields: [moneySourceId], references: [id])
+  moneySourceId String
+  // Optional association to a user if needed
+  user          User?       @relation(fields: [userId], references: [id])
+  userId        String?
+  createdAt     DateTime    @default(now())
+
+  @@index([moneySourceId])
+  @@index([userId])
+}
+
+model AppSettings {
+  id                 String   @id @default(uuid())
+  preferredCurrency  String
+  hideAmounts        Boolean
+  useCustomETBRate   Boolean
+  customETBtoUSDRate Float
+  customUSDtoETBRate Float
+  hasSeenWelcome     Boolean
+  userName           String
+  hasExistingData    Boolean
+  themePreference    String
+  // One-to-one relationship with User
+  user               User     @relation(fields: [userId], references: [id])
+  userId             String   @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+}
