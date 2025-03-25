@@ -42,7 +42,6 @@ export class AppSettingsService {
         customUSDtoETBRate: data.customUSDtoETBRate || 130.17,
         hasSeenWelcome:
           data.hasSeenWelcome !== undefined ? data.hasSeenWelcome : false,
-        userName: data.userName || '',
         hasExistingData:
           data.hasExistingData !== undefined ? data.hasExistingData : false,
         themePreference: data.themePreference || 'system',

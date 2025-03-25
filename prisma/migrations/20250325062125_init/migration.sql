@@ -85,7 +85,6 @@ CREATE TABLE "AppSettings" (
     "customETBtoUSDRate" DOUBLE PRECISION NOT NULL,
     "customUSDtoETBRate" DOUBLE PRECISION NOT NULL,
     "hasSeenWelcome" BOOLEAN NOT NULL,
-    "userName" TEXT NOT NULL,
     "hasExistingData" BOOLEAN NOT NULL,
     "themePreference" TEXT NOT NULL,
     "userId" TEXT NOT NULL,

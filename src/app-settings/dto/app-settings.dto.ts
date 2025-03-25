@@ -56,13 +56,6 @@ export class AppSettingsDto {
   hasSeenWelcome: boolean;
 
   @ApiProperty({
-    description: 'User name as set in app settings',
-    example: 'Mercy',
-  })
-  @Expose()
-  userName: string;
-
-  @ApiProperty({
     description: 'Indicates if the user has existing data',
     example: true,
   })
