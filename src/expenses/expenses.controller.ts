@@ -8,6 +8,8 @@ import {
   UseGuards,
   Request,
   Patch,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
@@ -24,10 +26,11 @@ import { ExpenseDto } from './dto';
 @ApiTags('expenses')
 @ApiCookieAuth()
 @Controller('expenses')
+@UseGuards(SessionAuthGuard)
+@UsePipes(new ValidationPipe({ transform: true }))
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
-  @UseGuards(SessionAuthGuard)
   @Get()
   @ApiOperation({ summary: 'Get all expenses for the current user' })
   @ApiResponse({
@@ -37,10 +40,9 @@ export class ExpensesController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Request() req) {
-    return this.expensesService.findAll(req.user.id);
+    return await this.expensesService.findAll(req.user.id);
   }
 
-  @UseGuards(SessionAuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific expense by ID' })
   @ApiParam({
@@ -56,10 +58,9 @@ export class ExpensesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Expense not found' })
   async findOne(@Param('id') id: string, @Request() req) {
-    return this.expensesService.findOne(id, req.user.id);
+    return await this.expensesService.findOne(id, req.user.id);
   }
 
-  @UseGuards(SessionAuthGuard)
   @Post()
   @ApiOperation({ summary: 'Create a new expense' })
   @ApiBody({ type: ExpenseDto })
@@ -70,10 +71,9 @@ export class ExpensesController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Body() createExpenseDto: any, @Request() req) {
-    return this.expensesService.create(createExpenseDto, req.user.id);
+    return await this.expensesService.create(createExpenseDto, req.user.id);
   }
 
-  @UseGuards(SessionAuthGuard)
   @Patch(':id')
   @ApiOperation({ summary: 'Update an existing expense' })
   @ApiParam({
@@ -94,10 +94,9 @@ export class ExpensesController {
     @Body() updateExpenseDto: any,
     @Request() req,
   ) {
-    return this.expensesService.update(id, updateExpenseDto, req.user.id);
+    return await this.expensesService.update(id, updateExpenseDto, req.user.id);
   }
 
-  @UseGuards(SessionAuthGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete an expense' })
   @ApiParam({

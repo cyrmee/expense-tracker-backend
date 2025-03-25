@@ -21,6 +21,14 @@ export class ExpenseHistoryDto {
   amount: number;
 
   @ApiProperty({
+    description: 'Amount in preferred currency',
+    example: 9.75,
+    required: false,
+  })
+  @Expose()
+  amountInPreferredCurrency?: number;
+
+  @ApiProperty({
     description: 'Date of the expense',
     example: '2025-03-20T21:00:00.000Z',
   })

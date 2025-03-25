@@ -17,8 +17,7 @@ async function main() {
         timeCost: 3, // number of iterations
         parallelism: 1, // degree of parallelism
       }),
-      isVerified: true,
-      twoFactorEnabled: true,
+      isVerified: false,
     },
   });
 
@@ -35,7 +34,6 @@ async function main() {
         parallelism: 1,
       }),
       isVerified: true,
-      twoFactorEnabled: true,
     },
   });
 
@@ -87,7 +85,6 @@ async function main() {
       currency: 'USD',
       icon: '💵',
       isDefault: true,
-      initialBalance: 1000,
       budget: 1500,
       userId: user1.id,
     },
@@ -101,7 +98,6 @@ async function main() {
       currency: 'USD',
       icon: '🏦',
       isDefault: false,
-      initialBalance: 5000,
       budget: 4000,
       userId: user1.id,
     },
@@ -115,7 +111,6 @@ async function main() {
       currency: 'USD',
       icon: '💵',
       isDefault: true,
-      initialBalance: 1000,
       budget: 1200,
       userId: user2.id,
     },
@@ -129,7 +124,6 @@ async function main() {
       currency: 'USD',
       icon: '💳',
       isDefault: false,
-      initialBalance: 0,
       budget: 1000,
       userId: user2.id,
     },
@@ -260,11 +254,8 @@ async function main() {
   // Create app settings for users
   await prisma.appSettings.create({
     data: {
-      preferredCurrency: 'USD',
+      preferredCurrency: 'ETB',
       hideAmounts: false,
-      useCustomETBRate: false,
-      customETBtoUSDRate: 0.02,
-      customUSDtoETBRate: 50,
       hasSeenWelcome: true,
       hasExistingData: true,
       themePreference: 'light',
@@ -274,11 +265,8 @@ async function main() {
 
   await prisma.appSettings.create({
     data: {
-      preferredCurrency: 'USD',
+      preferredCurrency: 'ETB',
       hideAmounts: true,
-      useCustomETBRate: false,
-      customETBtoUSDRate: 0.02,
-      customUSDtoETBRate: 50,
       hasSeenWelcome: true,
       hasExistingData: true,
       themePreference: 'dark',

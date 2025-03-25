@@ -1,18 +1,22 @@
 import {
   Controller,
   Get,
-  Post,
   Patch,
   Delete,
   Body,
   UseGuards,
   Request,
+  forwardRef,
+  Inject,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
+  ApiCookieAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AppSettingsService } from './app-settings.service';
 import { AppSettingsDto } from './dto';
@@ -21,9 +25,13 @@ import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
 @ApiTags('app-settings')
 @Controller('app-settings')
 @UseGuards(SessionAuthGuard)
-@ApiBearerAuth()
+@ApiCookieAuth()
+@UsePipes(new ValidationPipe({ transform: true }))
 export class AppSettingsController {
-  constructor(private readonly appSettingsService: AppSettingsService) {}
+  constructor(
+    @Inject(forwardRef(() => AppSettingsService))
+    private readonly appSettingsService: AppSettingsService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get app settings for the authenticated user' })
@@ -37,23 +45,9 @@ export class AppSettingsController {
     const settings = await this.appSettingsService.findOneByUserId(req.user.id);
     if (!settings) {
       // Return default settings if none exist
-      return this.appSettingsService.create(req.user.id, {});
+      return await this.appSettingsService.create(req.user.id, {});
     }
     return settings;
-  }
-
-  @Post()
-  @ApiOperation({ summary: 'Create app settings for the authenticated user' })
-  @ApiResponse({
-    status: 201,
-    description: 'App settings created successfully',
-    type: AppSettingsDto,
-  })
-  async create(
-    @Body() appSettingsDto: Partial<AppSettingsDto>,
-    @Request() req,
-  ) {
-    return this.appSettingsService.create(req.user.id, appSettingsDto);
   }
 
   @Patch()
@@ -63,22 +57,27 @@ export class AppSettingsController {
     description: 'App settings updated successfully',
     type: AppSettingsDto,
   })
+  @ApiBody({
+    type: AppSettingsDto,
+    description: 'Partial app settings to update',
+  })
   async update(
     @Body() appSettingsDto: Partial<AppSettingsDto>,
     @Request() req,
   ) {
-    return this.appSettingsService.update(req.user.id, appSettingsDto);
+    return await this.appSettingsService.update(req.user.id, appSettingsDto);
   }
 
   @Delete()
-  @ApiOperation({ summary: 'Delete app settings for the authenticated user' })
+  @ApiOperation({ summary: 'Reset app settings for the authenticated user' })
   @ApiResponse({
     status: 200,
-    description: 'App settings deleted successfully',
+    description: 'App settings reset successfully',
     type: AppSettingsDto,
   })
   @ApiResponse({ status: 404, description: 'App settings not found' })
   async remove(@Request() req) {
-    return this.appSettingsService.remove(req.user.id);
+    await this.appSettingsService.remove(req.user.id);
+    return await this.appSettingsService.create(req.user.id, {});
   }
 }

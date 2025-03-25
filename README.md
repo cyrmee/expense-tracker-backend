@@ -5,7 +5,6 @@ A comprehensive expense tracker backend API built with NestJS, PostgreSQL, Prism
 ## Features
 
 - **Authentication**: Session-based auth with Redis storage
-- **Two-factor Authentication**: TOTP support with QR code generation
 - **User Management**: Create, read, update, and delete user profiles
 - **Role-based Access Control**: Admin and regular user roles
 - **Expense Management**: Track, categorize, and analyze expenses
@@ -158,7 +157,7 @@ Once the application is running, you can access:
 ## Project Structure
 
 - `src/` - Source code
-  - `auth/` - Authentication module (login, register, 2FA)
+  - `auth/` - Authentication module (login, register)
   - `user/` - User management module
   - `expense/` - Expense tracking and management
   - `category/` - Expense categories handling

@@ -5,7 +5,7 @@ import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getUsers(): Promise<UserDto[]> {
     const users = await this.prisma.user.findMany({});
@@ -28,7 +28,6 @@ export class UserService {
         lastLoginAt: true,
         createdAt: true,
         updatedAt: true,
-        twoFactorEnabled: true,
       },
     });
 
@@ -54,32 +53,33 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
+
     // Transform user object to UserDto
-    return plainToClass(UserDto, {
-      ...user,
-      profilePicture: user.profilePicture || '',
-    });
+    return plainToClass(UserDto, user);
   }
 
-  async getAllUsers(): Promise<UserDto[]> {
-    const users = await this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        profilePicture: true,
-        isActive: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
-        lastLoginAt: true,
-        twoFactorEnabled: true,
-      },
+  async updateProfile(userId: string, data: Partial<UserDto>) {
+    if (!userId) {
+      throw new Error('User ID is required for profile update');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data,
     });
 
-    return users.map((user) => ({
-      ...user,
-      profilePicture: user.profilePicture || '',
-    }));
+    return plainToClass(UserDto, updatedUser);
+  }
+
+  async deleteUser(userId: string) {
+    if (!userId) {
+      throw new Error('User ID is required for deletion');
+    }
+
+    const deletedUser = await this.prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return plainToClass(UserDto, deletedUser);
   }
 }

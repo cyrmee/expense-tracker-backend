@@ -90,24 +90,26 @@ export class LoginDto {
   password: string;
 }
 
-export class TwoFactorAuthCodeDto {
+export class ChangePasswordDto {
   @ApiProperty({
-    description: 'Two-factor authentication code (6+ characters)',
-    example: '123456',
+    description: 'Current password',
+    example: 'StrongP@ss123',
   })
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
-  twoFactorCode: string;
-}
+  currentPassword: string;
 
-export class TwoFactorAuthSetupDto {
   @ApiProperty({
-    description: 'Two-factor authentication setup code (6+ characters)',
-    example: '123456',
+    description:
+      'New password (min 8 chars with uppercase, lowercase, and number/special char)',
+    example: 'NewStrongP@ss123',
   })
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
-  twoFactorCode: string;
+  @MinLength(8)
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message:
+      'Password must contain uppercase, lowercase, number/special character',
+  })
+  newPassword: string;
 }

@@ -4,7 +4,7 @@ import { ExportDataResponseDto, ImportDataDto } from './dto';
 
 @Injectable()
 export class DataService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Export all user data

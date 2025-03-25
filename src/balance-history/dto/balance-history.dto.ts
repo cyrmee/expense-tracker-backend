@@ -28,6 +28,14 @@ export class BalanceHistoryDto {
   balance: number;
 
   @ApiProperty({
+    description: 'Balance in preferred currency',
+    example: 150.25,
+    required: false,
+  })
+  @Expose()
+  balanceInPreferredCurrency?: number;
+
+  @ApiProperty({
     description: 'Currency type of the balance',
     example: 'ETB',
   })

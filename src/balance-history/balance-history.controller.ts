@@ -9,12 +9,14 @@ import {
   UseGuards,
   Request,
   NotFoundException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { BalanceHistoryService } from './balance-history.service';
 import { BalanceHistoryDto } from './dto';
@@ -23,7 +25,8 @@ import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
 @ApiTags('balance-history')
 @Controller('balance-history')
 @UseGuards(SessionAuthGuard)
-@ApiBearerAuth()
+@ApiCookieAuth()
+@UsePipes(new ValidationPipe({ transform: true }))
 export class BalanceHistoryController {
   constructor(private readonly balanceHistoryService: BalanceHistoryService) {}
 
@@ -35,7 +38,7 @@ export class BalanceHistoryController {
     type: [BalanceHistoryDto],
   })
   async findAll(@Request() req) {
-    return this.balanceHistoryService.findAll(req.user.id);
+    return await this.balanceHistoryService.findAll(req.user.id);
   }
 
   @Get(':id')
@@ -47,7 +50,7 @@ export class BalanceHistoryController {
   })
   @ApiResponse({ status: 404, description: 'Balance history record not found' })
   async findOne(@Param('id') id: string, @Request() req) {
-    return this.balanceHistoryService.findOne(id, req.user.id);
+    return await this.balanceHistoryService.findOne(id, req.user.id);
   }
 
   @Post()
@@ -61,7 +64,7 @@ export class BalanceHistoryController {
     @Body() balanceHistoryDto: Omit<BalanceHistoryDto, 'id' | 'createdAt'>,
     @Request() req,
   ) {
-    return this.balanceHistoryService.create({
+    return await this.balanceHistoryService.create({
       ...balanceHistoryDto,
       userId: req.user.id,
     });
@@ -80,7 +83,7 @@ export class BalanceHistoryController {
     @Body() balanceHistoryDto: Partial<BalanceHistoryDto>,
     @Request() req,
   ) {
-    return this.balanceHistoryService.update(
+    return await this.balanceHistoryService.update(
       id,
       req.user.id,
       balanceHistoryDto,
@@ -96,6 +99,6 @@ export class BalanceHistoryController {
   })
   @ApiResponse({ status: 404, description: 'Balance history record not found' })
   async remove(@Param('id') id: string, @Request() req) {
-    return this.balanceHistoryService.remove(id, req.user.id);
+    return await this.balanceHistoryService.remove(id, req.user.id);
   }
 }

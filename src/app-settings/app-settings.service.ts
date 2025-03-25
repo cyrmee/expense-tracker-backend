@@ -4,7 +4,7 @@ import { AppSettingsDto } from './dto';
 
 @Injectable()
 export class AppSettingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Find app settings for a specific user
@@ -32,14 +32,10 @@ export class AppSettingsService {
     }
 
     // Create new settings with defaults
-    return this.prisma.appSettings.create({
+    return await this.prisma.appSettings.create({
       data: {
         preferredCurrency: data.preferredCurrency || 'ETB',
         hideAmounts: data.hideAmounts !== undefined ? data.hideAmounts : false,
-        useCustomETBRate:
-          data.useCustomETBRate !== undefined ? data.useCustomETBRate : false,
-        customETBtoUSDRate: data.customETBtoUSDRate || 0.0076820991,
-        customUSDtoETBRate: data.customUSDtoETBRate || 130.17,
         hasSeenWelcome:
           data.hasSeenWelcome !== undefined ? data.hasSeenWelcome : false,
         hasExistingData:
@@ -66,7 +62,7 @@ export class AppSettingsService {
     }
 
     // Update existing settings
-    return this.prisma.appSettings.update({
+    return await this.prisma.appSettings.update({
       where: { userId },
       data: {
         ...data,
@@ -85,7 +81,7 @@ export class AppSettingsService {
       throw new NotFoundException('App settings not found');
     }
 
-    return this.prisma.appSettings.delete({
+    return await this.prisma.appSettings.delete({
       where: { userId },
     });
   }
