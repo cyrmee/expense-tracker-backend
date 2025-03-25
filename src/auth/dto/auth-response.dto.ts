@@ -17,12 +17,6 @@ export class AuthUserResponseDto {
   email: string;
 
   @ApiProperty({
-    description: 'Username',
-    example: 'johndoe123',
-  })
-  username: string;
-
-  @ApiProperty({
     description: 'Full name of the user',
     example: 'John Doe',
   })

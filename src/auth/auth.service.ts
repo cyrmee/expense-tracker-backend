@@ -42,21 +42,18 @@ export class AuthService {
     // Check if user already exists
     const existingUser = await this.prisma.user.findFirst({
       where: {
-        OR: [{ email: userData.email }, { username: userData.username }],
+        OR: [{ email: userData.email }],
       },
     });
 
     if (existingUser) {
-      throw new ForbiddenException(
-        'User with this email or username already exists',
-      );
+      throw new ForbiddenException('User with this email already exists');
     }
 
     const hash = await argon2.hash(userData.password);
     const createdUser = await this.prisma.user.create({
       data: {
         email: userData.email,
-        username: userData.username,
         name: userData.name,
         hash,
       },
@@ -66,7 +63,6 @@ export class AuthService {
     const userResponse: AuthUserResponseDto = {
       id: createdUser.id,
       email: createdUser.email,
-      username: createdUser.username,
       name: createdUser.name,
       twoFactorEnabled: createdUser.twoFactorEnabled,
       requires2FA: true,
@@ -84,10 +80,7 @@ export class AuthService {
     // Check if user already exists
     const existingUser = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { email: powerUserData.email },
-          { username: powerUserData.username },
-        ],
+        OR: [{ email: powerUserData.email }],
       },
     });
 
@@ -104,7 +97,6 @@ export class AuthService {
     const createdUser = await this.prisma.user.create({
       data: {
         email: powerUserData.email,
-        username: powerUserData.username,
         name: powerUserData.name,
         hash,
         isVerified: true,
@@ -114,7 +106,6 @@ export class AuthService {
     const userResponse: AuthUserResponseDto = {
       id: createdUser.id,
       email: createdUser.email,
-      username: createdUser.username,
       name: createdUser.name,
       twoFactorEnabled: createdUser.twoFactorEnabled,
       requires2FA: true,
@@ -153,7 +144,6 @@ export class AuthService {
     const userResponse: AuthUserResponseDto = {
       id: user.id,
       email: user.email,
-      username: user.username,
       name: user.name,
       requires2FA: true, // Always require 2FA
       twoFactorEnabled: user.twoFactorEnabled || false,
@@ -309,7 +299,6 @@ export class AuthService {
       select: {
         id: true,
         email: true,
-        username: true,
         name: true,
         twoFactorEnabled: true,
         isActive: true,
@@ -323,7 +312,6 @@ export class AuthService {
     const userResponse: AuthUserResponseDto = {
       id: user.id,
       email: user.email,
-      username: user.username,
       name: user.name,
       twoFactorEnabled: user.twoFactorEnabled,
       requires2FA: session.requires2FA,
