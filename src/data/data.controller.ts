@@ -11,7 +11,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { DataService } from './data.service';
 import { ExportDataResponseDto, ImportDataDto } from './dto';
@@ -20,7 +20,7 @@ import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
 @ApiTags('data')
 @Controller('data')
 @UseGuards(SessionAuthGuard)
-@ApiBearerAuth()
+@ApiCookieAuth()
 export class DataController {
   constructor(private readonly dataService: DataService) {}
 
@@ -36,7 +36,7 @@ export class DataController {
     description: 'Unauthorized access',
   })
   async exportData(@Request() req) {
-    return this.dataService.exportData(req.user.id);
+    return await this.dataService.exportData(req.user.id);
   }
 
   @Post('import')

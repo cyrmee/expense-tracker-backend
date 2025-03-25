@@ -6,9 +6,6 @@
 
 - Implemented session-based authentication using NestJS, Prisma ORM, and Redis
 - Created Redis module for session storage and management
-- Added two-factor authentication (2FA) support using TOTP (Time-based One-Time Password)
-- Implemented QR code generation for authenticator app setup
-- Added backup codes functionality for 2FA recovery
 - Created session serializer for Passport integration
 - Implemented role-based access control using guards
 - Added session authentication guard for protecting routes
@@ -26,7 +23,6 @@
 - Secured cookies with httpOnly and secure flags
 - Added CORS configuration for frontend integration
 - Implemented role-based access control for API endpoints
-- Added 2FA with TOTP authentication for enhanced security
 - Implemented input validation using class-validator
 
 ### API Endpoints
@@ -34,19 +30,29 @@
 - POST /auth/register - Register a new user
 - POST /auth/login - Authenticate and create a session
 - POST /auth/logout - Invalidate the current session
-- POST /auth/2fa/generate - Generate 2FA secret and QR code
-- POST /auth/2fa/enable - Enable 2FA for a user
-- POST /auth/2fa/verify - Verify a 2FA code
-- POST /auth/2fa/send - Simulate sending 2FA code via SMS/email
 - POST /auth/refresh - Refresh session expiration
 - GET /user/profile - Get authenticated user's profile
 - GET /user/list - Get list of all users (admin only)
+
+### Fixed
+
+- Session expiry edge cases
+- Password validation and hashing issues
+- Redis connection error handling
+- Session serialization issues
+
+### Changed
+
+- Updated authentication flow to use Redis sessions
+- Improved error handling and validation messages
+- Enhanced session management and security features
+- Updated user model schema for better security
 
 ## [Unreleased]
 
 ### Added
 
-- Extended User model in Prisma schema to include fields for two-factor authentication.
-- Created `auth` module with endpoints for registration, login, 2FA, logout, and profile retrieval.
-- Implemented session-based authentication using Redis.
-- Added role-based access control using `Roles` decorator and `RolesGuard`.
+- Extended User model in Prisma schema
+- Created `auth` module with endpoints for registration, login, logout, and profile retrieval
+- Implemented session-based authentication using Redis
+- Added role-based access control using `Roles` decorator and `RolesGuard`

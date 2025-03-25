@@ -23,26 +23,6 @@ export class AuthUserResponseDto {
   name: string;
 
   @ApiProperty({
-    description: 'Whether two-factor authentication is enabled',
-    example: false,
-  })
-  twoFactorEnabled: boolean;
-
-  @ApiProperty({
-    description:
-      'Whether two-factor authentication is required for this session',
-    example: true,
-  })
-  requires2FA: boolean;
-
-  @ApiProperty({
-    description:
-      'Whether two-factor authentication has been verified for this session',
-    example: false,
-  })
-  verified2FA?: boolean;
-
-  @ApiProperty({
     description: 'Whether the user account is active',
     example: true,
   })

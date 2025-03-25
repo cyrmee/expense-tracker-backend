@@ -28,6 +28,14 @@ export class MoneySourceDto {
   balance: number;
 
   @ApiProperty({
+    description: 'Balance in preferred currency',
+    example: 250.75,
+    required: false,
+  })
+  @Expose()
+  balanceInPreferredCurrency?: number;
+
+  @ApiProperty({
     description: 'Currency type',
     example: 'ETB',
   })
@@ -49,18 +57,19 @@ export class MoneySourceDto {
   isDefault: boolean;
 
   @ApiProperty({
-    description: 'Initial balance when the money source was created',
-    example: 8380,
-  })
-  @Expose()
-  initialBalance: number;
-
-  @ApiProperty({
     description: 'Budget allocated for this money source',
     example: 500,
   })
   @Expose()
   budget: number;
+
+  @ApiProperty({
+    description: 'Budget in preferred currency',
+    example: 15.25,
+    required: false,
+  })
+  @Expose()
+  budgetInPreferredCurrency?: number;
 
   @ApiProperty({
     description: 'Date when the money source was created',

@@ -28,27 +28,6 @@ export class AppSettingsDto {
   hideAmounts: boolean;
 
   @ApiProperty({
-    description: 'Flag for using a custom ETB rate',
-    example: false,
-  })
-  @Expose()
-  useCustomETBRate: boolean;
-
-  @ApiProperty({
-    description: 'Custom ETB to USD conversion rate',
-    example: 0.0076820991,
-  })
-  @Expose()
-  customETBtoUSDRate: number;
-
-  @ApiProperty({
-    description: 'Custom USD to ETB conversion rate',
-    example: 130.17,
-  })
-  @Expose()
-  customUSDtoETBRate: number;
-
-  @ApiProperty({
     description: 'Indicates whether the welcome message has been seen',
     example: true,
   })

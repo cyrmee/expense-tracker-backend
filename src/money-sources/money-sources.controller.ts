@@ -8,6 +8,8 @@ import {
   UseGuards,
   Request,
   Patch,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { MoneySourcesService } from './money-sources.service';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
@@ -23,11 +25,12 @@ import { MoneySourceDto } from './dto';
 
 @ApiTags('money-sources')
 @ApiCookieAuth()
+@UseGuards(SessionAuthGuard)
 @Controller('money-sources')
+@UsePipes(new ValidationPipe({ transform: true }))
 export class MoneySourcesController {
   constructor(private readonly moneySourcesService: MoneySourcesService) {}
 
-  @UseGuards(SessionAuthGuard)
   @Get()
   @ApiOperation({ summary: 'Get all money sources for the current user' })
   @ApiResponse({
@@ -37,10 +40,9 @@ export class MoneySourcesController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Request() req) {
-    return this.moneySourcesService.findAll(req.user.id);
+    return await this.moneySourcesService.findAll(req.user.id);
   }
 
-  @UseGuards(SessionAuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific money source by ID' })
   @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
@@ -52,10 +54,9 @@ export class MoneySourcesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Money source not found' })
   async findOne(@Param('id') id: string, @Request() req) {
-    return this.moneySourcesService.findOne(id, req.user.id);
+    return await this.moneySourcesService.findOne(id, req.user.id);
   }
 
-  @UseGuards(SessionAuthGuard)
   @Post()
   @ApiOperation({ summary: 'Create a new money source' })
   @ApiBody({ type: MoneySourceDto })
@@ -66,10 +67,12 @@ export class MoneySourcesController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Body() createMoneySourceDto: any, @Request() req) {
-    return this.moneySourcesService.create(createMoneySourceDto, req.user.id);
+    return await this.moneySourcesService.create(
+      createMoneySourceDto,
+      req.user.id,
+    );
   }
 
-  @UseGuards(SessionAuthGuard)
   @Patch(':id')
   @ApiOperation({ summary: 'Update an existing money source' })
   @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
@@ -86,14 +89,13 @@ export class MoneySourcesController {
     @Body() updateMoneySourceDto: any,
     @Request() req,
   ) {
-    return this.moneySourcesService.update(
+    return await this.moneySourcesService.update(
       id,
       updateMoneySourceDto,
       req.user.id,
     );
   }
 
-  @UseGuards(SessionAuthGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a money source' })
   @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })

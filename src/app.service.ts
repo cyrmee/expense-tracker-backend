@@ -14,7 +14,6 @@ export class AppService {
         'A feature-rich expense tracker backend API built with NestJS, PostgreSQL, Prisma ORM, and Redis',
       features: [
         'Session-based authentication with Redis storage',
-        'Two-factor Authentication (TOTP)',
         'Role-based access control',
         'User management',
         'Expense tracking features (transactions, budgets, reports)',

@@ -54,32 +54,4 @@ export class UserDto {
   })
   @Expose()
   updatedAt: Date;
-
-  @ApiProperty({
-    description: 'Whether two-factor authentication is enabled',
-    example: false,
-  })
-  @Expose()
-  twoFactorEnabled: boolean;
-
-  @ApiProperty({
-    description: 'Number of posts created by the user',
-    example: 10,
-  })
-  @Expose()
-  postCount?: number;
-
-  @ApiProperty({
-    description: 'Number of followers of the user',
-    example: 100,
-  })
-  @Expose()
-  followerCount?: number;
-
-  @ApiProperty({
-    description: 'Number of users followed by the user',
-    example: 50,
-  })
-  @Expose()
-  followingCount?: number;
 }

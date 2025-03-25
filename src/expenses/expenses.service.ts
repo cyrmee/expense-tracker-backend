@@ -2,18 +2,58 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExpenseDto } from './dto';
 import { plainToClass } from 'class-transformer';
+import { CurrencyConverter } from '../common/utils';
 
 @Injectable()
 export class ExpensesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly currencyConverter: CurrencyConverter,
+  ) {}
+
+  private async transformToDto(
+    expense: any,
+    moneySourceCurrency: string,
+    preferredCurrency: string,
+  ): Promise<ExpenseDto> {
+    const dto = plainToClass(ExpenseDto, expense);
+
+    if (moneySourceCurrency !== preferredCurrency) {
+      const convertedAmount = await this.currencyConverter.convertAmount(
+        expense.amount,
+        moneySourceCurrency,
+        preferredCurrency,
+      );
+      dto.amountInPreferredCurrency = convertedAmount || undefined;
+    }
+
+    return dto;
+  }
 
   async findAll(userId: string): Promise<ExpenseDto[]> {
     const expenses = await this.prisma.expense.findMany({
-      where: {
-        userId,
+      where: { userId },
+      include: {
+        moneySource: true,
+        user: {
+          include: {
+            appSettings: true,
+          },
+        },
       },
     });
-    return expenses.map((expense) => plainToClass(ExpenseDto, expense));
+
+    const results = await Promise.all(
+      expenses.map((expense) =>
+        this.transformToDto(
+          expense,
+          expense.moneySource.currency,
+          expense.user?.appSettings?.preferredCurrency || 'USD',
+        ),
+      ),
+    );
+
+    return results;
   }
 
   async findOne(id: string, userId: string): Promise<ExpenseDto> {
@@ -22,11 +62,25 @@ export class ExpensesService {
         id,
         userId,
       },
+      include: {
+        moneySource: true,
+        user: {
+          include: {
+            appSettings: true,
+          },
+        },
+      },
     });
+
     if (!expense) {
       throw new NotFoundException(`Expense with ID ${id} not found`);
     }
-    return plainToClass(ExpenseDto, expense);
+
+    return await this.transformToDto(
+      expense,
+      expense.moneySource.currency,
+      expense.user?.appSettings?.preferredCurrency || 'USD',
+    );
   }
 
   async create(data: any, userId: string): Promise<ExpenseDto> {
@@ -39,15 +93,36 @@ export class ExpensesService {
           },
         },
       },
+      include: {
+        moneySource: true,
+        user: {
+          include: {
+            appSettings: true,
+          },
+        },
+      },
     });
-    return plainToClass(ExpenseDto, expense);
+
+    await this.prisma.moneySource.update({
+      where: { id: expense.moneySourceId },
+      data: {
+        balance: {
+          decrement: expense.amount,
+        },
+      },
+    });
+
+    return await this.transformToDto(
+      expense,
+      expense.moneySource.currency,
+      expense.user?.appSettings?.preferredCurrency || 'USD',
+    );
   }
 
   async update(id: string, data: any, userId: string): Promise<ExpenseDto> {
-    // First check if the expense exists and belongs to the user
     await this.findOne(id, userId);
 
-    const updatedExpense = await this.prisma.expense.update({
+    const expense = await this.prisma.expense.update({
       where: {
         id,
       },
@@ -55,13 +130,34 @@ export class ExpensesService {
         ...data,
         updatedAt: new Date(),
       },
+      include: {
+        moneySource: true,
+        user: {
+          include: {
+            appSettings: true,
+          },
+        },
+      },
     });
-    return plainToClass(ExpenseDto, updatedExpense);
+
+    return await this.transformToDto(
+      expense,
+      expense.moneySource.currency,
+      expense.user?.appSettings?.preferredCurrency || 'USD',
+    );
   }
 
   async remove(id: string, userId: string): Promise<void> {
-    // First check if the expense exists and belongs to the user
-    await this.findOne(id, userId);
+    const expense = await this.findOne(id, userId);
+
+    await this.prisma.moneySource.update({
+      where: { id: expense.moneySourceId },
+      data: {
+        balance: {
+          increment: expense.amount,
+        },
+      },
+    });
 
     await this.prisma.expense.delete({
       where: {

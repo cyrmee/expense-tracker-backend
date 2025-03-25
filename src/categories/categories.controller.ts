@@ -9,6 +9,8 @@ import {
   UseGuards,
   Request,
   NotFoundException,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
@@ -19,6 +21,7 @@ import { CategoryDto } from './dto';
 @ApiTags('categories')
 @Controller('categories')
 @UseGuards(SessionAuthGuard)
+@UsePipes(new ValidationPipe({ transform: true }))
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
@@ -30,7 +33,7 @@ export class CategoriesController {
     type: [CategoryDto],
   })
   async findAll(@Request() req) {
-    return this.categoriesService.findAll(req.user.id);
+    return await this.categoriesService.findAll(req.user.id);
   }
 
   @Get(':id')
@@ -60,7 +63,7 @@ export class CategoriesController {
     @Body() categoryDto: Omit<CategoryDto, 'id' | 'createdAt' | 'updatedAt'>,
     @Request() req,
   ) {
-    return this.categoriesService.create({
+    return await this.categoriesService.create({
       ...categoryDto,
       userId: req.user.id,
     });

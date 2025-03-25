@@ -8,13 +8,14 @@ import {
   Body,
   UseGuards,
   Request,
-  NotFoundException,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { ExpenseHistoryService } from './expense-history.service';
 import { ExpenseHistoryDto } from './dto';
@@ -23,7 +24,8 @@ import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
 @ApiTags('expense-history')
 @Controller('expense-history')
 @UseGuards(SessionAuthGuard)
-@ApiBearerAuth()
+@ApiCookieAuth()
+@UsePipes(new ValidationPipe({ transform: true }))
 export class ExpenseHistoryController {
   constructor(private readonly expenseHistoryService: ExpenseHistoryService) {}
 
@@ -35,7 +37,7 @@ export class ExpenseHistoryController {
     type: [ExpenseHistoryDto],
   })
   async findAll(@Request() req) {
-    return this.expenseHistoryService.findAll(req.user.id);
+    return await this.expenseHistoryService.findAll(req.user.id);
   }
 
   @Get(':id')
@@ -47,7 +49,7 @@ export class ExpenseHistoryController {
   })
   @ApiResponse({ status: 404, description: 'Expense record not found' })
   async findOne(@Param('id') id: string, @Request() req) {
-    return this.expenseHistoryService.findOne(id, req.user.id);
+    return await this.expenseHistoryService.findOne(id, req.user.id);
   }
 
   @Post()
@@ -65,7 +67,7 @@ export class ExpenseHistoryController {
     >,
     @Request() req,
   ) {
-    return this.expenseHistoryService.create({
+    return await this.expenseHistoryService.create({
       ...expenseHistoryDto,
       userId: req.user.id,
     });
@@ -84,7 +86,7 @@ export class ExpenseHistoryController {
     @Body() expenseHistoryDto: Partial<ExpenseHistoryDto>,
     @Request() req,
   ) {
-    return this.expenseHistoryService.update(
+    return await this.expenseHistoryService.update(
       id,
       req.user.id,
       expenseHistoryDto,
@@ -100,6 +102,6 @@ export class ExpenseHistoryController {
   })
   @ApiResponse({ status: 404, description: 'Expense record not found' })
   async remove(@Param('id') id: string, @Request() req) {
-    return this.expenseHistoryService.remove(id, req.user.id);
+    return await this.expenseHistoryService.remove(id, req.user.id);
   }
 }

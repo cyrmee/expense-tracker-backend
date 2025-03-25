@@ -9,9 +9,6 @@ CREATE TABLE "User" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "failedLoginAttempts" INTEGER NOT NULL DEFAULT 0,
     "lastLoginAt" TIMESTAMP(3),
-    "twoFactorEnabled" BOOLEAN NOT NULL DEFAULT true,
-    "twoFactorSecret" TEXT,
-    "twoFactorBackupCodes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -54,7 +51,6 @@ CREATE TABLE "MoneySource" (
     "currency" TEXT NOT NULL,
     "icon" TEXT NOT NULL,
     "isDefault" BOOLEAN NOT NULL,
-    "initialBalance" DOUBLE PRECISION NOT NULL,
     "budget" DOUBLE PRECISION NOT NULL,
     "userId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -81,9 +77,6 @@ CREATE TABLE "AppSettings" (
     "id" TEXT NOT NULL,
     "preferredCurrency" TEXT NOT NULL,
     "hideAmounts" BOOLEAN NOT NULL,
-    "useCustomETBRate" BOOLEAN NOT NULL,
-    "customETBtoUSDRate" DOUBLE PRECISION NOT NULL,
-    "customUSDtoETBRate" DOUBLE PRECISION NOT NULL,
     "hasSeenWelcome" BOOLEAN NOT NULL,
     "hasExistingData" BOOLEAN NOT NULL,
     "themePreference" TEXT NOT NULL,
@@ -92,6 +85,17 @@ CREATE TABLE "AppSettings" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "AppSettings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ExchangeRate" (
+    "id" TEXT NOT NULL,
+    "rate" DOUBLE PRECISION NOT NULL,
+    "timestamp" TIMESTAMP(3) NOT NULL,
+    "base" TEXT NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ExchangeRate_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -124,6 +128,9 @@ CREATE UNIQUE INDEX "AppSettings_userId_key" ON "AppSettings"("userId");
 -- CreateIndex
 CREATE INDEX "AppSettings_userId_idx" ON "AppSettings"("userId");
 
+-- CreateIndex
+CREATE INDEX "ExchangeRate_base_idx" ON "ExchangeRate"("base");
+
 -- AddForeignKey
 ALTER TABLE "Expense" ADD CONSTRAINT "Expense_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -134,16 +141,16 @@ ALTER TABLE "Expense" ADD CONSTRAINT "Expense_moneySourceId_fkey" FOREIGN KEY ("
 ALTER TABLE "Expense" ADD CONSTRAINT "Expense_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MoneySource" ADD CONSTRAINT "MoneySource_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "MoneySource" ADD CONSTRAINT "MoneySource_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BalanceHistory" ADD CONSTRAINT "BalanceHistory_moneySourceId_fkey" FOREIGN KEY ("moneySourceId") REFERENCES "MoneySource"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "BalanceHistory" ADD CONSTRAINT "BalanceHistory_moneySourceId_fkey" FOREIGN KEY ("moneySourceId") REFERENCES "MoneySource"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BalanceHistory" ADD CONSTRAINT "BalanceHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "BalanceHistory" ADD CONSTRAINT "BalanceHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AppSettings" ADD CONSTRAINT "AppSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "AppSettings" ADD CONSTRAINT "AppSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
