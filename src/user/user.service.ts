@@ -22,7 +22,6 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        username: true,
         name: true,
         profilePicture: true,
         isVerified: true,
@@ -67,7 +66,6 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        username: true,
         name: true,
         profilePicture: true,
         isActive: true,
@@ -84,8 +82,4 @@ export class UserService {
       profilePicture: user.profilePicture || '',
     }));
   }
-
-  async addRoleToUser(userId: string, roleType: string) {}
-
-  async removeRoleFromUser(userId: string, roleType: string) {}
 }
