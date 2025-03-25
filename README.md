@@ -177,12 +177,10 @@ After seeding the database (either manually or using Docker), you can log in wit
 - Regular user:
 
   - Email: `john@example.com`
-  - Username: `john_doe`
   - Password: `password123`
 
 - Admin user:
   - Email: `jane@example.com`
-  - Username: `jane_doe`
   - Password: `password123`
 
 ## License

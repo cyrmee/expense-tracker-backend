@@ -18,16 +18,6 @@ export class RegisterDto {
   email: string;
 
   @ApiProperty({
-    description: 'Username (alphanumeric, min 3 characters)',
-    example: 'johndoe123',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @IsAlphanumeric()
-  @MinLength(3)
-  username: string;
-
-  @ApiProperty({
     description: 'Full name of the user',
     example: 'John Doe',
   })
@@ -58,16 +48,6 @@ export class RegisterPowerUsersDto {
   @IsEmail({}, { message: 'Please provide a valid email' })
   @IsNotEmpty()
   email: string;
-
-  @ApiProperty({
-    description: 'Username (alphanumeric, min 3 characters)',
-    example: 'johndoe123',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @IsAlphanumeric()
-  @MinLength(3)
-  username: string;
 
   @ApiProperty({
     description: 'Full name of the user',

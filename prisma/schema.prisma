@@ -112,7 +112,6 @@ model AppSettings {
   customETBtoUSDRate Float
   customUSDtoETBRate Float
   hasSeenWelcome     Boolean
-  userName           String
   hasExistingData    Boolean
   themePreference    String
   // One-to-one relationship with User

@@ -85,9 +85,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ForbiddenException(
-        'User with this email or username already exists',
-      );
+      throw new ForbiddenException('User with this email already exists');
     }
 
     // Hash the password
