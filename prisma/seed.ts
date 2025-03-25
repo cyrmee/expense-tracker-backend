@@ -10,7 +10,6 @@ async function main() {
     update: {},
     create: {
       email: 'john@example.com',
-      username: 'john_doe',
       name: 'John Doe',
       hash: await argon2.hash('password123', {
         type: argon2.argon2id,
@@ -28,7 +27,6 @@ async function main() {
     update: {},
     create: {
       email: 'jane@example.com',
-      username: 'jane_doe',
       name: 'Jane Doe',
       hash: await argon2.hash('password123', {
         type: argon2.argon2id,
@@ -268,7 +266,6 @@ async function main() {
       customETBtoUSDRate: 0.02,
       customUSDtoETBRate: 50,
       hasSeenWelcome: true,
-      userName: 'John',
       hasExistingData: true,
       themePreference: 'light',
       userId: user1.id,
@@ -283,7 +280,6 @@ async function main() {
       customETBtoUSDRate: 0.02,
       customUSDtoETBRate: 50,
       hasSeenWelcome: true,
-      userName: 'Jane',
       hasExistingData: true,
       themePreference: 'dark',
       userId: user2.id,

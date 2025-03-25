@@ -2,7 +2,6 @@
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "hash" TEXT NOT NULL,
     "profilePicture" TEXT,
@@ -86,7 +85,6 @@ CREATE TABLE "AppSettings" (
     "customETBtoUSDRate" DOUBLE PRECISION NOT NULL,
     "customUSDtoETBRate" DOUBLE PRECISION NOT NULL,
     "hasSeenWelcome" BOOLEAN NOT NULL,
-    "userName" TEXT NOT NULL,
     "hasExistingData" BOOLEAN NOT NULL,
     "themePreference" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -100,13 +98,7 @@ CREATE TABLE "AppSettings" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
-
--- CreateIndex
 CREATE INDEX "User_email_idx" ON "User"("email");
-
--- CreateIndex
-CREATE INDEX "User_username_idx" ON "User"("username");
 
 -- CreateIndex
 CREATE INDEX "Expense_userId_idx" ON "Expense"("userId");

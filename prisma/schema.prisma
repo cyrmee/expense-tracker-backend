@@ -11,7 +11,6 @@ datasource db {
 model User {
   id                   String           @id @default(uuid())
   email                String           @unique
-  username             String           @unique // Added username for @mentions
   name                 String
   hash                 String
   profilePicture       String?
@@ -31,7 +30,6 @@ model User {
   appSettings          AppSettings?
 
   @@index([email])
-  @@index([username])
 }
 
 model Expense {
@@ -114,7 +112,6 @@ model AppSettings {
   customETBtoUSDRate Float
   customUSDtoETBRate Float
   hasSeenWelcome     Boolean
-  userName           String
   hasExistingData    Boolean
   themePreference    String
   // One-to-one relationship with User

@@ -28,13 +28,6 @@ export class UserDto {
   email: string;
 
   @ApiProperty({
-    description: 'Username',
-    example: 'johndoe123',
-  })
-  @Expose()
-  username: string;
-
-  @ApiProperty({
     description: 'URL to user profile picture',
     example: 'https://example.com/images/profile.jpg',
   })
