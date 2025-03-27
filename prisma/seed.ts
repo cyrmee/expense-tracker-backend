@@ -256,8 +256,6 @@ async function main() {
     data: {
       preferredCurrency: 'ETB',
       hideAmounts: false,
-      hasSeenWelcome: true,
-      hasExistingData: true,
       themePreference: 'light',
       userId: user1.id,
     },
@@ -267,8 +265,6 @@ async function main() {
     data: {
       preferredCurrency: 'ETB',
       hideAmounts: true,
-      hasSeenWelcome: true,
-      hasExistingData: true,
       themePreference: 'dark',
       userId: user2.id,
     },

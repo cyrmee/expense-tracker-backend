@@ -36,10 +36,6 @@ export class AppSettingsService {
       data: {
         preferredCurrency: data.preferredCurrency || 'ETB',
         hideAmounts: data.hideAmounts !== undefined ? data.hideAmounts : false,
-        hasSeenWelcome:
-          data.hasSeenWelcome !== undefined ? data.hasSeenWelcome : false,
-        hasExistingData:
-          data.hasExistingData !== undefined ? data.hasExistingData : false,
         themePreference: data.themePreference || 'system',
         user: {
           connect: { id: userId },

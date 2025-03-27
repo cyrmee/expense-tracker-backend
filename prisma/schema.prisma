@@ -104,8 +104,6 @@ model AppSettings {
   id                String   @id @default(uuid())
   preferredCurrency String
   hideAmounts       Boolean
-  hasSeenWelcome    Boolean
-  hasExistingData   Boolean
   themePreference   String
   // One-to-one relationship with User
   user              User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
