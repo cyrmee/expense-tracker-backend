@@ -28,20 +28,6 @@ export class AppSettingsDto {
   hideAmounts: boolean;
 
   @ApiProperty({
-    description: 'Indicates whether the welcome message has been seen',
-    example: true,
-  })
-  @Expose()
-  hasSeenWelcome: boolean;
-
-  @ApiProperty({
-    description: 'Indicates if the user has existing data',
-    example: true,
-  })
-  @Expose()
-  hasExistingData: boolean;
-
-  @ApiProperty({
     description: 'Theme preference for the application',
     example: 'system',
   })

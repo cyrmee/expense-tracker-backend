@@ -10,6 +10,7 @@ import {
   Patch,
   UsePipes,
   ValidationPipe,
+  Query,
 } from '@nestjs/common';
 import { MoneySourcesService } from './money-sources.service';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
@@ -21,7 +22,9 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { MoneySourceDto } from './dto';
+import { MoneySourceBaseDto, MoneySourceDto } from './dto';
+import { ApiPaginationQuery } from '../common/decorators';
+import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
 
 @ApiTags('money-sources')
 @ApiCookieAuth()
@@ -39,8 +42,15 @@ export class MoneySourcesController {
     type: [MoneySourceDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(@Request() req) {
-    return await this.moneySourcesService.findAll(req.user.id);
+  @ApiPaginationQuery()
+  async getMoneySources(
+    @Request() req,
+    @Query() paginatedRequestDto: PaginatedRequestDto,
+  ): Promise<PaginatedResponseDto<MoneySourceDto>> {
+    return await this.moneySourcesService.getMoneySources(
+      req.user.id,
+      paginatedRequestDto,
+    );
   }
 
   @Get(':id')
@@ -54,19 +64,22 @@ export class MoneySourcesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Money source not found' })
   async findOne(@Param('id') id: string, @Request() req) {
-    return await this.moneySourcesService.findOne(id, req.user.id);
+    return await this.moneySourcesService.getMoneySource(id, req.user.id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new money source' })
-  @ApiBody({ type: MoneySourceDto })
+  @ApiBody({ type: MoneySourceBaseDto })
   @ApiResponse({
     status: 201,
     description: 'The money source has been successfully created',
     type: MoneySourceDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async create(@Body() createMoneySourceDto: any, @Request() req) {
+  async create(
+    @Body() createMoneySourceDto: MoneySourceBaseDto,
+    @Request() req,
+  ) {
     return await this.moneySourcesService.create(
       createMoneySourceDto,
       req.user.id,
@@ -90,7 +103,6 @@ export class MoneySourcesController {
     @Request() req,
   ) {
     return await this.moneySourcesService.update(
-      id,
       updateMoneySourceDto,
       req.user.id,
     );

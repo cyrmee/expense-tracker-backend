@@ -45,9 +45,12 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(process.env.PORT || 3000);
-  console.log(`Application is running on: ${await app.getUrl()}`);
-  console.log(`Swagger documentation: ${await app.getUrl()}/api/docs`);
+  const port = process.env.PORT || 5000;
+  await app.listen(port);
+  const baseUrl = `http://localhost:${port}`;
+
+  console.log(`Application is running on: ${baseUrl}`);
+  console.log(`Swagger documentation: ${baseUrl}/api/docs`);
 }
 
 bootstrap();

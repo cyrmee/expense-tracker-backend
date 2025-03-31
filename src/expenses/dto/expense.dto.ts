@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
+import { CategoryBaseDto } from '../../categories/dto';
+import { MoneySourceBaseDto } from '../../money-sources/dto';
 
 /**
  * Swagger DTO for expense data
@@ -44,25 +46,32 @@ export class ExpenseDto {
   notes?: string;
 
   @ApiProperty({
-    description: 'ID of the related category',
-    example: 'food',
+    description: 'Category id of the expense',
+    type: String,
   })
-  @Expose()
   categoryId: string;
 
   @ApiProperty({
-    description: 'ID of the related money source',
-    example: 'cash',
+    description: 'Category of the expense',
+    type: CategoryBaseDto,
   })
   @Expose()
+  @Type(() => CategoryBaseDto)
+  category: CategoryBaseDto;
+
+  @ApiProperty({
+    description: 'Money source id of the expense',
+    type: String,
+  })
   moneySourceId: string;
 
   @ApiProperty({
-    description: 'ID of the user who created the expense',
-    example: 'b6e11e23-d43d-4a0d-a9d3-08e94d7a032b',
+    description: 'Money source of the expense',
+    type: () => MoneySourceBaseDto, // Changed to lazy loading with arrow function
   })
   @Expose()
-  userId: string;
+  @Type(() => MoneySourceBaseDto)
+  moneySource: MoneySourceBaseDto;
 
   @ApiProperty({
     description: 'Date when the expense was created',

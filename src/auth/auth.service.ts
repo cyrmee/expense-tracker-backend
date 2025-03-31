@@ -61,13 +61,14 @@ export class AuthService {
     });
 
     // Create default app settings for the user
-    await this.appSettingsService.create(createdUser.id, {});
+    await this.appSettingsService.create(createdUser.id);
 
     // Return standardized user response
     const userResponse: AuthUserResponseDto = {
       id: createdUser.id,
       email: createdUser.email,
       name: createdUser.name,
+      isActive: true,
     };
 
     return userResponse;

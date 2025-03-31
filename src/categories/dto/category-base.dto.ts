@@ -1,12 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Type } from 'class-transformer';
-import { ExpenseBaseDto } from '../../expenses/dto';
+import { Exclude, Expose } from 'class-transformer';
 
-/**
- * Swagger DTO for category data
- */
 @Exclude()
-export class CategoryDto {
+export class CategoryBaseDto {
   @ApiProperty({
     description: 'Unique category identifier',
     example: 'food',
@@ -42,16 +38,6 @@ export class CategoryDto {
   })
   @Expose()
   userId?: string;
-
-  @ApiProperty({
-    description: 'List of expenses associated with this category',
-    type: ExpenseBaseDto,
-    isArray: true,
-    required: false,
-  })
-  @Expose()
-  @Type(() => ExpenseBaseDto)
-  expenses?: ExpenseBaseDto[];
 
   @ApiProperty({
     description: 'Date when the category was created',

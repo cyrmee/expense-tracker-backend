@@ -41,11 +41,11 @@ export class AppSettingsController {
     type: AppSettingsDto,
   })
   @ApiResponse({ status: 404, description: 'App settings not found' })
-  async findOne(@Request() req) {
-    const settings = await this.appSettingsService.findOneByUserId(req.user.id);
+  async getAppSettings(@Request() req) {
+    const settings = await this.appSettingsService.getAppSettings(req.user.id);
     if (!settings) {
       // Return default settings if none exist
-      return await this.appSettingsService.create(req.user.id, {});
+      return await this.appSettingsService.create(req.user.id); // Assuming create method initializes default settings
     }
     return settings;
   }
@@ -62,10 +62,11 @@ export class AppSettingsController {
     description: 'Partial app settings to update',
   })
   async update(
-    @Body() appSettingsDto: Partial<AppSettingsDto>,
+    @Body()
+    appSettingsDto: Omit<AppSettingsDto, 'id' | 'createdAt' | 'updatedAt'>,
     @Request() req,
   ) {
-    return await this.appSettingsService.update(req.user.id, appSettingsDto);
+    return await this.appSettingsService.update(appSettingsDto, req.user.id);
   }
 
   @Delete()
@@ -78,6 +79,6 @@ export class AppSettingsController {
   @ApiResponse({ status: 404, description: 'App settings not found' })
   async remove(@Request() req) {
     await this.appSettingsService.remove(req.user.id);
-    return await this.appSettingsService.create(req.user.id, {});
+    return await this.appSettingsService.create(req.user.id);
   }
 }

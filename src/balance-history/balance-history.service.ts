@@ -3,6 +3,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BalanceHistoryDto } from './dto';
 import { plainToClass } from 'class-transformer';
 import { CurrencyConverter } from '../common/utils';
+import {
+  PaginatedRequestDto,
+  PaginatedResponseDto,
+  QueryBuilder,
+  SortOrder,
+} from '../common/dto';
 
 @Injectable()
 export class BalanceHistoryService {
@@ -32,20 +38,56 @@ export class BalanceHistoryService {
   /**
    * Find all balance history records for a specific user
    */
-  async findAll(userId: string) {
+  async getBalanceHistories(
+    userId: string,
+    paginatedRequestDto: PaginatedRequestDto,
+  ): Promise<PaginatedResponseDto<BalanceHistoryDto>> {
+    const page = paginatedRequestDto.page;
+    const pageSize = paginatedRequestDto.pageSize;
+
+    const whereConditions = QueryBuilder.buildWhereCondition(
+      paginatedRequestDto,
+      userId,
+    );
+
+    // Add search conditions
+    if (paginatedRequestDto.search) {
+      whereConditions['OR'] = [
+        {
+          currency: {
+            contains: paginatedRequestDto.search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          moneySource: {
+            name: { contains: paginatedRequestDto.search, mode: 'insensitive' },
+          },
+        },
+      ];
+    }
+
+    const sortBy = paginatedRequestDto.sortBy || 'createdAt';
+    const sortOrder = paginatedRequestDto.sortOrder || SortOrder.DESC;
+    const orderBy = { [sortBy]: sortOrder };
+
+    // Use the whereConditions in the query
     const histories = await this.prisma.balanceHistory.findMany({
-      where: { userId },
-      orderBy: { date: 'desc' },
+      where: whereConditions,
       include: {
+        moneySource: true,
         user: {
           include: {
             appSettings: true,
           },
         },
       },
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     });
 
-    const results = await Promise.all(
+    const data = await Promise.all(
       histories.map((history) =>
         this.transformToDto(
           history,
@@ -54,13 +96,28 @@ export class BalanceHistoryService {
       ),
     );
 
-    return results;
+    const totalCount = await this.prisma.balanceHistory.count({
+      where: whereConditions,
+    });
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data,
+      totalCount,
+      totalPages,
+      pageSize,
+      page,
+    };
   }
 
   /**
    * Find a specific balance history record by ID
    */
-  async findOne(id: string, userId: string) {
+  async getBalanceHistory(
+    id: string,
+    userId: string,
+  ): Promise<BalanceHistoryDto> {
     const history = await this.prisma.balanceHistory.findFirst({
       where: {
         id,
@@ -91,8 +148,16 @@ export class BalanceHistoryService {
   async create(data: Omit<BalanceHistoryDto, 'id' | 'createdAt'>) {
     const history = await this.prisma.balanceHistory.create({
       data: {
-        ...data,
-        date: new Date(data.date), // Ensure date is a proper Date object
+        balance: data.balance,
+        currency: data.currency,
+        date: new Date(data.date),
+        createdAt: new Date(),
+        user: {
+          connect: { id: data.userId },
+        },
+        moneySource: {
+          connect: { id: data.moneySourceId },
+        },
       },
       include: {
         user: {
@@ -107,45 +172,5 @@ export class BalanceHistoryService {
       history,
       history.user?.appSettings?.preferredCurrency || 'USD',
     );
-  }
-
-  /**
-   * Update an existing balance history record
-   */
-  async update(id: string, userId: string, data: Partial<BalanceHistoryDto>) {
-    // First check if the record exists and belongs to the user
-    await this.findOne(id, userId);
-
-    const history = await this.prisma.balanceHistory.update({
-      where: { id },
-      data: {
-        ...data,
-        date: data.date ? new Date(data.date) : undefined, // Only update date if provided
-      },
-      include: {
-        user: {
-          include: {
-            appSettings: true,
-          },
-        },
-      },
-    });
-
-    return await this.transformToDto(
-      history,
-      history.user?.appSettings?.preferredCurrency || 'USD',
-    );
-  }
-
-  /**
-   * Delete a balance history record
-   */
-  async remove(id: string, userId: string) {
-    // First check if the record exists and belongs to the user
-    await this.findOne(id, userId);
-
-    return await this.prisma.balanceHistory.delete({
-      where: { id },
-    });
   }
 }

@@ -11,7 +11,6 @@ import { MoneySourcesModule } from './money-sources/money-sources.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { CategoriesModule } from './categories/categories.module';
 import { BalanceHistoryModule } from './balance-history/balance-history.module';
-import { ExpenseHistoryModule } from './expense-history/expense-history.module';
 import { AppSettingsModule } from './app-settings/app-settings.module';
 import { DataModule } from './data/data.module';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
@@ -26,7 +25,6 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ExpensesModule,
     CategoriesModule,
     BalanceHistoryModule,
-    ExpenseHistoryModule,
     AppSettingsModule,
     DataModule,
     AppConfigModule,

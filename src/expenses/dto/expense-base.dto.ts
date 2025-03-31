@@ -1,11 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
 
-/**
- * Data Transfer Object for expense history records
- */
 @Exclude()
-export class ExpenseHistoryDto {
+export class ExpenseBaseDto {
   @ApiProperty({
     description: 'Unique expense identifier',
     example: '4a409730-2574-4cd2-b7d1-feb20d1f3e4e',
@@ -38,31 +35,22 @@ export class ExpenseHistoryDto {
   @ApiProperty({
     description: 'Notes for the expense',
     example: 'Choafan Rice with Chicken',
-    nullable: true,
+    required: false,
   })
   @Expose()
   notes?: string;
 
   @ApiProperty({
-    description: 'ID of the related category',
-    example: 'food',
+    description: 'Category id of the expense',
+    type: String,
   })
-  @Expose()
   categoryId: string;
 
   @ApiProperty({
-    description: 'ID of the related money source',
-    example: 'cash',
+    description: 'Money source id of the expense',
+    type: String,
   })
-  @Expose()
   moneySourceId: string;
-
-  @ApiProperty({
-    description: 'ID of the user who created the expense',
-    example: 'b6e11e23-d43d-4a0d-a9d3-08e94d7a032b',
-  })
-  @Expose()
-  userId: string;
 
   @ApiProperty({
     description: 'Date when the expense was created',

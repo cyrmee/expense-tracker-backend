@@ -96,8 +96,8 @@ import { createClient } from '@redis/client';
           proxy: true,
           cookie: {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
+            secure: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging',
+            sameSite: 'lax',
             maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
             path: '/',
           },

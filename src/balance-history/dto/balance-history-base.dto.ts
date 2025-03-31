@@ -1,12 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Type } from 'class-transformer';
-import { MoneySourceBaseDto } from '../../money-sources/dto';
+import { Exclude, Expose } from 'class-transformer';
 
 /**
  * Data Transfer Object for balance history records
  */
 @Exclude()
-export class BalanceHistoryDto {
+export class BalanceHistoryBaseDto {
   @ApiProperty({
     description: 'Unique balance history identifier',
     example: 'a1b2c3d4-e5f6-7g8h-9i10-jk11lm12no13',
@@ -42,20 +41,6 @@ export class BalanceHistoryDto {
   })
   @Expose()
   currency: string;
-
-  @ApiProperty({
-    description: 'Money source id of the expense',
-    type: String,
-  })
-  moneySourceId: string;
-
-  @ApiProperty({
-    description: 'Money source of the expense',
-    type: () => MoneySourceBaseDto, // Changed to lazy loading with arrow function
-  })
-  @Expose()
-  @Type(() => MoneySourceBaseDto)
-  moneySource: MoneySourceBaseDto;
 
   @ApiProperty({
     description: 'ID of the user associated with this record',

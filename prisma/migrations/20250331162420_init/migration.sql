@@ -35,6 +35,7 @@ CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "icon" TEXT NOT NULL,
+    "color" TEXT,
     "isDefault" BOOLEAN NOT NULL,
     "userId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -52,7 +53,7 @@ CREATE TABLE "MoneySource" (
     "icon" TEXT NOT NULL,
     "isDefault" BOOLEAN NOT NULL,
     "budget" DOUBLE PRECISION NOT NULL,
-    "userId" TEXT,
+    "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -66,7 +67,7 @@ CREATE TABLE "BalanceHistory" (
     "balance" DOUBLE PRECISION NOT NULL,
     "currency" TEXT NOT NULL,
     "moneySourceId" TEXT NOT NULL,
-    "userId" TEXT,
+    "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "BalanceHistory_pkey" PRIMARY KEY ("id")
@@ -77,8 +78,6 @@ CREATE TABLE "AppSettings" (
     "id" TEXT NOT NULL,
     "preferredCurrency" TEXT NOT NULL,
     "hideAmounts" BOOLEAN NOT NULL,
-    "hasSeenWelcome" BOOLEAN NOT NULL,
-    "hasExistingData" BOOLEAN NOT NULL,
     "themePreference" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -138,7 +137,7 @@ ALTER TABLE "Expense" ADD CONSTRAINT "Expense_categoryId_fkey" FOREIGN KEY ("cat
 ALTER TABLE "Expense" ADD CONSTRAINT "Expense_moneySourceId_fkey" FOREIGN KEY ("moneySourceId") REFERENCES "MoneySource"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Expense" ADD CONSTRAINT "Expense_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

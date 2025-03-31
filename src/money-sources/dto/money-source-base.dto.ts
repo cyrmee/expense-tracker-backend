@@ -1,13 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Type } from 'class-transformer';
-import { ExpenseBaseDto } from '../../expenses/dto';
-import { BalanceHistoryBaseDto } from '../../balance-history/dto';
+import { Exclude, Expose } from 'class-transformer';
 
-/**
- * Swagger DTO for money source data
- */
 @Exclude()
-export class MoneySourceDto {
+export class MoneySourceBaseDto {
   @ApiProperty({
     description: 'Unique money source identifier',
     example: 'cash',
@@ -72,26 +67,6 @@ export class MoneySourceDto {
   })
   @Expose()
   budgetInPreferredCurrency?: number;
-
-  @ApiProperty({
-    description: 'List of expenses associated with this money source',
-    type: () => ExpenseBaseDto, // Changed to lazy loading with arrow function
-    isArray: true,
-    required: false,
-  })
-  @Expose()
-  @Type(() => ExpenseBaseDto)
-  expenses?: ExpenseBaseDto[];
-
-  @ApiProperty({
-    description: 'List of balance histories associated with this money source',
-    type: () => BalanceHistoryBaseDto, // Changed to lazy loading with arrow function
-    isArray: true,
-    required: false,
-  })
-  @Expose()
-  @Type(() => BalanceHistoryBaseDto)
-  balanceHistories?: BalanceHistoryBaseDto[];
 
   @ApiProperty({
     description: 'Date when the money source was created',

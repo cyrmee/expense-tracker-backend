@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Category } from '@prisma/client';
-import { CategoryDto } from './dto';
+import { CategoryBaseDto, CategoryDto } from './dto';
 
 @Injectable()
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(userId: string) {
+  async getCategories(userId: string) {
     return await this.prisma.category.findMany({
       where: {
         OR: [{ isDefault: true }, { userId }],
@@ -15,7 +15,7 @@ export class CategoriesService {
     });
   }
 
-  async findOne(id: string, userId: string) {
+  async getCategory(id: string, userId: string) {
     return await this.prisma.category.findFirst({
       where: {
         id,
@@ -24,35 +24,41 @@ export class CategoriesService {
     });
   }
 
-  async create(data: Pick<Category, 'name' | 'icon' | 'userId'>) {
+  async create(data: Omit<CategoryBaseDto, 'id' | 'createdAt' | 'updatedAt'>) {
     return await this.prisma.category.create({
       data: {
-        id: data.name.toLowerCase().replace(/\s+/g, '-'), // Generate ID from name
-        ...data,
+        name: data.name,
+        icon: data.icon,
+        user: {
+          connect: { id: data.userId! },
+        },
         isDefault: false, // User-created categories are never default
       },
     });
   }
 
-  async update(id: string, userId: string, data: Partial<CategoryDto>) {
+  async update(data: Partial<CategoryBaseDto>, userId: string) {
     // Ensure users can only update their own categories
-    const category = await this.findOne(id, userId);
-    if (!category || (category.isDefault && category.userId !== userId)) {
+    if (!data.id) throw new BadRequestException('Invalid data');
+
+    const category = await this.getCategory(data.id, userId);
+    if (!category || category.isDefault) {
       return null;
     }
 
     return await this.prisma.category.update({
-      where: { id },
+      where: { id: data.id },
       data: {
-        ...data,
+        name: data.name,
+        icon: data.icon,
+        isDefault: data.isDefault,
         updatedAt: new Date(),
       },
     });
   }
 
   async remove(id: string, userId: string) {
-    // Ensure users can only delete their own categories
-    const category = await this.findOne(id, userId);
+    const category = await this.getCategory(id, userId);
     if (!category || category.isDefault) {
       return null;
     }

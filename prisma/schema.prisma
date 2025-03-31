@@ -35,11 +35,11 @@ model Expense {
   date          DateTime
   notes         String?
   // Relationships
-  category      Category    @relation(fields: [categoryId], references: [id])
+  category      Category    @relation(fields: [categoryId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   categoryId    String
-  moneySource   MoneySource @relation(fields: [moneySourceId], references: [id])
+  moneySource   MoneySource @relation(fields: [moneySourceId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   moneySourceId String
-  user          User        @relation(fields: [userId], references: [id])
+  user          User        @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   userId        String
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -50,9 +50,10 @@ model Expense {
 
 model Category {
   // Using custom strings for IDs (e.g., "food", "transportation")
-  id        String    @id
+  id        String    @id @default(uuid())
   name      String
   icon      String
+  color     String?
   isDefault Boolean
   // Optional association to a user (for user-specific custom categories)
   user      User?     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
@@ -66,7 +67,7 @@ model Category {
 
 model MoneySource {
   // Using custom strings for IDs (e.g., "cash", "bank")
-  id               String           @id
+  id               String           @id @default(uuid())
   name             String
   balance          Float
   currency         String
@@ -75,9 +76,8 @@ model MoneySource {
   budget           Float
   expenses         Expense[]
   balanceHistories BalanceHistory[]
-  // Optional association to a user (for user-specific money sources)
-  user             User?            @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  userId           String?
+  user             User             @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  userId           String
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -91,9 +91,8 @@ model BalanceHistory {
   currency      String
   moneySource   MoneySource @relation(fields: [moneySourceId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   moneySourceId String
-  // Optional association to a user if needed
-  user          User?       @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  userId        String?
+  user          User        @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  userId        String
   createdAt     DateTime    @default(now())
 
   @@index([moneySourceId])

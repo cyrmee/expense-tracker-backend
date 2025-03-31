@@ -16,7 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
-import { CategoryDto } from './dto';
+import { CategoryBaseDto, CategoryDto } from './dto';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -33,7 +33,7 @@ export class CategoriesController {
     type: [CategoryDto],
   })
   async findAll(@Request() req) {
-    return await this.categoriesService.findAll(req.user.id);
+    return await this.categoriesService.getCategories(req.user.id);
   }
 
   @Get(':id')
@@ -45,7 +45,7 @@ export class CategoriesController {
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
   async findOne(@Param('id') id: string, @Request() req) {
-    const category = await this.categoriesService.findOne(id, req.user.id);
+    const category = await this.categoriesService.getCategory(id, req.user.id);
     if (!category) {
       throw new NotFoundException('Category not found');
     }
@@ -60,7 +60,8 @@ export class CategoriesController {
     type: CategoryDto,
   })
   async create(
-    @Body() categoryDto: Omit<CategoryDto, 'id' | 'createdAt' | 'updatedAt'>,
+    @Body()
+    categoryDto: Omit<CategoryBaseDto, 'id' | 'createdAt' | 'updatedAt'>,
     @Request() req,
   ) {
     return await this.categoriesService.create({
@@ -77,15 +78,11 @@ export class CategoriesController {
     type: CategoryDto,
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  async update(
-    @Param('id') id: string,
-    @Body() categoryDto: Partial<CategoryDto>,
-    @Request() req,
-  ) {
+  async update(@Body() categoryDto: Partial<CategoryDto>, @Request() req) {
+    categoryDto.userId = req.user.id; // Ensure the user ID is set for the update
     const updated = await this.categoriesService.update(
-      id,
-      req.user.id,
       categoryDto,
+      req.user.id,
     );
     if (!updated) {
       throw new NotFoundException('Category not found or cannot be modified');

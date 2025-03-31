@@ -10,6 +10,7 @@ import {
   Patch,
   UsePipes,
   ValidationPipe,
+  Query,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
@@ -21,7 +22,13 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { ExpenseDto } from './dto';
+import { ExpenseBaseDto, ExpenseDto } from './dto';
+import {
+  PaginatedResponseType,
+  PaginatedResponseDto,
+  PaginatedRequestDto,
+} from '../common/dto';
+import { ApiPaginationQuery } from '../common/decorators';
 
 @ApiTags('expenses')
 @ApiCookieAuth()
@@ -35,12 +42,19 @@ export class ExpensesController {
   @ApiOperation({ summary: 'Get all expenses for the current user' })
   @ApiResponse({
     status: 200,
-    description: 'Returns a list of all expenses for the user',
-    type: [ExpenseDto],
+    description: 'Returns a paginated list of expenses for the user',
+    type: PaginatedResponseType(ExpenseDto),
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(@Request() req) {
-    return await this.expensesService.findAll(req.user.id);
+  @ApiPaginationQuery()
+  async getUserExpenses(
+    @Request() req,
+    @Query() paginatedRequestDto: PaginatedRequestDto,
+  ): Promise<PaginatedResponseDto<ExpenseDto>> {
+    return await this.expensesService.getExpenses(
+      req.user.id,
+      paginatedRequestDto,
+    );
   }
 
   @Get(':id')
@@ -57,20 +71,20 @@ export class ExpensesController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Expense not found' })
-  async findOne(@Param('id') id: string, @Request() req) {
-    return await this.expensesService.findOne(id, req.user.id);
+  async getExpenseDetails(@Param('id') id: string, @Request() req) {
+    return await this.expensesService.getExpense(id, req.user.id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new expense' })
-  @ApiBody({ type: ExpenseDto })
+  @ApiBody({ type: ExpenseBaseDto })
   @ApiResponse({
     status: 201,
     description: 'The expense has been successfully created',
     type: ExpenseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async create(@Body() createExpenseDto: any, @Request() req) {
+  async create(@Body() createExpenseDto: ExpenseBaseDto, @Request() req) {
     return await this.expensesService.create(createExpenseDto, req.user.id);
   }
 
@@ -81,7 +95,7 @@ export class ExpensesController {
     description: 'Expense ID',
     example: '4a409730-2574-4cd2-b7d1-feb20d1f3e4e',
   })
-  @ApiBody({ type: ExpenseDto })
+  @ApiBody({ type: ExpenseBaseDto })
   @ApiResponse({
     status: 200,
     description: 'The expense has been successfully updated',
@@ -90,11 +104,10 @@ export class ExpensesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Expense not found' })
   async update(
-    @Param('id') id: string,
-    @Body() updateExpenseDto: any,
+    @Body() updateExpenseDto: Partial<ExpenseBaseDto>,
     @Request() req,
   ) {
-    return await this.expensesService.update(id, updateExpenseDto, req.user.id);
+    return await this.expensesService.update(updateExpenseDto, req.user.id);
   }
 
   @Delete(':id')

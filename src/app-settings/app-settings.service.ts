@@ -9,7 +9,7 @@ export class AppSettingsService {
   /**
    * Find app settings for a specific user
    */
-  async findOneByUserId(userId: string) {
+  async getAppSettings(userId: string) {
     const settings = await this.prisma.appSettings.findUnique({
       where: { userId },
     });
@@ -24,9 +24,22 @@ export class AppSettingsService {
   /**
    * Create app settings for a user
    */
-  async create(userId: string, data: Partial<AppSettingsDto>) {
+  async create(
+    userId: string,
+    data?: Omit<AppSettingsDto, 'id' | 'createdAt' | 'updatedAt'>,
+  ) {
+    if (!data) {
+      // If no data initialize with default values
+      data = {
+        preferredCurrency: 'ETB',
+        hideAmounts: false,
+        themePreference: 'system',
+        userId: userId,
+      };
+    }
+
     // Check if settings already exist for this user
-    const existingSettings = await this.findOneByUserId(userId);
+    const existingSettings = await this.getAppSettings(userId);
     if (existingSettings) {
       return existingSettings;
     }
@@ -47,13 +60,16 @@ export class AppSettingsService {
   /**
    * Update app settings for a user
    */
-  async update(userId: string, data: Partial<AppSettingsDto>) {
+  async update(
+    data: Partial<AppSettingsDto>,
+    userId: string,
+  ): Promise<AppSettingsDto> {
     // Ensure settings exist for the user
-    let settings = await this.findOneByUserId(userId);
+    let settings = await this.getAppSettings(userId);
 
-    // If not found, create new settings
+    // If not found, create new settings with default values
     if (!settings) {
-      settings = await this.create(userId, data);
+      settings = await this.create(userId);
       return settings;
     }
 
@@ -72,7 +88,7 @@ export class AppSettingsService {
    * Delete app settings for a user
    */
   async remove(userId: string) {
-    const settings = await this.findOneByUserId(userId);
+    const settings = await this.getAppSettings(userId);
     if (!settings) {
       throw new NotFoundException('App settings not found');
     }
