@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import {
@@ -15,12 +15,16 @@ import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class DashboardService {
+  private readonly logger = new Logger(DashboardService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly exchangeRatesService: ExchangeRatesService,
   ) {}
 
   async getOverview(userId: string): Promise<DashboardOverviewDto> {
+    this.logger.log(`Generating dashboard overview for user ${userId}`);
+
     // Get total expenses
     const expenses = await this.prisma.expense.findMany({
       where: { userId },
@@ -34,6 +38,9 @@ export class DashboardService {
 
     // Get user's preferred currency
     const preferredCurrency = await this.getUserPreferredCurrency(userId);
+    this.logger.log(
+      `Using preferred currency: ${preferredCurrency} for dashboard overview`,
+    );
 
     // Convert and calculate total expenses
     let totalExpenses = 0;
@@ -69,6 +76,12 @@ export class DashboardService {
     const budgetUtilization =
       totalBudget > 0 ? (totalExpenses / totalBudget) * 100 : 0;
 
+    this.logger.log(
+      `Dashboard overview generated for user ${userId}: expenses=${totalExpenses.toFixed(2)}, ` +
+        `budget=${totalBudget.toFixed(2)}, balance=${totalBalance.toFixed(2)}, ` +
+        `utilization=${budgetUtilization.toFixed(2)}% in ${preferredCurrency}`,
+    );
+
     return plainToClass(DashboardOverviewDto, {
       totalExpenses,
       totalBudget,
@@ -78,11 +91,16 @@ export class DashboardService {
   }
 
   async getTrends(userId: string): Promise<DashboardTrendsDto> {
+    this.logger.log(`Generating expense trends for user ${userId}`);
+
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
     // Get user's preferred currency
     const preferredCurrency = await this.getUserPreferredCurrency(userId);
+    this.logger.log(
+      `Using preferred currency: ${preferredCurrency} for trends analysis`,
+    );
 
     // Get all expenses for the year with money source for currency conversion
     const expenses = await this.prisma.expense.findMany({
@@ -99,6 +117,10 @@ export class DashboardService {
         moneySource: true,
       },
     });
+
+    this.logger.log(
+      `Processing ${expenses.length} expenses for trends analysis`,
+    );
 
     // Group expenses by month and week
     const monthlyTrends: Map<string, number> = new Map();
@@ -128,6 +150,10 @@ export class DashboardService {
       );
     }
 
+    this.logger.log(
+      `Trends analysis completed for user ${userId}: ${monthlyTrends.size} monthly data points, ${weeklyTrends.size} weekly data points`,
+    );
+
     return plainToClass(DashboardTrendsDto, {
       monthlyTrends: Array.from(monthlyTrends.entries()).map(
         ([date, amount]) => ({
@@ -145,8 +171,15 @@ export class DashboardService {
   }
 
   async getExpenseComposition(userId: string): Promise<ExpenseCompositionDto> {
+    this.logger.log(
+      `Generating expense composition analysis for user ${userId}`,
+    );
+
     // Get user's preferred currency
     const preferredCurrency = await this.getUserPreferredCurrency(userId);
+    this.logger.log(
+      `Using preferred currency: ${preferredCurrency} for expense composition`,
+    );
 
     // Get all expenses with their categories and money source for currency conversion
     const expenses = await this.prisma.expense.findMany({
@@ -156,6 +189,10 @@ export class DashboardService {
         moneySource: true,
       },
     });
+
+    this.logger.log(
+      `Analyzing ${expenses.length} expenses for category breakdown`,
+    );
 
     // Convert and calculate total expenses
     let totalExpenses = 0;
@@ -188,14 +225,23 @@ export class DashboardService {
       percentage: totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0,
     }));
 
+    this.logger.log(
+      `Expense composition analysis complete: identified ${categoryMap.size} categories`,
+    );
+
     return plainToClass(ExpenseCompositionDto, {
       categoryBreakdown,
     });
   }
 
   async getBudgetComparison(userId: string): Promise<BudgetComparisonDto> {
+    this.logger.log(`Generating budget comparison for user ${userId}`);
+
     // Get user's preferred currency
     const preferredCurrency = await this.getUserPreferredCurrency(userId);
+    this.logger.log(
+      `Using preferred currency: ${preferredCurrency} for budget comparison`,
+    );
 
     // Get all money sources with their expenses
     const moneySources = await this.prisma.moneySource.findMany({
@@ -204,6 +250,10 @@ export class DashboardService {
         expenses: true,
       },
     });
+
+    this.logger.log(
+      `Analyzing ${moneySources.length} money sources for budget comparison`,
+    );
 
     let totalBudget = 0;
     let totalActual = 0;
@@ -241,6 +291,10 @@ export class DashboardService {
       totalBudget += convertedBudget;
       totalActual += convertedActual;
 
+      this.logger.log(
+        `Money source ${source.name}: budget=${convertedBudget.toFixed(2)}, actual=${convertedActual.toFixed(2)}, variance=${variance.toFixed(2)} (${variancePercentage.toFixed(1)}%)`,
+      );
+
       comparisons.push({
         moneySource: source.name,
         budget: convertedBudget,
@@ -251,6 +305,10 @@ export class DashboardService {
     }
 
     const totalVariance = totalBudget - totalActual;
+
+    this.logger.log(
+      `Budget comparison complete: total budget=${totalBudget.toFixed(2)}, total actual=${totalActual.toFixed(2)}, total variance=${totalVariance.toFixed(2)}`,
+    );
 
     return plainToClass(BudgetComparisonDto, {
       comparisons,
@@ -285,12 +343,19 @@ export class DashboardService {
     userId: string,
     period?: string,
   ): Promise<ExpenseOverview> {
+    this.logger.log(
+      `Generating expenses overview for user ${userId}, period: ${period || 'this month'}`,
+    );
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
     // Get user's preferred currency
     const preferredCurrency = await this.getUserPreferredCurrency(userId);
+    this.logger.log(
+      `Using preferred currency: ${preferredCurrency} for expenses overview`,
+    );
 
     // Get this month's expenses with money source for currency conversion
     const thisMonthExpenses = await this.prisma.expense.findMany({
@@ -306,6 +371,10 @@ export class DashboardService {
       },
     });
 
+    this.logger.log(
+      `Processing ${thisMonthExpenses.length} expenses for current month`,
+    );
+
     // Get year to date expenses with money source for currency conversion
     const yearToDateExpenses = await this.prisma.expense.findMany({
       where: {
@@ -319,6 +388,10 @@ export class DashboardService {
         moneySource: true,
       },
     });
+
+    this.logger.log(
+      `Processing ${yearToDateExpenses.length} expenses for year-to-date`,
+    );
 
     // Calculate converted totals
     let thisMonthTotal = 0;
@@ -365,6 +438,10 @@ export class DashboardService {
         percentage: Number(cat.percentage.toFixed(1)),
       }));
 
+    this.logger.log(
+      `Expenses overview generated: monthly total=${thisMonthTotal.toFixed(2)}, YTD total=${yearToDateTotal.toFixed(2)} ${preferredCurrency}`,
+    );
+
     return {
       summary: `Summary of your expenses for ${period || 'this month'}`,
       thisMonth: {
@@ -383,13 +460,24 @@ export class DashboardService {
     userId: string,
     period?: string,
   ): Promise<TotalBalance> {
+    this.logger.log(
+      `Generating total balance data for user ${userId}, period: ${period || 'this month'}`,
+    );
+
     // Get all money sources for the user
     const moneySources = await this.prisma.moneySource.findMany({
       where: { userId },
     });
 
+    this.logger.log(
+      `Processing ${moneySources.length} money sources for balance calculation`,
+    );
+
     // Get user's preferred currency
     const preferredCurrency = await this.getUserPreferredCurrency(userId);
+    this.logger.log(
+      `Using preferred currency: ${preferredCurrency} for balance calculation`,
+    );
 
     // Calculate and convert total balance
     let totalBalance = 0;
@@ -407,8 +495,14 @@ export class DashboardService {
     const comparisonDate = new Date(now);
     if (period === 'year-to-date') {
       comparisonDate.setFullYear(comparisonDate.getFullYear() - 1);
+      this.logger.log(
+        `Using year-to-date comparison (since ${comparisonDate.toISOString().split('T')[0]})`,
+      );
     } else {
       comparisonDate.setMonth(comparisonDate.getMonth() - 1);
+      this.logger.log(
+        `Using month-to-month comparison (since ${comparisonDate.toISOString().split('T')[0]})`,
+      );
     }
 
     const previousBalances = await this.prisma.balanceHistory.findMany({
@@ -424,6 +518,10 @@ export class DashboardService {
       },
       distinct: ['moneySourceId'],
     });
+
+    this.logger.log(
+      `Found ${previousBalances.length} historical balance records for comparison`,
+    );
 
     // Calculate percentage changes and convert balances
     const moneySourceDetails: {
@@ -464,6 +562,14 @@ export class DashboardService {
                 convertedPreviousBalance) *
               100
             : 0;
+
+        this.logger.log(
+          `Money source ${source.name} balance change: ${convertedPreviousBalance.toFixed(2)} → ${convertedBalance.toFixed(2)} (${percentageChange.toFixed(1)}%)`,
+        );
+      } else {
+        this.logger.log(
+          `Money source ${source.name}: no previous balance data available for comparison`,
+        );
       }
 
       moneySourceDetails.push({
@@ -474,6 +580,10 @@ export class DashboardService {
         percentageChange: Number(percentageChange.toFixed(1)),
       });
     }
+
+    this.logger.log(
+      `Total balance calculation complete: ${totalBalance.toFixed(2)} ${preferredCurrency}`,
+    );
 
     return {
       totalBalance,

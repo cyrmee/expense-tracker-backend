@@ -21,6 +21,10 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User account is deactivated');
     }
 
+    if (!user.isVerified) {
+      throw new UnauthorizedException('User account is not verified');
+    }
+
     return user;
   }
 }

@@ -27,4 +27,10 @@ export class AuthUserResponseDto {
     example: true,
   })
   isActive?: boolean;
+
+  @ApiProperty({
+    description: 'Whether the user account is verified',
+    example: true,
+  })
+  isVerified?: boolean;
 }

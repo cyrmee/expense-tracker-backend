@@ -11,6 +11,8 @@ import {
   UsePipes,
   ValidationPipe,
   Patch,
+  BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -27,6 +29,9 @@ import {
   AuthUserResponseDto,
   LoginDto,
   ChangePasswordDto,
+  RequestResetDto,
+  ResetPasswordDto,
+  ValidateResetTokenDto,
 } from './dto';
 
 @ApiTags('auth')
@@ -142,5 +147,94 @@ export class AuthController {
       throw new UnauthorizedException('No active session');
     }
     return await this.authService.changePassword(user.id, changePasswordDto);
+  }
+
+  @Post('password-reset/request')
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiResponse({ status: 200, description: 'Reset email sent if email exists' })
+  async requestPasswordReset(@Body() dto: RequestResetDto) {
+    await this.authService.requestPasswordReset(dto.email);
+    return {
+      message:
+        'If your email exists in our system, you will receive a password reset link shortly',
+    };
+  }
+
+  @Post('password-reset/validate')
+  @ApiOperation({ summary: 'Validate reset token' })
+  @ApiResponse({ status: 200, description: 'Token validation result' })
+  async validateResetToken(@Body() dto: ValidateResetTokenDto) {
+    const isValid = await this.authService.validateResetToken(dto.token);
+    return { valid: isValid };
+  }
+
+  @Post('password-reset/reset')
+  @ApiOperation({ summary: 'Reset password using token' })
+  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    const success = await this.authService.resetPassword(dto);
+
+    if (!success) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    return { message: 'Password has been reset successfully' };
+  }
+
+  @Post('email-verification/request')
+  @ApiOperation({ summary: 'Request email verification' })
+  @ApiBody({
+    schema: {
+      properties: {
+        email: { type: 'string', example: 'user@example.com' },
+      },
+      required: ['email'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Verification email sent' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 403, description: 'Email already verified' })
+  async requestEmailVerification(@Body() body: { email: string }) {
+    await this.authService.requestEmailVerification(body.email);
+    return {
+      message: 'Verification email has been sent',
+    };
+  }
+
+  @Post('email-verification/verify')
+  @ApiOperation({ summary: 'Verify email with token and auto-login' })
+  @ApiBody({
+    schema: {
+      properties: {
+        otp: { type: 'string', example: '123456' },
+      },
+      required: ['otp'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verified and user logged in',
+  })
+  @ApiResponse({ status: 401, description: 'Invalid or expired token' })
+  async verifyEmail(@Body() body: { otp: string }, @Request() req) {
+    try {
+      const user = await this.authService.verifyEmailOtp(
+        body.otp,
+        req.sessionID,
+      );
+
+      return {
+        ...user,
+        verified: true,
+        message: 'Email verified and logged in successfully',
+        sessionId: req.sessionID,
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to verify email');
+    }
   }
 }

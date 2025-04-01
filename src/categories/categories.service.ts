@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Category } from '@prisma/client';
 import { CategoryBaseDto, CategoryDto } from './dto';
 
 @Injectable()
 export class CategoriesService {
+  private readonly logger = new Logger(CategoriesService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getCategories(userId: string) {
@@ -25,7 +27,9 @@ export class CategoriesService {
   }
 
   async create(data: Omit<CategoryBaseDto, 'id' | 'createdAt' | 'updatedAt'>) {
-    return await this.prisma.category.create({
+    this.logger.log(`Creating category "${data.name}" for user ${data.userId}`);
+
+    const category = await this.prisma.category.create({
       data: {
         name: data.name,
         icon: data.icon,
@@ -35,18 +39,34 @@ export class CategoriesService {
         isDefault: false, // User-created categories are never default
       },
     });
+
+    this.logger.log(`Category created with ID: ${category.id}`);
+    return category;
   }
 
   async update(data: Partial<CategoryBaseDto>, userId: string) {
     // Ensure users can only update their own categories
-    if (!data.id) throw new BadRequestException('Invalid data');
+    if (!data.id) {
+      this.logger.error('Category update failed - missing ID');
+      throw new BadRequestException('Invalid data');
+    }
+
+    this.logger.log(`Updating category ${data.id} for user ${userId}`);
 
     const category = await this.getCategory(data.id, userId);
-    if (!category || category.isDefault) {
+    if (!category) {
+      this.logger.error(`Category ${data.id} not found for user ${userId}`);
       return null;
     }
 
-    return await this.prisma.category.update({
+    if (category.isDefault) {
+      this.logger.warn(
+        `Update failed - attempted to modify default category ${data.id}`,
+      );
+      return null;
+    }
+
+    const updatedCategory = await this.prisma.category.update({
       where: { id: data.id },
       data: {
         name: data.name,
@@ -55,16 +75,32 @@ export class CategoriesService {
         updatedAt: new Date(),
       },
     });
+
+    this.logger.log(`Category ${data.id} updated successfully`);
+    return updatedCategory;
   }
 
   async remove(id: string, userId: string) {
+    this.logger.log(`Attempting to remove category ${id} for user ${userId}`);
+
     const category = await this.getCategory(id, userId);
-    if (!category || category.isDefault) {
+    if (!category) {
+      this.logger.error(`Category ${id} not found for user ${userId}`);
       return null;
     }
 
-    return await this.prisma.category.delete({
+    if (category.isDefault) {
+      this.logger.warn(
+        `Deletion failed - attempted to remove default category ${id}`,
+      );
+      return null;
+    }
+
+    const deletedCategory = await this.prisma.category.delete({
       where: { id },
     });
+
+    this.logger.log(`Category ${id} removed successfully`);
+    return deletedCategory;
   }
 }

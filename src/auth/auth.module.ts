@@ -9,6 +9,8 @@ import { RedisModule } from '../redis/redis.module';
 import { ConfigModule } from '@nestjs/config';
 import { SessionAuthGuard } from './guards';
 import { AppSettingsModule } from '../app-settings/app-settings.module';
+import { MailModule } from '../mail/mail.module'; // Add this import
+import { CommonModule } from '../common/common.module';
 
 @Global()
 @Module({
@@ -17,6 +19,8 @@ import { AppSettingsModule } from '../app-settings/app-settings.module';
     RedisModule,
     ConfigModule,
     forwardRef(() => AppSettingsModule),
+    MailModule,
+    CommonModule,
     PassportModule.register({
       session: true,
       defaultStrategy: 'local',

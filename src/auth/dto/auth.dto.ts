@@ -113,3 +113,34 @@ export class ChangePasswordDto {
   })
   newPassword: string;
 }
+
+export class RequestResetDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+}
+
+export class ValidateResetTokenDto {
+  @ApiProperty({ example: '1234567890abcdef' })
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+}
+
+export class ResetPasswordDto {
+  @ApiProperty({ example: '1234567890abcdef' })
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @ApiProperty({ example: 'NewSecurePassword123!' })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message:
+      'Password must include uppercase, lowercase, and numbers or special characters',
+  })
+  password: string;
+}
