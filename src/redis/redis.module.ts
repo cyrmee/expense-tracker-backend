@@ -111,7 +111,7 @@ import { createClient } from '@redis/client';
             secure:
               process.env.NODE_ENV === 'production' ||
               process.env.NODE_ENV === 'staging',
-            sameSite: 'lax',
+            sameSite: 'none',
             maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
             path: '/',
           },
