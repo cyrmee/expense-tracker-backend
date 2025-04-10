@@ -11,6 +11,7 @@ A comprehensive expense tracker backend API built with NestJS, PostgreSQL, Prism
 - **Category Management**: Predefined and customizable expense categories
 - **Money Source Handling**: Manage different sources like cash, bank accounts, credit cards
 - **Data Analytics**: Expense trends, budget comparisons, and spending analysis
+- **AI-Powered Features**: Natural language expense parsing and smart category suggestions using Google's Gemini AI
 
 ## Prerequisites
 
@@ -52,7 +53,7 @@ Create a `.env` file in the root directory by copying `.env.example`:
 cp .env.example .env
 ```
 
-Update the `.env` file with your database and Redis configurations:
+Update the `.env` file with your database, Redis, and API configurations:
 
 ```
 DATABASE_URL="postgresql://postgres:your_password@localhost/expense-tracker-db"
@@ -65,7 +66,10 @@ REDIS_HOST="localhost"
 REDIS_PORT="6379"
 REDIS_URL="redis://localhost:6379"
 APP_NAME="ExpenseTrackerApp"
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
+
+For AI features to work, you'll need to obtain a Google Gemini API key from the [Google AI Studio](https://makersuite.google.com/app/apikey).
 
 ### 4. Database setup
 
@@ -154,9 +158,32 @@ Once the application is running, you can access:
 
 - REST API documentation at: `http://localhost:5000/api/docs` (Swagger UI)
 
+## AI-Powered Features
+
+The application integrates with Google's Gemini AI model to provide intelligent expense processing capabilities:
+
+### Natural Language Expense Parsing
+
+Users can submit expense descriptions in natural language, and the AI will extract:
+
+- The expense amount
+- The date of the expense (supports both exact dates and relative terms like "yesterday" or "last week")
+- The appropriate expense category
+- Which money source was used
+- Additional notes about the expense
+
+Example: "Spent $45 at the grocery store yesterday using my credit card" will be automatically parsed into a structured expense entry.
+
+### Smart Category Suggestions
+
+When adding a new expense, the AI can suggest the most appropriate category based on the expense description, making categorization faster and more consistent.
+
+These features require a valid Google Gemini API key to be configured in your `.env` file.
+
 ## Project Structure
 
 - `src/` - Source code
+  - `ai/` - AI service for natural language expense processing and category suggestions
   - `auth/` - Authentication module (login, register)
   - `user/` - User management module
   - `expense/` - Expense tracking and management

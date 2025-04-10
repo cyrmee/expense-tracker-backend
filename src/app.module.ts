@@ -16,6 +16,7 @@ import { DataModule } from './data/data.module';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         limit: 10,
       },
     ]),
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
