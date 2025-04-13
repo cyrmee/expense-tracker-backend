@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserDto } from './dto';
+import { UpdateUserDto, UserDto } from './dto';
 import { plainToClass } from 'class-transformer';
 
 @Injectable()
@@ -67,20 +67,35 @@ export class UserService {
     return plainToClass(UserDto, user);
   }
 
-  async updateProfile(userId: string, data: Partial<UserDto>) {
+  async updateProfile(userId: string, data: UpdateUserDto) {
     if (!userId) {
       this.logger.error('Profile update failed - missing user ID');
       throw new Error('User ID is required for profile update');
     }
 
     this.logger.log(`Updating profile for user ${userId}`);
-    const updatedUser = await this.prisma.user.update({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      data,
     });
 
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...data,
+      },
+    });
+
+    if (user?.email !== updatedUser?.email) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          isVerified: false,
+        },
+      });
+    }
+
     this.logger.log(`Profile updated successfully for user ${userId}`);
-    return plainToClass(UserDto, updatedUser);
+    return;
   }
 
   async deleteUser(userId: string) {
@@ -90,11 +105,11 @@ export class UserService {
     }
 
     this.logger.log(`Deleting user account: ${userId}`);
-    const deletedUser = await this.prisma.user.delete({
+    await this.prisma.user.delete({
       where: { id: userId },
     });
 
     this.logger.log(`User account ${userId} deleted successfully`);
-    return plainToClass(UserDto, deletedUser);
+    return;
   }
 }

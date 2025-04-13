@@ -11,6 +11,8 @@ import {
   UsePipes,
   ValidationPipe,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { MoneySourcesService } from './money-sources.service';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
@@ -22,9 +24,14 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { MoneySourceBaseDto, MoneySourceDto } from './dto';
+import {
+  CreateMoneySourceDto,
+  MoneySourceBaseDto,
+  MoneySourceDto,
+} from './dto';
 import { ApiPaginationQuery } from '../common/decorators';
 import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
+import { UpdateMoneySourceDto } from './dto/update-money-source.dto';
 
 @ApiTags('money-sources')
 @ApiCookieAuth()
@@ -35,6 +42,7 @@ export class MoneySourcesController {
   constructor(private readonly moneySourcesService: MoneySourcesService) {}
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all money sources for the current user' })
   @ApiResponse({
     status: 200,
@@ -54,6 +62,7 @@ export class MoneySourcesController {
   }
 
   @Get(':id')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a specific money source by ID' })
   @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
   @ApiResponse({
@@ -68,8 +77,9 @@ export class MoneySourcesController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new money source' })
-  @ApiBody({ type: MoneySourceBaseDto })
+  @ApiBody({ type: CreateMoneySourceDto })
   @ApiResponse({
     status: 201,
     description: 'The money source has been successfully created',
@@ -77,19 +87,20 @@ export class MoneySourcesController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(
-    @Body() createMoneySourceDto: MoneySourceBaseDto,
+    @Body() createMoneySourceDto: CreateMoneySourceDto,
     @Request() req,
   ) {
-    return await this.moneySourcesService.create(
-      createMoneySourceDto,
-      req.user.id,
-    );
+    await this.moneySourcesService.create(createMoneySourceDto, req.user.id);
+    return {
+      message: 'Money source created successfully',
+    };
   }
 
   @Patch(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Update an existing money source' })
   @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
-  @ApiBody({ type: MoneySourceDto })
+  @ApiBody({ type: UpdateMoneySourceDto })
   @ApiResponse({
     status: 200,
     description: 'The money source has been successfully updated',
@@ -99,16 +110,21 @@ export class MoneySourcesController {
   @ApiResponse({ status: 404, description: 'Money source not found' })
   async update(
     @Param('id') id: string,
-    @Body() updateMoneySourceDto: any,
+    @Body() updateMoneySourceDto: UpdateMoneySourceDto,
     @Request() req,
   ) {
-    return await this.moneySourcesService.update(
+    await this.moneySourcesService.update(
+      id,
       updateMoneySourceDto,
       req.user.id,
     );
+    return {
+      message: 'Money source updated successfully',
+    };
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a money source' })
   @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
   @ApiResponse({

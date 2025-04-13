@@ -4,7 +4,11 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as passport from 'passport';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AllExceptionsFilter, HttpExceptionFilter } from './common/filters';
+import {
+  AllExceptionsFilter,
+  HttpExceptionFilter,
+  PrismaExceptionFilter,
+} from './common/filters';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -31,7 +35,11 @@ async function bootstrap() {
   logger.log('Global validation pipe configured');
 
   // Apply global exception filters
-  app.useGlobalFilters(new AllExceptionsFilter(), new HttpExceptionFilter());
+  app.useGlobalFilters(
+    new AllExceptionsFilter(),
+    new HttpExceptionFilter(),
+    new PrismaExceptionFilter(),
+  );
   logger.log('Global exception filters applied');
 
   // Setup Swagger

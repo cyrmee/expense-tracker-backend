@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ExpenseBaseDto, ExpenseDto } from './dto';
+import { ExpenseBaseDto, ExpenseDto, ParsedExpenseDto } from './dto';
 import { plainToClass } from 'class-transformer';
 import { CurrencyConverter } from '../common/utils';
 import {
@@ -9,6 +9,7 @@ import {
   QueryBuilder,
   SortOrder,
 } from '../common/dto';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class ExpensesService {
@@ -17,6 +18,7 @@ export class ExpensesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
+    private readonly aiService: AiService,
   ) {}
 
   private async transformToDto(
@@ -204,6 +206,20 @@ export class ExpensesService {
       expense.moneySource.currency,
       expense.user?.appSettings?.preferredCurrency || 'USD',
     );
+  }
+
+  async createFromText(
+    text: string,
+    userId: string,
+  ): Promise<ParsedExpenseDto> {
+    const parsedData = await this.aiService.parseExpenseData(text, userId);
+
+    if (!parsedData) {
+      this.logger.error('Failed to parse expense data from text');
+      throw new NotFoundException('Failed to parse expense data');
+    }
+
+    return parsedData;
   }
 
   async update(

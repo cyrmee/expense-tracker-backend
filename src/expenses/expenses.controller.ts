@@ -22,7 +22,12 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { ExpenseBaseDto, ExpenseDto } from './dto';
+import {
+  CreateExpenseFromTextDto,
+  ExpenseBaseDto,
+  ExpenseDto,
+  ParsedExpenseDto,
+} from './dto';
 import {
   PaginatedResponseType,
   PaginatedResponseDto,
@@ -86,6 +91,25 @@ export class ExpensesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Body() createExpenseDto: ExpenseBaseDto, @Request() req) {
     return await this.expensesService.create(createExpenseDto, req.user.id);
+  }
+
+  @Post('from-text')
+  @ApiOperation({ summary: 'Create a new expense from text' })
+  @ApiBody({ type: CreateExpenseFromTextDto })
+  @ApiResponse({
+    status: 201,
+    description: 'The expense has been successfully created from text',
+    type: ParsedExpenseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createFromText(
+    @Body() createExpenseFromTextDto: CreateExpenseFromTextDto,
+    @Request() req,
+  ) {
+    return await this.expensesService.createFromText(
+      createExpenseFromTextDto.text,
+      req.user.id,
+    );
   }
 
   @Patch(':id')
