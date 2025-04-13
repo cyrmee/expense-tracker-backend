@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AppSettingsDto } from './dto';
+import { AppSettingsDto, UpdateAppSettingsDto } from './dto';
+import { CreateAppSettingsDto } from './dto/create-app-settings.dto';
 
 @Injectable()
 export class AppSettingsService {
@@ -29,19 +30,15 @@ export class AppSettingsService {
   /**
    * Create app settings for a user
    */
-  async create(
-    userId: string,
-    data?: Omit<AppSettingsDto, 'id' | 'createdAt' | 'updatedAt'>,
-  ) {
+  async create(userId: string, data?: CreateAppSettingsDto): Promise<void> {
     this.logger.log(`Creating app settings for user ${userId}`);
 
     if (!data) {
       // If no data initialize with default values
       data = {
         preferredCurrency: 'ETB',
-        hideAmounts: false,
+        hideAmounts: true,
         themePreference: 'system',
-        userId: userId,
       };
       this.logger.log(
         `No settings provided, using defaults: preferredCurrency=${data.preferredCurrency}, themePreference=${data.themePreference}`,
@@ -50,19 +47,14 @@ export class AppSettingsService {
 
     // Check if settings already exist for this user
     const existingSettings = await this.getAppSettings(userId);
-    if (existingSettings) {
-      this.logger.log(
-        `Settings already exist for user ${userId}, returning existing settings`,
-      );
-      return existingSettings;
-    }
+    if (existingSettings) return;
 
     // Create new settings with defaults
     const newSettings = await this.prisma.appSettings.create({
       data: {
-        preferredCurrency: data.preferredCurrency || 'ETB',
-        hideAmounts: data.hideAmounts !== undefined ? data.hideAmounts : false,
-        themePreference: data.themePreference || 'system',
+        preferredCurrency: data?.preferredCurrency,
+        hideAmounts: data?.hideAmounts !== undefined ? data.hideAmounts : false,
+        themePreference: data?.themePreference || 'system',
         user: {
           connect: { id: userId },
         },
@@ -73,45 +65,42 @@ export class AppSettingsService {
       `App settings created for user ${userId}: preferredCurrency=${newSettings.preferredCurrency}, themePreference=${newSettings.themePreference}`,
     );
 
-    return newSettings;
+    return;
   }
 
   /**
    * Update app settings for a user
    */
-  async update(
-    data: Partial<AppSettingsDto>,
-    userId: string,
-  ): Promise<AppSettingsDto> {
+  async update(data: UpdateAppSettingsDto, userId: string): Promise<void> {
     this.logger.log(`Updating app settings for user ${userId}`);
 
     // Ensure settings exist for the user
-    let settings = await this.getAppSettings(userId);
+    const appSettings = await this.getAppSettings(userId);
 
     // If not found, create new settings with default values
-    if (!settings) {
+    if (!appSettings) {
       this.logger.log(
         `No existing settings found for user ${userId}, creating new settings`,
       );
-      settings = await this.create(userId);
-      return settings;
+      await this.create(userId);
+      return;
     }
 
     // Update existing settings
-    const updatedSettings = await this.prisma.appSettings.update({
+    await this.prisma.appSettings.update({
       where: { userId },
       data: {
-        ...data,
-        // Explicitly exclude userId to prevent errors
-        userId: undefined,
+        preferredCurrency:
+          data.preferredCurrency || appSettings.preferredCurrency,
+        hideAmounts:
+          data.hideAmounts !== undefined
+            ? data.hideAmounts
+            : appSettings.hideAmounts,
+        themePreference: data.themePreference || appSettings.themePreference,
       },
     });
 
-    this.logger.log(
-      `App settings updated for user ${userId}: preferredCurrency=${updatedSettings.preferredCurrency}, themePreference=${updatedSettings.themePreference}`,
-    );
-
-    return updatedSettings;
+    return;
   }
 
   /**
