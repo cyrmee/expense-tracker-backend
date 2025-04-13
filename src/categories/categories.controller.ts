@@ -11,12 +11,14 @@ import {
   NotFoundException,
   ValidationPipe,
   UsePipes,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
-import { CategoryBaseDto, CategoryDto } from './dto';
+import { CategoryDto, CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -26,6 +28,7 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all categories' })
   @ApiResponse({
     status: 200,
@@ -37,7 +40,9 @@ export class CategoriesController {
   }
 
   @Get(':id')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get category by id' })
+  @ApiParam({ name: 'id', description: 'Category ID', type: 'string' })
   @ApiResponse({
     status: 200,
     description: 'Returns the category',
@@ -53,49 +58,53 @@ export class CategoriesController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new category' })
   @ApiResponse({
     status: 201,
     description: 'Category created successfully',
-    type: CategoryDto,
+  })
+  @ApiBody({
+    description: 'Category data',
+    type: CreateCategoryDto,
   })
   async create(
-    @Body()
-    categoryDto: Omit<CategoryBaseDto, 'id' | 'createdAt' | 'updatedAt'>,
+    @Body() categoryDto: CreateCategoryDto,
     @Request() req,
   ) {
-    return await this.categoriesService.create({
-      ...categoryDto,
-      userId: req.user.id,
-    });
+    await this.categoriesService.create(categoryDto, req.user.id);
+    return { message: 'Category created successfully' };
   }
 
   @Patch(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Update a category' })
+  @ApiParam({ name: 'id', description: 'Category ID', type: 'string' })
+  @ApiBody({
+    description: 'Category update data',
+    type: UpdateCategoryDto,
+  })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'Category updated successfully',
-    type: CategoryDto,
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  async update(@Body() categoryDto: Partial<CategoryDto>, @Request() req) {
-    categoryDto.userId = req.user.id; // Ensure the user ID is set for the update
-    const updated = await this.categoriesService.update(
-      categoryDto,
-      req.user.id,
-    );
-    if (!updated) {
-      throw new NotFoundException('Category not found or cannot be modified');
-    }
-    return updated;
+  async update(
+    @Param('id') id: string,
+    @Body() categoryDto: UpdateCategoryDto,
+    @Request() req,
+  ) {
+    await this.categoriesService.update(id, categoryDto, req.user.id);
+    return;
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a category' })
+  @ApiParam({ name: 'id', description: 'Category ID', type: 'string' })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'Category deleted successfully',
-    type: CategoryDto,
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
   async remove(@Param('id') id: string, @Request() req) {
@@ -103,6 +112,6 @@ export class CategoriesController {
     if (!deleted) {
       throw new NotFoundException('Category not found or cannot be deleted');
     }
-    return deleted;
+    return;
   }
 }

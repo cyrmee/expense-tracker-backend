@@ -8,6 +8,8 @@ import {
   Patch,
   Body,
   Delete,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
@@ -16,8 +18,9 @@ import {
   ApiOperation,
   ApiResponse,
   ApiCookieAuth,
+  ApiBody,
 } from '@nestjs/swagger';
-import { UserDto } from './dto';
+import { UpdateUserDto, UserDto } from './dto';
 
 @ApiTags('users')
 @ApiCookieAuth()
@@ -40,19 +43,24 @@ export class UserController {
   }
 
   @Patch()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiBody({ type: UpdateUserDto })
   @ApiOperation({ summary: 'Update user profile' })
   @ApiResponse({
-    status: 200,
-    description: 'Returns the updated user profile',
-    type: UserDto,
+    status: 204,
+    description: 'Returns message of successful update',
   })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async updateProfile(@Request() req, @Body() data: Partial<UserDto>) {
-    return await this.userService.updateProfile(req.user.id, data);
+  async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
+    await this.userService.updateProfile(req.user.id, updateUserDto);
+    return {
+      message: 'Profile updated successfully',
+    };
   }
 
   @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete user profile' })
   @ApiResponse({
     status: 200,
@@ -60,6 +68,9 @@ export class UserController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteProfile(@Request() req) {
-    return await this.userService.deleteUser(req.user.id);
+    await this.userService.deleteUser(req.user.id);
+    return {
+      message: 'User profile deleted successfully',
+    };
   }
 }

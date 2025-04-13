@@ -1,7 +1,14 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Category } from '@prisma/client';
-import { CategoryBaseDto, CategoryDto } from './dto';
+import {
+  CreateCategoryDto as CreateCategoryDto,
+  UpdateCategoryDto,
+} from './dto';
 
 @Injectable()
 export class CategoriesService {
@@ -14,6 +21,7 @@ export class CategoriesService {
       where: {
         OR: [{ isDefault: true }, { userId }],
       },
+      orderBy: { updatedAt: 'desc' },
     });
   }
 
@@ -26,58 +34,50 @@ export class CategoriesService {
     });
   }
 
-  async create(data: Omit<CategoryBaseDto, 'id' | 'createdAt' | 'updatedAt'>) {
-    this.logger.log(`Creating category "${data.name}" for user ${data.userId}`);
-
-    const category = await this.prisma.category.create({
+  async create(data: CreateCategoryDto, userId: string): Promise<void> {
+    await this.prisma.category.create({
       data: {
         name: data.name,
         icon: data.icon,
+        color: data.color,
         user: {
-          connect: { id: data.userId! },
+          connect: { id: userId },
         },
         isDefault: false, // User-created categories are never default
       },
     });
-
-    this.logger.log(`Category created with ID: ${category.id}`);
-    return category;
+    return;
   }
 
-  async update(data: Partial<CategoryBaseDto>, userId: string) {
-    // Ensure users can only update their own categories
-    if (!data.id) {
-      this.logger.error('Category update failed - missing ID');
+  async update(
+    id: string,
+    data: UpdateCategoryDto,
+    userId: string,
+  ): Promise<void> {
+    if (!id) {
       throw new BadRequestException('Invalid data');
     }
 
-    this.logger.log(`Updating category ${data.id} for user ${userId}`);
+    const category = await this.getCategory(id, userId);
+    if (!category)
+      throw new NotFoundException(`Category with ID ${id} not found`);
 
-    const category = await this.getCategory(data.id, userId);
-    if (!category) {
-      this.logger.error(`Category ${data.id} not found for user ${userId}`);
-      return null;
-    }
-
-    if (category.isDefault) {
-      this.logger.warn(
-        `Update failed - attempted to modify default category ${data.id}`,
+    if (category.isDefault)
+      throw new BadRequestException(
+        `Default categories cannot be modified. Please create a new category instead.`,
       );
-      return null;
-    }
 
-    const updatedCategory = await this.prisma.category.update({
-      where: { id: data.id },
+    await this.prisma.category.update({
+      where: { id },
       data: {
         name: data.name,
         icon: data.icon,
-        isDefault: data.isDefault,
+        color: data.color,
         updatedAt: new Date(),
       },
     });
 
-    this.logger.log(`Category ${data.id} updated successfully`);
-    return updatedCategory;
+    return;
   }
 
   async remove(id: string, userId: string) {

@@ -103,18 +103,15 @@ import { createClient } from '@redis/client';
           secret: configService.get('SESSION_SECRET')!,
           name: 'sessionId',
           resave: false,
-          saveUninitialized: true,
+          saveUninitialized: false, // Change this to false
           rolling: true,
           proxy: true,
           cookie: {
             httpOnly: true,
-            secure:
-              process.env.NODE_ENV === 'production' ||
-              process.env.NODE_ENV === 'staging',
-            sameSite: 'none',
+            secure: process.env.NODE_ENV === 'production', // Set based on environment
+            sameSite: 'lax', // More secure default
             maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
             path: '/',
-            domain: undefined,
           },
         });
       },

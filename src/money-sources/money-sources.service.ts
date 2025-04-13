@@ -5,7 +5,11 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { MoneySourceBaseDto, MoneySourceDto } from './dto';
+import {
+  CreateMoneySourceDto,
+  MoneySourceDto,
+  UpdateMoneySourceDto,
+} from './dto';
 import { plainToClass } from 'class-transformer';
 import { CurrencyConverter } from '../common/utils';
 import {
@@ -131,6 +135,8 @@ export class MoneySourcesService {
         userId,
       },
       include: {
+        expenses: true,
+        balanceHistories: true,
         user: {
           include: {
             appSettings: true,
@@ -152,10 +158,7 @@ export class MoneySourcesService {
     );
   }
 
-  async create(
-    data: Omit<MoneySourceBaseDto, 'id' | 'createdAt' | 'updatedAt'>,
-    userId: string,
-  ): Promise<MoneySourceDto> {
+  async create(data: CreateMoneySourceDto, userId: string): Promise<void> {
     this.logger.log(
       `Creating money source for user ${userId}: ${data.name} (${data.currency})`,
     );
@@ -199,27 +202,25 @@ export class MoneySourcesService {
       `Initial balance history record created for money source: ${moneySource.id}`,
     );
 
-    return await this.transformToDto(
-      moneySource,
-      moneySource.user?.appSettings?.preferredCurrency || 'USD',
-    );
+    return;
   }
 
   async update(
-    data: Partial<MoneySourceBaseDto>,
+    id: string,
+    data: UpdateMoneySourceDto,
     userId: string,
-  ): Promise<MoneySourceDto> {
-    if (!data.id) {
+  ): Promise<void> {
+    if (!id) {
       this.logger.error('Money source update failed - missing ID');
       throw new BadRequestException('ID is required for update');
     }
 
-    this.logger.log(`Updating money source ${data.id} for user ${userId}`);
-    await this.getMoneySource(data.id, userId);
+    this.logger.log(`Updating money source ${id} for user ${userId}`);
+    await this.getMoneySource(id, userId);
 
     const updatedMoneySource = await this.prisma.moneySource.update({
       where: {
-        id: data.id,
+        id,
       },
       data: {
         name: data.name,
@@ -239,19 +240,12 @@ export class MoneySourcesService {
       },
     });
 
-    this.logger.log(`Money source ${data.id} updated successfully`);
+    this.logger.log(`Money source ${id} updated successfully`);
 
-    return await this.transformToDto(
-      updatedMoneySource,
-      updatedMoneySource.user?.appSettings?.preferredCurrency || 'USD',
-    );
+    return;
   }
 
-  async addFunds(
-    id: string,
-    amount: number,
-    userId: string,
-  ): Promise<MoneySourceDto> {
+  async addFunds(id: string, amount: number, userId: string): Promise<void> {
     this.logger.log(
       `Adding funds (${amount}) to money source ${id} for user ${userId}`,
     );
@@ -298,10 +292,7 @@ export class MoneySourcesService {
       `Funds added successfully to money source ${id}, new balance: ${newBalance} ${moneySource.currency}`,
     );
 
-    return await this.transformToDto(
-      updatedMoneySource,
-      updatedMoneySource.user?.appSettings?.preferredCurrency || 'USD',
-    );
+    return;
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -315,5 +306,6 @@ export class MoneySourcesService {
     });
 
     this.logger.log(`Money source ${id} removed successfully`);
+    return;
   }
 }

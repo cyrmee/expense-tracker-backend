@@ -10,6 +10,8 @@ import {
   Inject,
   ValidationPipe,
   UsePipes,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,7 +21,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { AppSettingsService } from './app-settings.service';
-import { AppSettingsDto } from './dto';
+import { AppSettingsDto, UpdateAppSettingsDto } from './dto';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
 
 @ApiTags('app-settings')
@@ -34,6 +36,7 @@ export class AppSettingsController {
   ) {}
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get app settings for the authenticated user' })
   @ApiResponse({
     status: 200,
@@ -51,25 +54,29 @@ export class AppSettingsController {
   }
 
   @Patch()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Update app settings for the authenticated user' })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'App settings updated successfully',
-    type: AppSettingsDto,
   })
   @ApiBody({
-    type: AppSettingsDto,
+    type: UpdateAppSettingsDto,
     description: 'Partial app settings to update',
   })
   async update(
     @Body()
-    appSettingsDto: Omit<AppSettingsDto, 'id' | 'createdAt' | 'updatedAt'>,
+    updateAppSettingsDto: UpdateAppSettingsDto,
     @Request() req,
   ) {
-    return await this.appSettingsService.update(appSettingsDto, req.user.id);
+    await this.appSettingsService.update(updateAppSettingsDto, req.user.id);
+    return {
+      message: 'App settings updated successfully',
+    };
   }
 
   @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Reset app settings for the authenticated user' })
   @ApiResponse({
     status: 200,
@@ -79,6 +86,9 @@ export class AppSettingsController {
   @ApiResponse({ status: 404, description: 'App settings not found' })
   async remove(@Request() req) {
     await this.appSettingsService.remove(req.user.id);
-    return await this.appSettingsService.create(req.user.id);
+    await this.appSettingsService.create(req.user.id);
+    return {
+      message: 'App settings reset successfully',
+    };
   }
 }

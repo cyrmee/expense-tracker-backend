@@ -11,6 +11,8 @@ import {
   UsePipes,
   ValidationPipe,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
@@ -22,7 +24,14 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { ExpenseBaseDto, ExpenseDto } from './dto';
+import {
+  CreateExpenseDto,
+  CreateExpenseFromTextDto,
+  ExpenseBaseDto,
+  ExpenseDto,
+  ParsedExpenseDto,
+  UpdateExpenseDto,
+} from './dto';
 import {
   PaginatedResponseType,
   PaginatedResponseDto,
@@ -39,6 +48,7 @@ export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all expenses for the current user' })
   @ApiResponse({
     status: 200,
@@ -58,6 +68,7 @@ export class ExpensesController {
   }
 
   @Get(':id')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a specific expense by ID' })
   @ApiParam({
     name: 'id',
@@ -76,41 +87,65 @@ export class ExpensesController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new expense' })
-  @ApiBody({ type: ExpenseBaseDto })
+  @ApiBody({ type: CreateExpenseDto })
   @ApiResponse({
     status: 201,
     description: 'The expense has been successfully created',
-    type: ExpenseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async create(@Body() createExpenseDto: ExpenseBaseDto, @Request() req) {
-    return await this.expensesService.create(createExpenseDto, req.user.id);
+  async create(@Body() createExpenseDto: CreateExpenseDto, @Request() req) {
+    await this.expensesService.create(createExpenseDto, req.user.id);
+    return { message: 'Expense created successfully' };
+  }
+
+  @Post('from-text')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new expense from text' })
+  @ApiBody({ type: CreateExpenseFromTextDto })
+  @ApiResponse({
+    status: 201,
+    description: 'The expense has been successfully created from text',
+    type: ParsedExpenseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createFromText(
+    @Body() createExpenseFromTextDto: CreateExpenseFromTextDto,
+    @Request() req,
+  ) {
+    return await this.expensesService.createFromText(
+      createExpenseFromTextDto.text,
+      req.user.id,
+    );
   }
 
   @Patch(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Update an existing expense' })
   @ApiParam({
     name: 'id',
     description: 'Expense ID',
     example: '4a409730-2574-4cd2-b7d1-feb20d1f3e4e',
   })
-  @ApiBody({ type: ExpenseBaseDto })
+  @ApiBody({ type: UpdateExpenseDto })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'The expense has been successfully updated',
-    type: ExpenseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Expense not found' })
   async update(
-    @Body() updateExpenseDto: Partial<ExpenseBaseDto>,
+    @Param('id') id: string,
+    @Body() updateExpenseDto: UpdateExpenseDto,
     @Request() req,
   ) {
-    return await this.expensesService.update(updateExpenseDto, req.user.id);
+    await this.expensesService.update(id, updateExpenseDto, req.user.id);
+    return { message: 'Expense updated successfully' };
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete an expense' })
   @ApiParam({
     name: 'id',
