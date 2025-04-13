@@ -7,8 +7,8 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateMoneySourceDto,
-  MoneySourceBaseDto,
   MoneySourceDto,
+  UpdateMoneySourceDto,
 } from './dto';
 import { plainToClass } from 'class-transformer';
 import { CurrencyConverter } from '../common/utils';
@@ -18,7 +18,6 @@ import {
   QueryBuilder,
   SortOrder,
 } from '../common/dto';
-import { UpdateMoneySourceDto } from './dto/update-money-source.dto';
 
 @Injectable()
 export class MoneySourcesService {

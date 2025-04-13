@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AppSettingsDto, UpdateAppSettingsDto } from './dto';
-import { CreateAppSettingsDto } from './dto/create-app-settings.dto';
+import { CreateAppSettingsDto, UpdateAppSettingsDto } from './dto';
 
 @Injectable()
 export class AppSettingsService {

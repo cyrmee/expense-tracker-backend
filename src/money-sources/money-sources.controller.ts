@@ -26,12 +26,11 @@ import {
 } from '@nestjs/swagger';
 import {
   CreateMoneySourceDto,
-  MoneySourceBaseDto,
   MoneySourceDto,
+  UpdateMoneySourceDto,
 } from './dto';
 import { ApiPaginationQuery } from '../common/decorators';
 import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
-import { UpdateMoneySourceDto } from './dto/update-money-source.dto';
 
 @ApiTags('money-sources')
 @ApiCookieAuth()
