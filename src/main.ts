@@ -17,7 +17,14 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.set('trust proxy', 1);
 
-  // Get and apply session middleware from RedisModule
+  app.enableCors({
+    origin: true,
+    credentials: true,
+    methods: '*',
+    allowedHeaders: '*',
+  });
+
+  // Then apply session middleware
   const sessionMiddleware = app.get('SESSION_MIDDLEWARE');
   app.use(sessionMiddleware);
   app.use(passport.initialize());
@@ -54,15 +61,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
   logger.log('Swagger documentation configured');
-
-  // Enable CORS
-  app.enableCors({
-    origin: true,
-    credentials: true,
-    methods: '*',
-    allowedHeaders: '*',
-  });
-  logger.log('CORS enabled');
 
   const port = process.env.PORT || 5000;
   await app.listen(port);
