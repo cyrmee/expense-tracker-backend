@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OpenExchangeRatesResponse } from './dto';
 
 @Injectable()
-export class ExchangeRatesService {
+export class ExchangeRatesService implements OnModuleInit {
   private readonly logger = new Logger(ExchangeRatesService.name);
   private readonly apiUrl: string | undefined;
   private readonly appId: string | undefined;
@@ -24,6 +24,11 @@ export class ExchangeRatesService {
         'OPENEXCHANGERATES_APP_ID environment variable is not set',
       );
     }
+  }
+
+  async onModuleInit() {
+    this.logger.log('Initializing exchange rates on startup');
+    await this.updateExchangeRates();
   }
 
   @Cron(CronExpression.EVERY_4_HOURS)
