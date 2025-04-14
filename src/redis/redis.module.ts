@@ -113,7 +113,9 @@ import { createClient } from '@redis/client';
             maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
             path: '/',
             domain:
-              process.env.NODE_ENV === 'production' ? undefined : undefined, // Set explicit domain in production
+              process.env.NODE_ENV === 'production'
+                ? configService.get('BACKEND_DOMAIN') // Read from env var
+                : undefined, // Keep undefined for localhost
           },
         });
       },

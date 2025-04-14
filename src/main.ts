@@ -17,45 +17,8 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.set('trust proxy', 1);
 
-  app.use(
-    (
-      req: { method: string },
-      res: {
-        header: (arg0: string, arg1: string) => void;
-        status: (arg0: number) => {
-          (): any;
-          new (): any;
-          send: { (): any; new (): any };
-        };
-      },
-      next: () => any,
-    ) => {
-      res.header(
-        'Access-Control-Allow-Origin',
-        'https://expense-tracker-frontend-kohl.vercel.app',
-      );
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.header(
-        'Access-Control-Allow-Methods',
-        'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-      );
-      res.header(
-        'Access-Control-Allow-Headers',
-        'Origin, X-Requested-With, Content-Type, Accept, Authorization, content-type',
-      );
-
-      // Handle preflight requests
-      if (req.method === 'OPTIONS') {
-        return res.status(204).send();
-      }
-
-      return next();
-    },
-  );
-
-  // Still keep the built-in CORS (belt and suspenders approach)
   app.enableCors({
-    origin: 'https://expense-tracker-frontend-kohl.vercel.app',
+    origin: true, // Allow all origins
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders:
