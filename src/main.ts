@@ -59,6 +59,8 @@ async function bootstrap() {
   app.enableCors({
     origin: true,
     credentials: true,
+    methods: '*',
+    allowedHeaders: '*',
   });
   logger.log('CORS enabled');
 
