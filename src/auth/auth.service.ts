@@ -186,7 +186,7 @@ export class AuthService {
     }
   }
 
-  // Updated login method to use JWT
+  // Updated login method to use JWT with refresh tokens
   async login(user: any, sessionId: string): Promise<any> {
     this.logger.log(`User login: ${user.email} (${user.id})`);
 
@@ -201,7 +201,7 @@ export class AuthService {
       60 * 60 * 24 * 3,
     );
 
-    // Create JWT payload
+    // Create JWT payload for access token
     const payload = {
       sub: user.id,
       email: user.email,
@@ -210,20 +210,11 @@ export class AuthService {
       isVerified: user.isVerified,
     };
 
-    // Generate JWT
-    const token = this.jwtService.sign(payload);
+    // Generate access token with short expiry
+    const accessToken = this.generateAccessToken(payload);
 
-    // Store token in Redis with user data
-    await this.redisClient.set(
-      `jwt_session:${user.id}:${token}`,
-      JSON.stringify({
-        userId: user.id,
-        email: user.email,
-        token,
-        createdAt: new Date().toISOString(),
-      }),
-      { EX: sessionExpiry },
-    );
+    // Generate refresh token with long expiry
+    const refreshToken = await this.generateRefreshToken(user.id);
 
     // For backward compatibility, still store session data
     await this.redisClient.set(
@@ -235,7 +226,7 @@ export class AuthService {
       { EX: sessionExpiry },
     );
 
-    // Return JWT token along with user data
+    // Return both tokens along with user data
     const userResponse: AuthUserResponseDto = {
       id: user.id,
       email: user.email,
@@ -245,33 +236,56 @@ export class AuthService {
     };
 
     return {
-      accessToken: token,
+      accessToken,
+      refreshToken,
       user: userResponse,
-      sessionId,
+      sessionId, // For backward compatibility
     };
   }
 
-  async logout(sessionId: string) {
+  async logout(sessionId: string, refreshToken?: string, userId?: string) {
+    // If refresh token is provided, invalidate it
+    if (refreshToken && userId) {
+      try {
+        // First decrypt the refresh token
+        const unencryptedToken = await this.cryptoService.decrypt(refreshToken);
+        
+        // Then invalidate the unencrypted token in Redis
+        await this.redisClient.del(`refresh_token:${userId}:${unencryptedToken}`);
+        this.logger.log(`Refresh token invalidated for user ${userId}`);
+
+        // Optionally, invalidate all refresh tokens for this user
+        const refreshTokenKeys = await this.redisClient.keys(`refresh_token:${userId}:*`);
+        if (refreshTokenKeys && refreshTokenKeys.length > 0) {
+          await this.redisClient.del(refreshTokenKeys);
+          this.logger.log(`All refresh tokens invalidated for user ${userId}`);
+        }
+      } catch (error) {
+        this.logger.error(`Error decrypting refresh token during logout: ${error.message}`);
+        // Continue with logout process even if token decryption fails
+      }
+    }
+
     // Get the session data to find userId
     const sessionData = await this.redisClient.get(`session:${sessionId}`);
     if (sessionData) {
       const session = JSON.parse(sessionData);
-
-      // Get all JWT tokens for this user
-      const keys = await this.redisClient.keys(
+      
+      // Get all JWT access tokens for this user
+      const jwtKeys = await this.redisClient.keys(
         `jwt_session:${session.userId}:*`,
       );
 
       // Delete all tokens
-      if (keys && keys.length > 0) {
-        await this.redisClient.del(keys);
+      if (jwtKeys && jwtKeys.length > 0) {
+        await this.redisClient.del(jwtKeys);
       }
     }
 
     // Delete traditional session
     await this.redisClient.del(`session:${sessionId}`);
 
-    this.logger.log(`User logout: Session ${sessionId}`);
+    this.logger.log(`User logout completed: Session ${sessionId}`);
     return { message: 'Logged out successfully' };
   }
 
@@ -409,6 +423,99 @@ export class AuthService {
     } catch (error) {
       this.logger.error(`Error refreshing JWT token: ${error.message}`);
       throw new UnauthorizedException('Failed to refresh token');
+    }
+  }
+
+  // Validate refresh token and issue a new access token
+  async refreshAccessToken(refreshToken: string): Promise<any> {
+    try {
+      // Decrypt the incoming refresh token
+      let unencryptedToken: string;
+      try {
+        unencryptedToken = await this.cryptoService.decrypt(refreshToken);
+        this.logger.debug('Successfully decrypted refresh token');
+      } catch (decryptError) {
+        this.logger.error(`Error decrypting refresh token: ${decryptError.message}`);
+        throw new UnauthorizedException('Invalid refresh token format');
+      }
+      
+      // Verify the refresh token
+      const decoded = this.jwtService.verify(unencryptedToken) as {
+        sub: string;
+        type: string;
+      };
+
+      // Check if token is of type 'refresh'
+      if (!decoded || !decoded.sub || decoded.type !== 'refresh') {
+        throw new UnauthorizedException(
+          'Invalid refresh token. Only refresh tokens are accepted.',
+        );
+      }
+
+      const userId = decoded.sub;
+
+      // Check if the refresh token exists in Redis - using the decrypted token
+      const tokenKey = `refresh_token:${userId}:${unencryptedToken}`;
+      const tokenData = await this.redisClient.get(tokenKey);
+
+      if (!tokenData) {
+        throw new UnauthorizedException('Refresh token not found or expired');
+      }
+
+      // Get user data
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          isActive: true,
+          isVerified: true,
+        },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Check if user is active
+      if (!user.isActive) {
+        throw new UnauthorizedException('User account is inactive');
+      }
+
+      // Generate a new access token
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        name: user.name,
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+      };
+      const newAccessToken = this.generateAccessToken(payload);
+
+      // Delete the old refresh token
+      await this.redisClient.del(tokenKey);
+      
+      // Generate a new refresh token (will be encrypted)
+      const newRefreshToken = await this.generateRefreshToken(user.id);
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isVerified: user.isVerified,
+          isActive: user.isActive,
+        },
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      this.logger.error(`Error refreshing access token: ${error.message}`);
+      throw new UnauthorizedException('Failed to refresh access token');
     }
   }
 
@@ -615,5 +722,64 @@ export class AuthService {
       this.logger.error('Failed to verify OTP', error.stack);
       return false;
     }
+  }
+
+  // Method to generate an access token with short expiry
+  generateAccessToken(payload: any): string {
+    const accessTokenExpiry = this.configService.get<string>(
+      'JWT_ACCESS_EXPIRATION',
+      '15m',
+    );
+    this.logger.log(`Generating access token with expiry ${accessTokenExpiry}`);
+
+    // Add token type to payload for extra security
+    const tokenPayload = {
+      ...payload,
+      type: 'access', // Explicitly mark as access token
+    };
+
+    return this.jwtService.sign(tokenPayload, {
+      expiresIn: accessTokenExpiry,
+    });
+  }
+
+  // Method to generate a refresh token with long expiry
+  async generateRefreshToken(userId: string): Promise<string> {
+    const refreshTokenExpiry = this.configService.get<number>(
+      'JWT_REFRESH_EXPIRATION_SECONDS',
+      60 * 60 * 24 * 7,
+    ); // 7 days
+    this.logger.log(
+      `Generating refresh token for user ${userId} with expiry ${refreshTokenExpiry} seconds`,
+    );
+
+    // Generate a refresh token with minimal payload - just the user ID and token type
+    const payload = {
+      sub: userId,
+      type: 'refresh', // Explicitly mark as refresh token
+    };
+
+    const unencryptedToken = this.jwtService.sign(payload, {
+      expiresIn: `${refreshTokenExpiry}s`,
+    });
+
+    // Encrypt the token before storing and sending to client
+    const encryptedToken = await this.cryptoService.encrypt(unencryptedToken);
+    
+    // Store the unencrypted token in Redis (for validation purposes)
+    // We'll decrypt incoming tokens before validating them
+    const tokenKey = `refresh_token:${userId}:${unencryptedToken}`;
+    await this.redisClient.set(
+      tokenKey,
+      JSON.stringify({
+        userId,
+        refreshToken: unencryptedToken,
+        createdAt: new Date().toISOString(),
+      }),
+      { EX: refreshTokenExpiry },
+    );
+
+    // Return the encrypted token to the client
+    return encryptedToken;
   }
 }

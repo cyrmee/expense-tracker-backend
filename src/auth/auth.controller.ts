@@ -79,12 +79,18 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout and invalidate session and JWT tokens' })
   @ApiResponse({ status: 200, description: 'Successfully logged out' })
   @ApiBearerAuth()
-  async logout(@Request() req, @Headers('authorization') auth: string) {
+  async logout(
+    @Request() req,
+    @Headers('authorization') auth: string,
+    @Body() body?: { refreshToken?: string },
+  ) {
     const token = auth?.split(' ')[1];
     const sessionId = req.sessionID;
+    const refreshToken = body?.refreshToken;
+    const userId = req.user?.id;
 
     // Destroy Redis session and JWT tokens
-    await this.authService.logout(sessionId);
+    await this.authService.logout(sessionId, refreshToken, userId);
 
     // Then destroy Express session
     return new Promise<void>((resolve) => {
@@ -117,6 +123,30 @@ export class AuthController {
     }
 
     return await this.authService.refreshJwtToken(token);
+  }
+
+  @Post('refresh-access-token')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Refresh access token using refresh token' })
+  @ApiBody({
+    schema: {
+      properties: {
+        refreshToken: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+      },
+      required: ['refreshToken'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'New access token generated',
+    type: JwtAuthResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  async refreshAccessToken(@Body() body: { refreshToken: string }) {
+    return await this.authService.refreshAccessToken(body.refreshToken);
   }
 
   // Keep the session-based refresh for backward compatibility

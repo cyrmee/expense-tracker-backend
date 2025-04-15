@@ -1,9 +1,8 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthService } from '../auth.service';
-import { StrategyOptionsWithRequest } from 'passport-jwt';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -13,26 +12,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET'),
-      passReqToCallback: true,
-    } as StrategyOptionsWithRequest);
+      ignoreExpiration: false, // Ensure we validate token expiry
+      secretOrKey:
+        configService.get<string>('JWT_SECRET') ||
+        'fallback_secret_do_not_use_in_production',
+    });
   }
 
-  async validate(req: any, payload: any) {
-    // Validate that the JWT token is in Redis (session storage)
-    const isValid = await this.authService.validateJwtToken(
-      req.headers.authorization?.split(' ')[1],
-      payload.sub,
-    );
-
-    if (!isValid) {
-      throw new UnauthorizedException(
-        'Invalid token - not found in session storage',
-      );
+  async validate(payload: any) {
+    // Check if token is of type 'access'
+    if (!payload || payload.type !== 'access') {
+      throw new UnauthorizedException('Invalid token type. Access denied.');
     }
 
-    // Return the user data from the payload
+    // The token is verified by Passport and we've checked the token type
+    // Return the user data that will be attached to the request object
     return {
       id: payload.sub,
       email: payload.email,

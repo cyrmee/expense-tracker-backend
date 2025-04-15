@@ -8,7 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { SessionSerializer } from './session.serializer';
 import { RedisModule } from '../redis/redis.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { SessionAuthGuard, JwtAuthGuard } from './guards';
+import { JwtAuthGuard } from './guards';
 import { AppSettingsModule } from '../app-settings/app-settings.module';
 import { MailModule } from '../mail/mail.module';
 import { CommonModule } from '../common/common.module';
@@ -42,10 +42,9 @@ import { JwtModule } from '@nestjs/jwt';
     LocalStrategy,
     JwtStrategy,
     SessionSerializer,
-    SessionAuthGuard,
     JwtAuthGuard,
   ],
   controllers: [AuthController],
-  exports: [AuthService, SessionAuthGuard, JwtAuthGuard, JwtModule],
+  exports: [AuthService, JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}
