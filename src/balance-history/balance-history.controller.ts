@@ -14,18 +14,18 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiCookieAuth,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { BalanceHistoryService } from './balance-history.service';
 import { BalanceHistoryDto } from './dto';
-import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
+import { JwtAuthGuard } from '../auth/guards';
 import { ApiPaginationQuery } from '../common/decorators';
 import { PaginatedRequestDto } from '../common/dto';
 
 @ApiTags('balance-history')
 @Controller('balance-history')
-@UseGuards(SessionAuthGuard)
-@ApiCookieAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @UsePipes(new ValidationPipe({ transform: true }))
 export class BalanceHistoryController {
   constructor(private readonly balanceHistoryService: BalanceHistoryService) {}

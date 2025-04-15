@@ -20,6 +20,7 @@ import {
 import { AppSettingsService } from '../app-settings/app-settings.service';
 import { MailService } from '../mail/mail.service';
 import { CryptoService } from '../common/crypto.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -32,7 +33,8 @@ export class AuthService {
     @Inject(forwardRef(() => AppSettingsService))
     private readonly appSettingsService: AppSettingsService,
     private readonly mailService: MailService,
-    private readonly cryptoService: CryptoService, // Inject CryptoService
+    private readonly cryptoService: CryptoService,
+    private readonly jwtService: JwtService,
   ) {}
 
   // Get raw session data from Redis
@@ -184,7 +186,8 @@ export class AuthService {
     }
   }
 
-  async login(user: any, sessionId: string): Promise<AuthUserResponseDto> {
+  // Updated login method to use JWT
+  async login(user: any, sessionId: string): Promise<any> {
     this.logger.log(`User login: ${user.email} (${user.id})`);
 
     // Update last login timestamp
@@ -198,7 +201,31 @@ export class AuthService {
       60 * 60 * 24 * 3,
     );
 
-    // Store simple session data
+    // Create JWT payload
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      isActive: user.isActive,
+      isVerified: user.isVerified,
+    };
+
+    // Generate JWT
+    const token = this.jwtService.sign(payload);
+
+    // Store token in Redis with user data
+    await this.redisClient.set(
+      `jwt_session:${user.id}:${token}`,
+      JSON.stringify({
+        userId: user.id,
+        email: user.email,
+        token,
+        createdAt: new Date().toISOString(),
+      }),
+      { EX: sessionExpiry },
+    );
+
+    // For backward compatibility, still store session data
     await this.redisClient.set(
       `session:${sessionId}`,
       JSON.stringify({
@@ -206,22 +233,183 @@ export class AuthService {
         email: user.email,
       }),
       { EX: sessionExpiry },
-    ); // Expire based on session expiry setting
+    );
 
-    // Return standardized user response
+    // Return JWT token along with user data
     const userResponse: AuthUserResponseDto = {
       id: user.id,
       email: user.email,
       name: user.name,
+      isVerified: user.isVerified,
+      isActive: user.isActive,
     };
 
-    return userResponse;
+    return {
+      accessToken: token,
+      user: userResponse,
+      sessionId,
+    };
   }
 
   async logout(sessionId: string) {
-    this.logger.log(`User logout: Session ${sessionId}`);
+    // Get the session data to find userId
+    const sessionData = await this.redisClient.get(`session:${sessionId}`);
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+
+      // Get all JWT tokens for this user
+      const keys = await this.redisClient.keys(
+        `jwt_session:${session.userId}:*`,
+      );
+
+      // Delete all tokens
+      if (keys && keys.length > 0) {
+        await this.redisClient.del(keys);
+      }
+    }
+
+    // Delete traditional session
     await this.redisClient.del(`session:${sessionId}`);
+
+    this.logger.log(`User logout: Session ${sessionId}`);
     return { message: 'Logged out successfully' };
+  }
+
+  async validateJwtToken(token: string, userId: string): Promise<boolean> {
+    if (!token || !userId) {
+      return false;
+    }
+
+    try {
+      // Check if the token exists in Redis
+      const tokenKey = `jwt_session:${userId}:${token}`;
+      const tokenData = await this.redisClient.get(tokenKey);
+
+      return !!tokenData;
+    } catch (error) {
+      this.logger.error(`Error validating JWT token: ${error.message}`);
+      return false;
+    }
+  }
+
+  // Get user data by JWT token
+  async getUserByToken(token: string): Promise<AuthUserResponseDto | null> {
+    try {
+      // Decode the token to get the userId
+      const decoded = this.jwtService.decode(token) as { sub: string };
+      if (!decoded || !decoded.sub) {
+        return null;
+      }
+
+      // Check if token is valid in Redis
+      const isValidToken = await this.validateJwtToken(token, decoded.sub);
+      if (!isValidToken) {
+        return null;
+      }
+
+      // Get user data
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          isActive: true,
+          isVerified: true,
+        },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+      };
+    } catch (error) {
+      this.logger.error(`Error getting user by token: ${error.message}`);
+      return null;
+    }
+  }
+
+  // Method to refresh JWT token
+  async refreshJwtToken(oldToken: string): Promise<any> {
+    try {
+      // Verify the old token is still valid
+      const decoded = this.jwtService.decode(oldToken) as { sub: string };
+      if (!decoded || !decoded.sub) {
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      const isValid = await this.validateJwtToken(oldToken, decoded.sub);
+      if (!isValid) {
+        throw new UnauthorizedException('Token not found or expired');
+      }
+
+      // Get user data
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          isActive: true,
+          isVerified: true,
+        },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Delete the old token
+      await this.redisClient.del(`jwt_session:${user.id}:${oldToken}`);
+
+      // Generate a new token
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        name: user.name,
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+      };
+      const newToken = this.jwtService.sign(payload);
+
+      // Store the new token
+      const sessionExpiry = this.configService.get<number>(
+        'SESSION_EXPIRY_SECONDS',
+        60 * 60 * 24 * 3,
+      );
+
+      await this.redisClient.set(
+        `jwt_session:${user.id}:${newToken}`,
+        JSON.stringify({
+          userId: user.id,
+          email: user.email,
+          token: newToken,
+          createdAt: new Date().toISOString(),
+        }),
+        { EX: sessionExpiry },
+      );
+
+      return {
+        accessToken: newToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isVerified: user.isVerified,
+          isActive: user.isActive,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Error refreshing JWT token: ${error.message}`);
+      throw new UnauthorizedException('Failed to refresh token');
+    }
   }
 
   async getUserFromSession(

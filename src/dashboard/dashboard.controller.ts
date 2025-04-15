@@ -11,7 +11,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiCookieAuth,
+  ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
@@ -23,12 +23,12 @@ import {
   ExpenseOverview,
   TotalBalance,
 } from './dto';
-import { SessionAuthGuard } from '../auth/guards';
+import { JwtAuthGuard } from '../auth/guards';
 
 @ApiTags('dashboard')
 @Controller('dashboard')
-@UseGuards(SessionAuthGuard)
-@ApiCookieAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @UsePipes(new ValidationPipe({ transform: true }))
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}

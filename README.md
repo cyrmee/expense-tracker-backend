@@ -4,7 +4,7 @@ A comprehensive expense tracker backend API built with NestJS, PostgreSQL, Prism
 
 ## Features
 
-- **Authentication**: Session-based auth with Redis storage
+- **Authentication**: JWT authentication with Redis token validation and storage
 - **User Management**: Create, read, update, and delete user profiles
 - **Role-based Access Control**: Admin and regular user roles
 - **Expense Management**: Track, categorize, and analyze expenses
@@ -67,6 +67,8 @@ REDIS_PORT="6379"
 REDIS_URL="redis://localhost:6379"
 APP_NAME="ExpenseTrackerApp"
 GEMINI_API_KEY=your_gemini_api_key_here
+JWT_SECRET=your_very_strong_jwt_secret_key_here
+JWT_EXPIRATION=3d
 ```
 
 For AI features to work, you'll need to obtain a Google Gemini API key from the [Google AI Studio](https://makersuite.google.com/app/apikey).
@@ -157,6 +159,29 @@ pnpm start:debug
 Once the application is running, you can access:
 
 - REST API documentation at: `http://localhost:5000/api/docs` (Swagger UI)
+  - The Swagger UI provides an "Authorize" button where you can enter your JWT token to authenticate all API requests
+
+## Authentication
+
+The application uses JWT (JSON Web Token) authentication for securing API endpoints:
+
+### Authentication Flow
+
+1. **Registration**: Create a new account using `/auth/register` endpoint
+2. **Login**: Authenticate with your credentials at `/auth/login` to receive a JWT token
+3. **Access Protected Resources**: Include the JWT token in the Authorization header of your requests:
+   ```
+   Authorization: Bearer your_jwt_token_here
+   ```
+4. **Token Refresh**: Use the `/auth/refresh-token` endpoint to obtain a new token before the current one expires
+5. **Logout**: Use the `/auth/logout` endpoint to invalidate all active tokens
+
+### Security Features
+
+- JWT tokens are stored in Redis for validation and revocation capabilities
+- Tokens can be revoked individually or all at once (during logout)
+- JWT payload contains essential user information (id, email, name, isActive, isVerified)
+- Invalid or expired tokens result in 401 Unauthorized responses
 
 ## AI-Powered Features
 
@@ -184,14 +209,14 @@ These features require a valid Google Gemini API key to be configured in your `.
 
 - `src/` - Source code
   - `ai/` - AI service for natural language expense processing and category suggestions
-  - `auth/` - Authentication module (login, register)
+  - `auth/` - Authentication module (login, register, JWT strategies)
   - `user/` - User management module
   - `expense/` - Expense tracking and management
   - `category/` - Expense categories handling
   - `money-source/` - Money sources management
   - `analytics/` - Data analysis and reporting
   - `prisma/` - Prisma service for database access
-  - `redis/` - Redis module for session management
+  - `redis/` - Redis module for session and JWT token management
   - `config/` - Application configuration
 - `prisma/` - Prisma schema, migrations, and seed data
 - `test/` - End-to-end tests

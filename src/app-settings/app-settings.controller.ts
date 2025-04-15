@@ -17,17 +17,17 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiCookieAuth,
+  ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
 import { AppSettingsService } from './app-settings.service';
 import { AppSettingsDto, UpdateAppSettingsDto } from './dto';
-import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
+import { JwtAuthGuard } from '../auth/guards';
 
 @ApiTags('app-settings')
 @Controller('app-settings')
-@UseGuards(SessionAuthGuard)
-@ApiCookieAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @UsePipes(new ValidationPipe({ transform: true }))
 export class AppSettingsController {
   constructor(

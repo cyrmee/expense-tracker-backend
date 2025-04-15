@@ -10,13 +10,13 @@ import {
 } from '@nestjs/common';
 import { ExchangeRatesService } from './exchange-rates.service';
 import { ExchangeRateDto } from './dto';
-import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
-import { SessionAuthGuard } from '../auth/guards';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards';
 
 @ApiTags('exchange-rates')
 @Controller('exchange-rates')
-@UseGuards(SessionAuthGuard)
-@ApiCookieAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @UsePipes(new ValidationPipe({ transform: true }))
 export class ExchangeRatesController {
   private readonly logger = new Logger(ExchangeRatesController.name);

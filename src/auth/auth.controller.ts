@@ -13,6 +13,7 @@ import {
   Patch,
   BadRequestException,
   InternalServerErrorException,
+  Headers,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -21,12 +22,13 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBody,
-  ApiCookieAuth,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
-import { LocalAuthGuard, SessionAuthGuard, LogoutGuard } from './guards';
+import { LocalAuthGuard, LogoutGuard, JwtAuthGuard } from './guards';
 import {
   RegisterDto,
   AuthUserResponseDto,
+  JwtAuthResponseDto,
   LoginDto,
   ChangePasswordDto,
   RequestResetDto,
@@ -35,7 +37,6 @@ import {
 } from './dto';
 
 @ApiTags('auth')
-@ApiCookieAuth()
 @Controller('auth')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class AuthController {
@@ -62,29 +63,29 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({
     status: 200,
-    description: 'User successfully logged in',
-    type: AuthUserResponseDto,
+    description: 'User successfully logged in and JWT token issued',
+    type: JwtAuthResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async login(@Request() req, @Res({ passthrough: true }) res: Response) {
+  async login(@Request() req) {
     const user = req.user;
-    // User authenticated successfully, create session
-    const loginResponse = await this.authService.login(user, req.sessionID);
-    return {
-      ...loginResponse,
-      sessionId: req.sessionID,
-    };
+    // User authenticated successfully, create JWT token and session
+    return await this.authService.login(user, req.sessionID);
   }
 
   @UseGuards(LogoutGuard)
   @Post('logout')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Logout and invalidate session' })
+  @ApiOperation({ summary: 'Logout and invalidate session and JWT tokens' })
   @ApiResponse({ status: 200, description: 'Successfully logged out' })
-  async logout(@Request() req) {
+  @ApiBearerAuth()
+  async logout(@Request() req, @Headers('authorization') auth: string) {
+    const token = auth?.split(' ')[1];
     const sessionId = req.sessionID;
-    // Destroy Redis session first
+
+    // Destroy Redis session and JWT tokens
     await this.authService.logout(sessionId);
+
     // Then destroy Express session
     return new Promise<void>((resolve) => {
       req.logout(() => {
@@ -99,10 +100,31 @@ export class AuthController {
     });
   }
 
+  @Post('refresh-token')
+  @HttpCode(200)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Refresh JWT token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token refreshed',
+    type: JwtAuthResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async refreshToken(@Headers('authorization') auth: string) {
+    const token = auth?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
+    }
+
+    return await this.authService.refreshJwtToken(token);
+  }
+
+  // Keep the session-based refresh for backward compatibility
   @Post('refresh')
   @HttpCode(200)
-  @UseGuards(SessionAuthGuard)
-  @ApiOperation({ summary: 'Refresh user session' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Refresh user session (Legacy)' })
   @ApiResponse({ status: 200, description: 'Session refreshed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async refreshSession(@Request() req) {
@@ -112,9 +134,10 @@ export class AuthController {
     return await this.authService.refreshSession(req.sessionID);
   }
 
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   @HttpCode(200)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user information' })
   @ApiResponse({
     status: 200,
@@ -123,16 +146,13 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentUser(@Request() req) {
-    const user = await this.authService.getUserFromSession(req.sessionID);
-    if (!user) {
-      throw new UnauthorizedException('No active session');
-    }
-    return user;
+    return req.user;
   }
 
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Patch('change-password')
   @HttpCode(200)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Change user password' })
   @ApiBody({ type: ChangePasswordDto })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
@@ -142,11 +162,10 @@ export class AuthController {
     @Request() req,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    const user = await this.authService.getUserFromSession(req.sessionID);
-    if (!user) {
-      throw new UnauthorizedException('No active session');
-    }
-    return await this.authService.changePassword(user.id, changePasswordDto);
+    return await this.authService.changePassword(
+      req.user.id,
+      changePasswordDto,
+    );
   }
 
   @Post('password-reset/request')
@@ -215,6 +234,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Email verified and user logged in',
+    type: JwtAuthResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired token' })
   async verifyEmail(@Body() body: { otp: string }, @Request() req) {
@@ -228,7 +248,6 @@ export class AuthController {
         ...user,
         verified: true,
         message: 'Email verified and logged in successfully',
-        sessionId: req.sessionID,
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {

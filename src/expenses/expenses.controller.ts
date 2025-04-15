@@ -15,12 +15,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
-import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
+import { JwtAuthGuard } from '../auth/guards';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiCookieAuth,
+  ApiBearerAuth,
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
@@ -40,9 +40,9 @@ import {
 import { ApiPaginationQuery } from '../common/decorators';
 
 @ApiTags('expenses')
-@ApiCookieAuth()
+@ApiBearerAuth()
 @Controller('expenses')
-@UseGuards(SessionAuthGuard)
+@UseGuards(JwtAuthGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}

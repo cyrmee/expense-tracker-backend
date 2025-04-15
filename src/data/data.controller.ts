@@ -11,16 +11,16 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiCookieAuth,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { DataService } from './data.service';
 import { ExportDataResponseDto, ImportDataDto } from './dto';
-import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
+import { JwtAuthGuard } from '../auth/guards';
 
 @ApiTags('data')
 @Controller('data')
-@UseGuards(SessionAuthGuard)
-@ApiCookieAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class DataController {
   constructor(private readonly dataService: DataService) {}
 

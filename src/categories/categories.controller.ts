@@ -14,15 +14,21 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 
-import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
+import { JwtAuthGuard } from '../auth/guards';
 import { CategoryDto, CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @ApiTags('categories')
 @Controller('categories')
-@UseGuards(SessionAuthGuard)
+@UseGuards(JwtAuthGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
@@ -68,10 +74,7 @@ export class CategoriesController {
     description: 'Category data',
     type: CreateCategoryDto,
   })
-  async create(
-    @Body() categoryDto: CreateCategoryDto,
-    @Request() req,
-  ) {
+  async create(@Body() categoryDto: CreateCategoryDto, @Request() req) {
     await this.categoriesService.create(categoryDto, req.user.id);
     return { message: 'Category created successfully' };
   }

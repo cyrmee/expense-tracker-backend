@@ -12,19 +12,19 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
+import { JwtAuthGuard } from '../auth/guards';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiCookieAuth,
+  ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
 import { UpdateUserDto, UserDto } from './dto';
 
 @ApiTags('users')
-@ApiCookieAuth()
-@UseGuards(SessionAuthGuard)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class UserController {

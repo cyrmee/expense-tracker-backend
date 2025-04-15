@@ -4,13 +4,15 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
 import { SessionSerializer } from './session.serializer';
 import { RedisModule } from '../redis/redis.module';
-import { ConfigModule } from '@nestjs/config';
-import { SessionAuthGuard } from './guards';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { SessionAuthGuard, JwtAuthGuard } from './guards';
 import { AppSettingsModule } from '../app-settings/app-settings.module';
-import { MailModule } from '../mail/mail.module'; // Add this import
+import { MailModule } from '../mail/mail.module';
 import { CommonModule } from '../common/common.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Global()
 @Module({
@@ -22,12 +24,28 @@ import { CommonModule } from '../common/common.module';
     MailModule,
     CommonModule,
     PassportModule.register({
-      session: true,
-      defaultStrategy: 'local',
+      defaultStrategy: 'jwt',
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRATION', '3d'),
+        },
+      }),
+      inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, LocalStrategy, SessionSerializer, SessionAuthGuard],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    SessionSerializer,
+    SessionAuthGuard,
+    JwtAuthGuard,
+  ],
   controllers: [AuthController],
-  exports: [AuthService, SessionAuthGuard],
+  exports: [AuthService, SessionAuthGuard, JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}

@@ -15,12 +15,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { MoneySourcesService } from './money-sources.service';
-import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
+import { JwtAuthGuard } from '../auth/guards';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiCookieAuth,
+  ApiBearerAuth,
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
@@ -33,8 +33,8 @@ import { ApiPaginationQuery } from '../common/decorators';
 import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
 
 @ApiTags('money-sources')
-@ApiCookieAuth()
-@UseGuards(SessionAuthGuard)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('money-sources')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class MoneySourcesController {

@@ -34,3 +34,26 @@ export class AuthUserResponseDto {
   })
   isVerified?: boolean;
 }
+
+/**
+ * DTO for returning JWT authentication response
+ */
+export class JwtAuthResponseDto {
+  @ApiProperty({
+    description: 'JWT access token for authentication',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  accessToken: string;
+
+  @ApiProperty({
+    description: 'User information',
+    type: AuthUserResponseDto,
+  })
+  user: AuthUserResponseDto;
+
+  @ApiProperty({
+    description: 'Session ID (kept for backward compatibility)',
+    example: '1234567890',
+  })
+  sessionId?: string;
+}
