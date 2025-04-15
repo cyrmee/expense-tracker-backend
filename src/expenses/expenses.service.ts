@@ -222,99 +222,97 @@ export class ExpensesService {
     data: UpdateExpenseDto,
     userId: string,
   ): Promise<void> {
-    if (!id) {
-      throw new NotFoundException('Expense id is required');
-    }
-
     const previousExpense = await this.getExpense(id, userId);
 
-    const updateData: any = {
-      updatedAt: new Date(),
-    };
-
-    if (data.amount !== undefined) updateData.amount = data.amount;
-    if (data.date !== undefined) updateData.date = data.date;
-    if (data.notes !== undefined) updateData.notes = data.notes;
-
-    if (data.categoryId) {
-      updateData.category = {
-        connect: { id: data.categoryId },
+    await this.prisma.$transaction(async (tx) => {
+      const updateData: any = {
+        updatedAt: new Date(),
       };
-    }
 
-    if (data.moneySourceId) {
-      updateData.moneySource = {
-        connect: { id: data.moneySourceId },
-      };
-    }
+      if (data.amount !== undefined) updateData.amount = data.amount;
+      if (data.date !== undefined) updateData.date = data.date;
+      if (data.notes !== undefined) updateData.notes = data.notes;
 
-    const updatedExpense = await this.prisma.expense.update({
-      where: { id },
-      data: updateData,
-      include: {
-        moneySource: true,
-        user: {
-          include: {
-            appSettings: true,
+      if (data.categoryId) {
+        updateData.category = {
+          connect: { id: data.categoryId },
+        };
+      }
+
+      if (data.moneySourceId) {
+        updateData.moneySource = {
+          connect: { id: data.moneySourceId },
+        };
+      }
+
+      const updatedExpense = await tx.expense.update({
+        where: { id },
+        data: updateData,
+        include: {
+          moneySource: true,
+          user: {
+            include: {
+              appSettings: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (data.amount || data.moneySourceId) {
-      this.logger.log('Adjusting money source balance for expense update');
+      if (data.amount || data.moneySourceId) {
+        this.logger.log('Adjusting money source balance for expense update');
 
-      // Case 1: Money source has changed - need to restore old balance and deduct from new
-      if (
-        data.moneySourceId &&
-        previousExpense.moneySource.id !== updatedExpense.moneySource.id
-      ) {
-        this.logger.log(
-          `Money source changed from ${previousExpense.moneySource.id} to ${updatedExpense.moneySource.id}`,
-        );
+        // Case 1: Money source has changed - need to restore old balance and deduct from new
+        if (
+          data.moneySourceId &&
+          previousExpense.moneySource.id !== updatedExpense.moneySource.id
+        ) {
+          this.logger.log(
+            `Money source changed from ${previousExpense.moneySource.id} to ${updatedExpense.moneySource.id}`,
+          );
 
-        // Restore full amount to the old money source
-        await this.prisma.moneySource.update({
-          where: { id: previousExpense.moneySource.id },
-          data: {
-            balance: { increment: previousExpense.amount },
-          },
-        });
-
-        // Deduct new amount from the new money source
-        await this.prisma.moneySource.update({
-          where: { id: updatedExpense.moneySource.id },
-          data: {
-            balance: { decrement: updatedExpense.amount },
-          },
-        });
-      }
-      // Case 2: Same money source, only amount has changed
-      else if (data.amount && previousExpense.amount !== data.amount) {
-        const amountDifference = data.amount - previousExpense.amount;
-        this.logger.log(
-          `Amount changed by ${amountDifference} (${previousExpense.amount} → ${data.amount})`,
-        );
-
-        if (amountDifference > 0) {
-          // If new amount is higher, decrease the additional amount from balance
-          await this.prisma.moneySource.update({
-            where: { id: updatedExpense.moneySource.id },
+          // Restore full amount to the old money source
+          await tx.moneySource.update({
+            where: { id: previousExpense.moneySource.id },
             data: {
-              balance: { decrement: amountDifference },
+              balance: { increment: previousExpense.amount },
             },
           });
-        } else {
-          // If new amount is lower, increase balance by the difference
-          await this.prisma.moneySource.update({
+
+          // Deduct new amount from the new money source
+          await tx.moneySource.update({
             where: { id: updatedExpense.moneySource.id },
             data: {
-              balance: { increment: -amountDifference },
+              balance: { decrement: updatedExpense.amount },
             },
           });
         }
+        // Case 2: Same money source, only amount has changed
+        else if (data.amount && previousExpense.amount !== data.amount) {
+          const amountDifference = data.amount - previousExpense.amount;
+          this.logger.log(
+            `Amount changed by ${amountDifference} (${previousExpense.amount} → ${data.amount})`,
+          );
+
+          if (amountDifference > 0) {
+            // If new amount is higher, decrease the additional amount from balance
+            await tx.moneySource.update({
+              where: { id: updatedExpense.moneySource.id },
+              data: {
+                balance: { decrement: amountDifference },
+              },
+            });
+          } else {
+            // If new amount is lower, increase balance by the difference
+            await tx.moneySource.update({
+              where: { id: updatedExpense.moneySource.id },
+              data: {
+                balance: { increment: -amountDifference },
+              },
+            });
+          }
+        }
       }
-    }
+    });
 
     return;
   }
@@ -323,19 +321,21 @@ export class ExpensesService {
     this.logger.log(`Removing expense ${id} for user ${userId}`);
     const expense = await this.getExpense(id, userId);
 
-    await this.prisma.moneySource.update({
-      where: { id: expense.moneySource.id },
-      data: {
-        balance: {
-          increment: expense.amount,
+    await this.prisma.$transaction(async (tx) => {
+      await tx.moneySource.update({
+        where: { id: expense.moneySource.id },
+        data: {
+          balance: {
+            increment: expense.amount,
+          },
         },
-      },
-    });
+      });
 
-    await this.prisma.expense.delete({
-      where: {
-        id,
-      },
+      await tx.expense.delete({
+        where: {
+          id,
+        },
+      });
     });
 
     return;

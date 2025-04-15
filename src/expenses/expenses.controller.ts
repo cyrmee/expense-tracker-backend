@@ -13,6 +13,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { JwtAuthGuard } from '../auth/guards';
@@ -140,6 +141,9 @@ export class ExpensesController {
     @Body() updateExpenseDto: UpdateExpenseDto,
     @Request() req,
   ) {
+    if (!id) {
+      throw new NotFoundException('Expense id is required');
+    }
     await this.expensesService.update(id, updateExpenseDto, req.user.id);
     return { message: 'Expense updated successfully' };
   }
@@ -153,7 +157,7 @@ export class ExpensesController {
     example: '4a409730-2574-4cd2-b7d1-feb20d1f3e4e',
   })
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'The expense has been successfully deleted',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

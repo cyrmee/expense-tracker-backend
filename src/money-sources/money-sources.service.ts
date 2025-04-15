@@ -159,48 +159,40 @@ export class MoneySourcesService {
   }
 
   async create(data: CreateMoneySourceDto, userId: string): Promise<void> {
-    this.logger.log(
-      `Creating money source for user ${userId}: ${data.name} (${data.currency})`,
-    );
-
-    const moneySource = await this.prisma.moneySource.create({
-      data: {
-        name: data.name,
-        balance: data.balance,
-        currency: data.currency,
-        icon: data.icon,
-        isDefault: data.isDefault,
-        budget: data.budget,
-        user: {
-          connect: {
-            id: userId,
+    await this.prisma.$transaction(async (tx) => {
+      const moneySource = await tx.moneySource.create({
+        data: {
+          name: data.name,
+          balance: data.balance,
+          currency: data.currency,
+          icon: data.icon,
+          isDefault: data.isDefault,
+          budget: data.budget,
+          user: {
+            connect: {
+              id: userId,
+            },
           },
         },
-      },
-      include: {
-        user: {
-          include: {
-            appSettings: true,
+        include: {
+          user: {
+            include: {
+              appSettings: true,
+            },
           },
         },
-      },
+      });
+
+      await tx.balanceHistory.create({
+        data: {
+          userId,
+          moneySourceId: moneySource.id,
+          balance: moneySource.balance,
+          currency: moneySource.currency,
+          date: new Date(),
+        },
+      });
     });
-
-    this.logger.log(`Created money source with ID: ${moneySource.id}`);
-
-    await this.prisma.balanceHistory.create({
-      data: {
-        userId,
-        moneySourceId: moneySource.id,
-        balance: moneySource.balance,
-        currency: moneySource.currency,
-        date: new Date(),
-      },
-    });
-
-    this.logger.log(
-      `Initial balance history record created for money source: ${moneySource.id}`,
-    );
 
     return;
   }
@@ -218,7 +210,7 @@ export class MoneySourcesService {
     this.logger.log(`Updating money source ${id} for user ${userId}`);
     await this.getMoneySource(id, userId);
 
-    const updatedMoneySource = await this.prisma.moneySource.update({
+    await this.prisma.moneySource.update({
       where: {
         id,
       },
@@ -250,47 +242,45 @@ export class MoneySourcesService {
       `Adding funds (${amount}) to money source ${id} for user ${userId}`,
     );
 
-    const moneySource = await this.prisma.moneySource.findFirst({
-      where: { id, userId },
-      include: { user: { include: { appSettings: true } } },
+    await this.prisma.$transaction(async (tx) => {
+      const moneySource = await tx.moneySource.findFirst({
+        where: { id, userId },
+        include: { user: { include: { appSettings: true } } },
+      });
+
+      if (!moneySource) {
+        this.logger.error(
+          `Add funds failed - money source with ID ${id} not found for user ${userId}`,
+        );
+        throw new NotFoundException(`Money source with ID ${id} not found`);
+      }
+
+      if (amount <= 0) {
+        this.logger.error(`Add funds failed - invalid amount: ${amount}`);
+        throw new BadRequestException(
+          'Amount must be positive when adding funds',
+        );
+      }
+
+      // Update with new balance
+      const newBalance = moneySource.balance + amount;
+      await tx.moneySource.update({
+        where: { id },
+        data: { balance: newBalance, updatedAt: new Date() },
+        include: { user: { include: { appSettings: true } } },
+      });
+
+      // Create balance history with new total balance
+      await tx.balanceHistory.create({
+        data: {
+          userId,
+          moneySourceId: id,
+          balance: newBalance,
+          currency: moneySource.currency,
+          date: new Date(),
+        },
+      });
     });
-
-    if (!moneySource) {
-      this.logger.error(
-        `Add funds failed - money source with ID ${id} not found for user ${userId}`,
-      );
-      throw new NotFoundException(`Money source with ID ${id} not found`);
-    }
-
-    if (amount <= 0) {
-      this.logger.error(`Add funds failed - invalid amount: ${amount}`);
-      throw new BadRequestException(
-        'Amount must be positive when adding funds',
-      );
-    }
-
-    // Update with new balance
-    const newBalance = moneySource.balance + amount;
-    const updatedMoneySource = await this.prisma.moneySource.update({
-      where: { id },
-      data: { balance: newBalance, updatedAt: new Date() },
-      include: { user: { include: { appSettings: true } } },
-    });
-
-    // Create balance history with new total balance
-    await this.prisma.balanceHistory.create({
-      data: {
-        userId,
-        moneySourceId: id,
-        balance: newBalance,
-        currency: moneySource.currency,
-        date: new Date(),
-      },
-    });
-
-    this.logger.log(
-      `Funds added successfully to money source ${id}, new balance: ${newBalance} ${moneySource.currency}`,
-    );
 
     return;
   }
