@@ -18,7 +18,7 @@ async function bootstrap() {
   app.set('trust proxy', 1);
 
   app.enableCors({
-    origin: '*', // Allow all origins
+    origin: true, // Allow all origins
     credentials: true,
     methods: '*', // Allow all methods
     allowedHeaders: '*', // Allow all headers
