@@ -18,11 +18,13 @@ async function bootstrap() {
   app.set('trust proxy', 1);
 
   app.enableCors({
-    origin: true, // Allow all origins
+    origin: '*', // Allow all origins
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders:
-      'Origin,X-Requested-With,Content-Type,Accept,Authorization,content-type',
+    methods: '*', // Allow all methods
+    allowedHeaders: '*', // Allow all headers
+    exposedHeaders: '*', // Expose all headers
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Then apply session middleware

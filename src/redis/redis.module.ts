@@ -112,10 +112,10 @@ import { createClient } from '@redis/client';
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
             path: '/',
-            domain:
-              process.env.NODE_ENV === 'production'
-                ? configService.get('BACKEND_DOMAIN') // Read from env var
-                : undefined, // Keep undefined for localhost
+            // domain:
+            //   process.env.NODE_ENV === 'production'
+            //     ? configService.get('BACKEND_DOMAIN') // Read from env var
+            //     : undefined, // Keep undefined for localhost
           },
         });
       },
