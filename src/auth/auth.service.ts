@@ -249,19 +249,25 @@ export class AuthService {
       try {
         // First decrypt the refresh token
         const unencryptedToken = await this.cryptoService.decrypt(refreshToken);
-        
+
         // Then invalidate the unencrypted token in Redis
-        await this.redisClient.del(`refresh_token:${userId}:${unencryptedToken}`);
+        await this.redisClient.del(
+          `refresh_token:${userId}:${unencryptedToken}`,
+        );
         this.logger.log(`Refresh token invalidated for user ${userId}`);
 
         // Optionally, invalidate all refresh tokens for this user
-        const refreshTokenKeys = await this.redisClient.keys(`refresh_token:${userId}:*`);
+        const refreshTokenKeys = await this.redisClient.keys(
+          `refresh_token:${userId}:*`,
+        );
         if (refreshTokenKeys && refreshTokenKeys.length > 0) {
           await this.redisClient.del(refreshTokenKeys);
           this.logger.log(`All refresh tokens invalidated for user ${userId}`);
         }
       } catch (error) {
-        this.logger.error(`Error decrypting refresh token during logout: ${error.message}`);
+        this.logger.error(
+          `Error decrypting refresh token during logout: ${error.message}`,
+        );
         // Continue with logout process even if token decryption fails
       }
     }
@@ -270,7 +276,7 @@ export class AuthService {
     const sessionData = await this.redisClient.get(`session:${sessionId}`);
     if (sessionData) {
       const session = JSON.parse(sessionData);
-      
+
       // Get all JWT access tokens for this user
       const jwtKeys = await this.redisClient.keys(
         `jwt_session:${session.userId}:*`,
@@ -435,10 +441,12 @@ export class AuthService {
         unencryptedToken = await this.cryptoService.decrypt(refreshToken);
         this.logger.debug('Successfully decrypted refresh token');
       } catch (decryptError) {
-        this.logger.error(`Error decrypting refresh token: ${decryptError.message}`);
+        this.logger.error(
+          `Error decrypting refresh token: ${decryptError.message}`,
+        );
         throw new UnauthorizedException('Invalid refresh token format');
       }
-      
+
       // Verify the refresh token
       const decoded = this.jwtService.verify(unencryptedToken) as {
         sub: string;
@@ -495,7 +503,7 @@ export class AuthService {
 
       // Delete the old refresh token
       await this.redisClient.del(tokenKey);
-      
+
       // Generate a new refresh token (will be encrypted)
       const newRefreshToken = await this.generateRefreshToken(user.id);
 
@@ -765,7 +773,7 @@ export class AuthService {
 
     // Encrypt the token before storing and sending to client
     const encryptedToken = await this.cryptoService.encrypt(unencryptedToken);
-    
+
     // Store the unencrypted token in Redis (for validation purposes)
     // We'll decrypt incoming tokens before validating them
     const tokenKey = `refresh_token:${userId}:${unencryptedToken}`;
