@@ -735,7 +735,7 @@ export class AuthService {
   // Method to generate an access token with short expiry
   generateAccessToken(payload: any): string {
     const accessTokenExpiry = this.configService.get<string>(
-      'JWT_ACCESS_EXPIRATION',
+      'JWT_EXPIRATION',
       '15m',
     );
     this.logger.log(`Generating access token with expiry ${accessTokenExpiry}`);
