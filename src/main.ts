@@ -27,12 +27,9 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  // Then apply session middleware
-  const sessionMiddleware = app.get('SESSION_MIDDLEWARE');
-  app.use(sessionMiddleware);
+  // Initialize only passport
   app.use(passport.initialize());
-  app.use(passport.session());
-  logger.log('Session and authentication middleware configured');
+  logger.log('JWT authentication middleware configured');
 
   // Set up global validation pipe
   app.useGlobalPipes(

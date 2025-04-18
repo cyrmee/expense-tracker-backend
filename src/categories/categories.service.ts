@@ -81,8 +81,6 @@ export class CategoriesService {
   }
 
   async remove(id: string, userId: string) {
-    this.logger.log(`Attempting to remove category ${id} for user ${userId}`);
-
     const category = await this.getCategory(id, userId);
     if (!category) {
       this.logger.error(`Category ${id} not found for user ${userId}`);
@@ -100,7 +98,6 @@ export class CategoriesService {
       where: { id },
     });
 
-    this.logger.log(`Category ${id} removed successfully`);
     return deletedCategory;
   }
 }

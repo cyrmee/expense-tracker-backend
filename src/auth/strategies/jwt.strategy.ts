@@ -1,14 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { AuthService } from '../auth.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private readonly configService: ConfigService,
-    private readonly authService: AuthService,
+    configService: ConfigService,
+    @Inject('REDIS_CLIENT') private readonly redisClient: any,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -25,8 +24,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token type. Access denied.');
     }
 
-    // The token is verified by Passport and we've checked the token type
-    // Return the user data that will be attached to the request object
+    // Check if the JTI exists in Redis - this is crucial for security
+    // This allows for immediate token revocation and validates the token is still active
+    const jtiKey = `jwt_jti:${payload.sub}:${payload.jti}`;
+    const tokenData = await this.redisClient.get(jtiKey);
+
+    if (!tokenData) {
+      throw new UnauthorizedException('Invalid or revoked token');
+    }
+
+    // Only perform critical validation checks based on token payload
+    // This avoids a database lookup for every authenticated request
+    if (!payload.isActive) {
+      throw new UnauthorizedException('User account is inactive');
+    }
+
+    if (!payload.isVerified) {
+      throw new UnauthorizedException('User account is not verified');
+    }
+
+    // Return the user data from the token payload
+    // The token already contains the essential user information
     return {
       id: payload.sub,
       email: payload.email,

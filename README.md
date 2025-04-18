@@ -60,15 +60,14 @@ DATABASE_URL="postgresql://postgres:your_password@localhost/expense-tracker-db"
 PORT="5000"
 FRONTEND_URL="*"
 NODE_ENV=development
-COOKIE_NAME=expense_tracker
-SESSION_SECRET=your-strong-secret-here
+
 REDIS_HOST="localhost"
 REDIS_PORT="6379"
 REDIS_URL="redis://localhost:6379"
 APP_NAME="ExpenseTrackerApp"
 GEMINI_API_KEY=your_gemini_api_key_here
 JWT_SECRET=your_very_strong_jwt_secret_key_here
-JWT_EXPIRATION=3d
+JWT_ACCESS_EXPIRATION=15m
 ```
 
 For AI features to work, you'll need to obtain a Google Gemini API key from the [Google AI Studio](https://makersuite.google.com/app/apikey).
@@ -216,7 +215,7 @@ These features require a valid Google Gemini API key to be configured in your `.
   - `money-source/` - Money sources management
   - `analytics/` - Data analysis and reporting
   - `prisma/` - Prisma service for database access
-  - `redis/` - Redis module for session and JWT token management
+  - `redis/` - Redis module for JWT token management
   - `config/` - Application configuration
 - `prisma/` - Prisma schema, migrations, and seed data
 - `test/` - End-to-end tests

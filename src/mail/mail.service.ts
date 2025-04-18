@@ -25,8 +25,6 @@ export class MailService {
         subject: 'Password Reset Request',
         text: emailBody,
       });
-
-      this.logger.log(`Reset password email sent to ${email}`);
     } catch (error) {
       this.logger.error(
         `Failed to send reset password email to ${email}`,
@@ -45,8 +43,6 @@ export class MailService {
         subject: 'Expense Tracker OTP',
         text: emailBody,
       });
-
-      this.logger.log(`OTP email sent to ${email}`);
     } catch (error) {
       this.logger.error(`Failed to send OTP email to ${email}`, error.stack);
       throw error;

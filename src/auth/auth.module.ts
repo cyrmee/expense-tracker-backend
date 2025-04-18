@@ -5,7 +5,6 @@ import { AuthController } from './auth.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { SessionSerializer } from './session.serializer';
 import { RedisModule } from '../redis/redis.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './guards';
@@ -31,19 +30,13 @@ import { JwtModule } from '@nestjs/jwt';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRATION', '3d'),
+          expiresIn: configService.get<string>('JWT_ACCESS_EXPIRATION', '15m'),
         },
       }),
       inject: [ConfigService],
     }),
   ],
-  providers: [
-    AuthService,
-    LocalStrategy,
-    JwtStrategy,
-    SessionSerializer,
-    JwtAuthGuard,
-  ],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard],
   controllers: [AuthController],
   exports: [AuthService, JwtAuthGuard, JwtModule],
 })

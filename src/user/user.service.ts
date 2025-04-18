@@ -19,7 +19,6 @@ export class UserService {
   }
 
   async getUserById(id: string): Promise<UserDto | null> {
-    this.logger.log(`Retrieving user by ID: ${id}`);
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
@@ -51,7 +50,6 @@ export class UserService {
       throw new Error('User ID is required for profile lookup');
     }
 
-    this.logger.log(`Retrieving profile for user ${userId}`);
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -73,7 +71,6 @@ export class UserService {
       throw new Error('User ID is required for profile update');
     }
 
-    this.logger.log(`Updating profile for user ${userId}`);
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -94,7 +91,6 @@ export class UserService {
       });
     }
 
-    this.logger.log(`Profile updated successfully for user ${userId}`);
     return;
   }
 
@@ -104,12 +100,10 @@ export class UserService {
       throw new Error('User ID is required for deletion');
     }
 
-    this.logger.log(`Deleting user account: ${userId}`);
     await this.prisma.user.delete({
       where: { id: userId },
     });
 
-    this.logger.log(`User account ${userId} deleted successfully`);
     return;
   }
 }

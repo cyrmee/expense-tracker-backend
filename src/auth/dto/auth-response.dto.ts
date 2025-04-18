@@ -56,10 +56,4 @@ export class JwtAuthResponseDto {
     type: AuthUserResponseDto,
   })
   user: AuthUserResponseDto;
-
-  @ApiProperty({
-    description: 'Session ID (kept for backward compatibility)',
-    example: '1234567890',
-  })
-  sessionId?: string;
 }

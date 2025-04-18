@@ -27,14 +27,12 @@ export class ExchangeRatesService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    this.logger.log('Initializing exchange rates on startup');
     await this.updateExchangeRates();
   }
 
   @Cron(CronExpression.EVERY_4_HOURS)
   async updateExchangeRates() {
     try {
-      this.logger.log('Starting exchange rates update...');
       const response = await axios.get<OpenExchangeRatesResponse>(
         `${this.apiUrl}?app_id=${this.appId}`,
       );
@@ -43,10 +41,6 @@ export class ExchangeRatesService implements OnModuleInit {
       const rates = data.rates;
       const timestamp = new Date(data.timestamp * 1000);
       const base = data.base;
-
-      this.logger.log(
-        `Received exchange rates with base ${base} at ${timestamp}`,
-      );
 
       // Process all rates and update database
       for (const [currency, rate] of Object.entries(rates)) {
@@ -67,7 +61,7 @@ export class ExchangeRatesService implements OnModuleInit {
       }
 
       this.logger.log(
-        `Successfully updated ${Object.keys(rates).length} exchange rates`,
+        `Exchange rates updated successfully at ${new Date().toISOString()}`,
       );
     } catch (error) {
       this.logger.error('Failed to update exchange rates', error.stack);
@@ -99,7 +93,6 @@ export class ExchangeRatesService implements OnModuleInit {
 
   // Method to manually trigger the exchange rates update
   async manualUpdate() {
-    this.logger.log('Manual update triggered');
     await this.updateExchangeRates();
     return { message: 'Exchange rates update triggered' };
   }

@@ -6,7 +6,6 @@ import {
   UseGuards,
   Get,
   UnauthorizedException,
-  Res,
   HttpCode,
   UsePipes,
   ValidationPipe,
@@ -14,8 +13,8 @@ import {
   BadRequestException,
   InternalServerErrorException,
   Headers,
+  HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { AuthService } from './auth.service';
 import {
   ApiTags,
@@ -43,6 +42,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
@@ -58,7 +58,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -68,15 +68,16 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async login(@Request() req) {
-    const user = req.user;
-    // User authenticated successfully, create JWT token and session
-    return await this.authService.login(user, req.sessionID);
+    if (!req.user) throw new UnauthorizedException('Invalid credentials');
+
+    // User authenticated successfully, create JWT token
+    return await this.authService.login(req.user);
   }
 
   @UseGuards(LogoutGuard)
   @Post('logout')
-  @HttpCode(200)
-  @ApiOperation({ summary: 'Logout and invalidate session and JWT tokens' })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Logout and invalidate JWT tokens' })
   @ApiResponse({ status: 200, description: 'Successfully logged out' })
   @ApiBearerAuth()
   async logout(
@@ -84,49 +85,15 @@ export class AuthController {
     @Headers('authorization') auth: string,
     @Body() body?: { refreshToken?: string },
   ) {
-    const token = auth?.split(' ')[1];
-    const sessionId = req.sessionID;
     const refreshToken = body?.refreshToken;
     const userId = req.user?.id;
 
-    // Destroy Redis session and JWT tokens
-    await this.authService.logout(sessionId, refreshToken, userId);
-
-    // Then destroy Express session
-    return new Promise<void>((resolve) => {
-      req.logout(() => {
-        req.session.destroy((err) => {
-          if (err) {
-            console.error('Error destroying session:', err);
-          }
-          resolve();
-        });
-        resolve();
-      });
-    });
-  }
-
-  @Post('refresh-token')
-  @HttpCode(200)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Refresh JWT token' })
-  @ApiResponse({
-    status: 200,
-    description: 'Token refreshed',
-    type: JwtAuthResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async refreshToken(@Headers('authorization') auth: string) {
-    const token = auth?.split(' ')[1];
-    if (!token) {
-      throw new UnauthorizedException('No token provided');
-    }
-
-    return await this.authService.refreshJwtToken(token);
+    // Invalidate JWT tokens only
+    return await this.authService.logout(refreshToken, userId);
   }
 
   @Post('refresh-access-token')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Refresh access token using refresh token' })
   @ApiBody({
     schema: {
@@ -149,24 +116,9 @@ export class AuthController {
     return await this.authService.refreshAccessToken(body.refreshToken);
   }
 
-  // Keep the session-based refresh for backward compatibility
-  @Post('refresh')
-  @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Refresh user session (Legacy)' })
-  @ApiResponse({ status: 200, description: 'Session refreshed' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async refreshSession(@Request() req) {
-    if (!req.sessionID) {
-      throw new UnauthorizedException('No active session');
-    }
-    return await this.authService.refreshSession(req.sessionID);
-  }
-
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user information' })
   @ApiResponse({
@@ -181,7 +133,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Change user password' })
   @ApiBody({ type: ChangePasswordDto })
@@ -199,6 +151,7 @@ export class AuthController {
   }
 
   @Post('password-reset/request')
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Request password reset email' })
   @ApiResponse({ status: 200, description: 'Reset email sent if email exists' })
   async requestPasswordReset(@Body() dto: RequestResetDto) {
@@ -210,6 +163,7 @@ export class AuthController {
   }
 
   @Post('password-reset/validate')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Validate reset token' })
   @ApiResponse({ status: 200, description: 'Token validation result' })
   async validateResetToken(@Body() dto: ValidateResetTokenDto) {
@@ -218,6 +172,7 @@ export class AuthController {
   }
 
   @Post('password-reset/reset')
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Reset password using token' })
   @ApiResponse({ status: 200, description: 'Password reset successful' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
@@ -232,6 +187,7 @@ export class AuthController {
   }
 
   @Post('email-verification/request')
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Request email verification' })
   @ApiBody({
     schema: {
@@ -252,6 +208,7 @@ export class AuthController {
   }
 
   @Post('email-verification/verify')
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Verify email with token and auto-login' })
   @ApiBody({
     schema: {
@@ -267,12 +224,9 @@ export class AuthController {
     type: JwtAuthResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired token' })
-  async verifyEmail(@Body() body: { otp: string }, @Request() req) {
+  async verifyEmail(@Body() body: { otp: string }) {
     try {
-      const user = await this.authService.verifyEmailOtp(
-        body.otp,
-        req.sessionID,
-      );
+      const user = await this.authService.verifyEmailOtp(body.otp);
 
       return {
         ...user,

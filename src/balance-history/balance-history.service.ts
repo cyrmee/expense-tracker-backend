@@ -151,10 +151,6 @@ export class BalanceHistoryService {
    * Create a new balance history record
    */
   async create(data: Omit<BalanceHistoryDto, 'id' | 'createdAt'>) {
-    this.logger.log(
-      `Creating balance history record for user: ${data.userId}, money source: ${data.moneySourceId}`,
-    );
-
     const history = await this.prisma.balanceHistory.create({
       data: {
         balance: data.balance,

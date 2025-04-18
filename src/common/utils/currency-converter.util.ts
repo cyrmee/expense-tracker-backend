@@ -24,10 +24,6 @@ export class CurrencyConverter {
   ): Promise<number | null> {
     if (fromCurrency === toCurrency) return amount;
 
-    this.logger.log(
-      `Converting ${amount} from ${fromCurrency} to ${toCurrency}`,
-    );
-
     const fromRate = await this.getExchangeRate(fromCurrency);
     const toRate = await this.getExchangeRate(toCurrency);
 
@@ -47,9 +43,7 @@ export class CurrencyConverter {
 
     // Convert through USD (base currency)
     const convertedAmount = (amount * toRate) / fromRate;
-    this.logger.log(
-      `Converted ${amount} ${fromCurrency} to ${convertedAmount.toFixed(2)} ${toCurrency}`,
-    );
+
     return convertedAmount;
   }
 }

@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { redisStore } from 'cache-manager-redis-store';
-import * as session from 'express-session';
-import * as redis from 'connect-redis';
 import { createClient } from '@redis/client';
 
 @Module({
@@ -15,7 +13,7 @@ import { createClient } from '@redis/client';
         store: await redisStore({
           url: configService.get('REDIS_URL'),
           ttl: configService.get<number>(
-            'SESSION_EXPIRY_SECONDS',
+            'TOKEN_EXPIRY_SECONDS',
             60 * 60 * 24 * 3,
           ),
           // Fallback to socket config if REDIS_URL is not available
@@ -91,37 +89,7 @@ import { createClient } from '@redis/client';
       },
       inject: [ConfigService],
     },
-    {
-      provide: 'SESSION_MIDDLEWARE',
-      useFactory: async (redisClient: any, configService: ConfigService) => {
-        const store = new redis.RedisStore({
-          client: redisClient,
-        });
-
-        return session({
-          store,
-          secret: configService.get('SESSION_SECRET')!,
-          name: 'sessionId',
-          resave: false,
-          saveUninitialized: false,
-          rolling: true,
-          proxy: true,
-          cookie: {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
-            path: '/',
-            // domain:
-            //   process.env.NODE_ENV === 'production'
-            //     ? configService.get('BACKEND_DOMAIN') // Read from env var
-            //     : undefined, // Keep undefined for localhost
-          },
-        });
-      },
-      inject: ['REDIS_CLIENT', ConfigService],
-    },
   ],
-  exports: ['REDIS_CLIENT', 'SESSION_MIDDLEWARE', CacheModule],
+  exports: ['REDIS_CLIENT', CacheModule],
 })
 export class RedisModule {}

@@ -155,10 +155,6 @@ export class ExpensesService {
   }
 
   async create(data: CreateExpenseDto, userId: string): Promise<void> {
-    this.logger.log(
-      `Creating expense for user ${userId}, category ${data.categoryId}, money source ${data.moneySourceId}, amount ${data.amount}`,
-    );
-
     const expense = await this.prisma.expense.create({
       data: {
         amount: data.amount,
@@ -259,17 +255,11 @@ export class ExpensesService {
       });
 
       if (data.amount || data.moneySourceId) {
-        this.logger.log('Adjusting money source balance for expense update');
-
         // Case 1: Money source has changed - need to restore old balance and deduct from new
         if (
           data.moneySourceId &&
           previousExpense.moneySource.id !== updatedExpense.moneySource.id
         ) {
-          this.logger.log(
-            `Money source changed from ${previousExpense.moneySource.id} to ${updatedExpense.moneySource.id}`,
-          );
-
           // Restore full amount to the old money source
           await tx.moneySource.update({
             where: { id: previousExpense.moneySource.id },
@@ -289,9 +279,6 @@ export class ExpensesService {
         // Case 2: Same money source, only amount has changed
         else if (data.amount && previousExpense.amount !== data.amount) {
           const amountDifference = data.amount - previousExpense.amount;
-          this.logger.log(
-            `Amount changed by ${amountDifference} (${previousExpense.amount} → ${data.amount})`,
-          );
 
           if (amountDifference > 0) {
             // If new amount is higher, decrease the additional amount from balance
@@ -318,7 +305,6 @@ export class ExpensesService {
   }
 
   async remove(id: string, userId: string): Promise<void> {
-    this.logger.log(`Removing expense ${id} for user ${userId}`);
     const expense = await this.getExpense(id, userId);
 
     await this.prisma.$transaction(async (tx) => {

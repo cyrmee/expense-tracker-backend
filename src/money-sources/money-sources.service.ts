@@ -207,7 +207,6 @@ export class MoneySourcesService {
       throw new BadRequestException('ID is required for update');
     }
 
-    this.logger.log(`Updating money source ${id} for user ${userId}`);
     await this.getMoneySource(id, userId);
 
     await this.prisma.moneySource.update({
@@ -232,16 +231,10 @@ export class MoneySourcesService {
       },
     });
 
-    this.logger.log(`Money source ${id} updated successfully`);
-
     return;
   }
 
   async addFunds(id: string, amount: number, userId: string): Promise<void> {
-    this.logger.log(
-      `Adding funds (${amount}) to money source ${id} for user ${userId}`,
-    );
-
     await this.prisma.$transaction(async (tx) => {
       const moneySource = await tx.moneySource.findFirst({
         where: { id, userId },
@@ -286,7 +279,6 @@ export class MoneySourcesService {
   }
 
   async remove(id: string, userId: string): Promise<void> {
-    this.logger.log(`Removing money source ${id} for user ${userId}`);
     await this.getMoneySource(id, userId);
 
     await this.prisma.moneySource.delete({
@@ -295,7 +287,6 @@ export class MoneySourcesService {
       },
     });
 
-    this.logger.log(`Money source ${id} removed successfully`);
     return;
   }
 }
