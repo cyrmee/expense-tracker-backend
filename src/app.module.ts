@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -17,6 +17,7 @@ import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AiModule } from './ai/ai.module';
+import { BenchmarkingModule } from './benchmarking/benchmarking.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { AiModule } from './ai/ai.module';
       },
     ]),
     AiModule,
+    BenchmarkingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
