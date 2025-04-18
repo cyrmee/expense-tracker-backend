@@ -1,24 +1,24 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  HttpCode,
-  HttpStatus,
-  Patch,
-  Request,
   UseGuards,
+  Request,
   UsePipes,
   ValidationPipe,
+  Patch,
+  Body,
+  Delete,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards';
 import {
-  ApiBearerAuth,
-  ApiBody,
+  ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiTags,
+  ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { UpdateUserDto, UserDto } from './dto';
 

@@ -1,8 +1,8 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -27,6 +27,31 @@ export class MoneySourcesService {
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
   ) {}
+
+  private async transformToDto(
+    moneySource: any,
+    preferredCurrency: string,
+  ): Promise<MoneySourceDto> {
+    const dto = plainToClass(MoneySourceDto, moneySource);
+
+    if (moneySource.currency !== preferredCurrency) {
+      const convertedBalance = await this.currencyConverter.convertAmount(
+        moneySource.balance,
+        moneySource.currency,
+        preferredCurrency,
+      );
+      const convertedBudget = await this.currencyConverter.convertAmount(
+        moneySource.budget,
+        moneySource.currency,
+        preferredCurrency,
+      );
+
+      dto.balanceInPreferredCurrency = convertedBalance || undefined;
+      dto.budgetInPreferredCurrency = convertedBudget || undefined;
+    }
+
+    return dto;
+  }
 
   async getMoneySources(
     userId: string,
@@ -263,30 +288,5 @@ export class MoneySourcesService {
     });
 
     return;
-  }
-
-  private async transformToDto(
-    moneySource: any,
-    preferredCurrency: string,
-  ): Promise<MoneySourceDto> {
-    const dto = plainToClass(MoneySourceDto, moneySource);
-
-    if (moneySource.currency !== preferredCurrency) {
-      const convertedBalance = await this.currencyConverter.convertAmount(
-        moneySource.balance,
-        moneySource.currency,
-        preferredCurrency,
-      );
-      const convertedBudget = await this.currencyConverter.convertAmount(
-        moneySource.budget,
-        moneySource.currency,
-        preferredCurrency,
-      );
-
-      dto.balanceInPreferredCurrency = convertedBalance || undefined;
-      dto.budgetInPreferredCurrency = convertedBudget || undefined;
-    }
-
-    return dto;
   }
 }

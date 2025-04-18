@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
 import {
-  IsBoolean,
+  IsString,
   IsNotEmpty,
   IsNumber,
-  IsOptional,
-  IsString,
   Min,
+  IsOptional,
+  IsBoolean,
 } from 'class-validator';
 
 @Exclude()

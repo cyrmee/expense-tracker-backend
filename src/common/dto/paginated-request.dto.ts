@@ -4,8 +4,8 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  Max,
   Min,
+  Max,
 } from 'class-validator';
 
 export enum SortOrder {

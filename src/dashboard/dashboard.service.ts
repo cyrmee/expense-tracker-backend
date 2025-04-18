@@ -2,12 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import {
-  BudgetComparisonDto,
-  BudgetComparisonItemDto,
-  CategoryExpenseDto,
   DashboardOverviewDto,
   DashboardTrendsDto,
   ExpenseCompositionDto,
+  BudgetComparisonDto,
+  CategoryExpenseDto,
+  BudgetComparisonItemDto,
   ExpenseOverview,
   TotalBalance,
 } from './dto';
@@ -262,6 +262,27 @@ export class DashboardService {
     });
   }
 
+  /**
+   * Helper method to get the user's preferred currency
+   * @param userId The user ID
+   * @returns The preferred currency code (defaults to ETB)
+   */
+  private async getUserPreferredCurrency(userId: string): Promise<string> {
+    const userSettings = await this.prisma.appSettings.findUnique({
+      where: { userId },
+    });
+    return userSettings?.preferredCurrency || 'ETB';
+  }
+
+  private getWeekNumber(date: Date): string {
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor(
+      (date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000),
+    );
+    const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+    return `${date.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
+  }
+
   async getExpensesOverview(
     userId: string,
     period?: string,
@@ -461,26 +482,5 @@ export class DashboardService {
       currency: preferredCurrency,
       moneySources: moneySourceDetails,
     };
-  }
-
-  /**
-   * Helper method to get the user's preferred currency
-   * @param userId The user ID
-   * @returns The preferred currency code (defaults to ETB)
-   */
-  private async getUserPreferredCurrency(userId: string): Promise<string> {
-    const userSettings = await this.prisma.appSettings.findUnique({
-      where: { userId },
-    });
-    return userSettings?.preferredCurrency || 'ETB';
-  }
-
-  private getWeekNumber(date: Date): string {
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const days = Math.floor(
-      (date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000),
-    );
-    const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-    return `${date.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
   }
 }

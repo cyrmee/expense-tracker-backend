@@ -1,24 +1,24 @@
 import {
-  Body,
   Controller,
-  Delete,
-  forwardRef,
   Get,
+  Patch,
+  Delete,
+  Body,
+  UseGuards,
+  Request,
+  forwardRef,
+  Inject,
+  ValidationPipe,
+  UsePipes,
   HttpCode,
   HttpStatus,
-  Inject,
-  Patch,
-  Request,
-  UseGuards,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
-  ApiBody,
+  ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiTags,
+  ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AppSettingsService } from './app-settings.service';
 import { AppSettingsDto, UpdateAppSettingsDto } from './dto';

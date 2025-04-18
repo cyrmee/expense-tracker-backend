@@ -1,44 +1,41 @@
 -- CreateTable
-CREATE TABLE "User"
-(
-    "id"                  TEXT         NOT NULL,
-    "email"               TEXT         NOT NULL,
-    "name"                TEXT         NOT NULL,
-    "hash"                TEXT         NOT NULL,
-    "profilePicture"      TEXT,
-    "isVerified"          BOOLEAN      NOT NULL DEFAULT false,
-    "isActive"            BOOLEAN      NOT NULL DEFAULT true,
-    "failedLoginAttempts" INTEGER      NOT NULL DEFAULT 0,
-    "lastLoginAt"         TIMESTAMP(3),
-    "createdAt"           TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt"           TIMESTAMP(3) NOT NULL,
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "hash" TEXT NOT NULL,
+    "profilePicture" TEXT,
+    "isVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "failedLoginAttempts" INTEGER NOT NULL DEFAULT 0,
+    "lastLoginAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Expense"
-(
-    "id"            TEXT             NOT NULL,
-    "amount"        DOUBLE PRECISION NOT NULL,
-    "date"          TIMESTAMP(3)     NOT NULL,
-    "notes"         TEXT,
-    "categoryId"    TEXT             NOT NULL,
-    "moneySourceId" TEXT             NOT NULL,
-    "userId"        TEXT             NOT NULL,
-    "createdAt"     TIMESTAMP(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt"     TIMESTAMP(3)     NOT NULL,
+CREATE TABLE "Expense" (
+    "id" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "notes" TEXT,
+    "categoryId" TEXT NOT NULL,
+    "moneySourceId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Expense_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Category"
-(
-    "id"     TEXT NOT NULL,
-    "name"   TEXT NOT NULL,
-    "icon"   TEXT NOT NULL,
-    "color"  TEXT,
+CREATE TABLE "Category" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "icon" TEXT NOT NULL,
+    "color" TEXT,
     "isDefault" BOOLEAN NOT NULL,
     "userId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -48,123 +45,111 @@ CREATE TABLE "Category"
 );
 
 -- CreateTable
-CREATE TABLE "MoneySource"
-(
-    "id"        TEXT             NOT NULL,
-    "name"      TEXT             NOT NULL,
-    "balance"   DOUBLE PRECISION NOT NULL,
-    "currency"  TEXT             NOT NULL,
-    "icon"      TEXT             NOT NULL,
-    "isDefault" BOOLEAN          NOT NULL,
-    "budget"    DOUBLE PRECISION NOT NULL,
-    "userId"    TEXT             NOT NULL,
-    "createdAt" TIMESTAMP(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3)     NOT NULL,
+CREATE TABLE "MoneySource" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "balance" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL,
+    "icon" TEXT NOT NULL,
+    "isDefault" BOOLEAN NOT NULL,
+    "budget" DOUBLE PRECISION NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "MoneySource_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "BalanceHistory"
-(
-    "id"            TEXT             NOT NULL,
-    "date"          TIMESTAMP(3)     NOT NULL,
-    "balance"       DOUBLE PRECISION NOT NULL,
-    "currency"      TEXT             NOT NULL,
-    "moneySourceId" TEXT             NOT NULL,
-    "userId"        TEXT             NOT NULL,
-    "createdAt"     TIMESTAMP(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "BalanceHistory" (
+    "id" TEXT NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "balance" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL,
+    "moneySourceId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "BalanceHistory_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "AppSettings"
-(
-    "id"                TEXT         NOT NULL,
-    "preferredCurrency" TEXT         NOT NULL,
-    "hideAmounts"       BOOLEAN      NOT NULL,
-    "themePreference"   TEXT         NOT NULL,
-    "userId"            TEXT         NOT NULL,
-    "createdAt"         TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt"         TIMESTAMP(3) NOT NULL,
+CREATE TABLE "AppSettings" (
+    "id" TEXT NOT NULL,
+    "preferredCurrency" TEXT NOT NULL,
+    "hideAmounts" BOOLEAN NOT NULL,
+    "themePreference" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "AppSettings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "ExchangeRate"
-(
-    "id"        TEXT             NOT NULL,
-    "rate"      DOUBLE PRECISION NOT NULL,
-    "timestamp" TIMESTAMP(3)     NOT NULL,
-    "base"      TEXT             NOT NULL,
-    "updatedAt" TIMESTAMP(3)     NOT NULL,
+CREATE TABLE "ExchangeRate" (
+    "id" TEXT NOT NULL,
+    "rate" DOUBLE PRECISION NOT NULL,
+    "timestamp" TIMESTAMP(3) NOT NULL,
+    "base" TEXT NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "ExchangeRate_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User" ("email");
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE INDEX "User_email_idx" ON "User" ("email");
+CREATE INDEX "User_email_idx" ON "User"("email");
 
 -- CreateIndex
-CREATE INDEX "Expense_userId_idx" ON "Expense" ("userId");
+CREATE INDEX "Expense_userId_idx" ON "Expense"("userId");
 
 -- CreateIndex
-CREATE INDEX "Expense_date_idx" ON "Expense" ("date");
+CREATE INDEX "Expense_date_idx" ON "Expense"("date");
 
 -- CreateIndex
-CREATE INDEX "Category_userId_idx" ON "Category" ("userId");
+CREATE INDEX "Category_userId_idx" ON "Category"("userId");
 
 -- CreateIndex
-CREATE INDEX "MoneySource_userId_idx" ON "MoneySource" ("userId");
+CREATE INDEX "MoneySource_userId_idx" ON "MoneySource"("userId");
 
 -- CreateIndex
-CREATE INDEX "BalanceHistory_moneySourceId_idx" ON "BalanceHistory" ("moneySourceId");
+CREATE INDEX "BalanceHistory_moneySourceId_idx" ON "BalanceHistory"("moneySourceId");
 
 -- CreateIndex
-CREATE INDEX "BalanceHistory_userId_idx" ON "BalanceHistory" ("userId");
+CREATE INDEX "BalanceHistory_userId_idx" ON "BalanceHistory"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AppSettings_userId_key" ON "AppSettings" ("userId");
+CREATE UNIQUE INDEX "AppSettings_userId_key" ON "AppSettings"("userId");
 
 -- CreateIndex
-CREATE INDEX "AppSettings_userId_idx" ON "AppSettings" ("userId");
+CREATE INDEX "AppSettings_userId_idx" ON "AppSettings"("userId");
 
 -- CreateIndex
-CREATE INDEX "ExchangeRate_base_idx" ON "ExchangeRate" ("base");
+CREATE INDEX "ExchangeRate_base_idx" ON "ExchangeRate"("base");
 
 -- AddForeignKey
-ALTER TABLE "Expense"
-    ADD CONSTRAINT "Expense_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category" ("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Expense" ADD CONSTRAINT "Expense_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense"
-    ADD CONSTRAINT "Expense_moneySourceId_fkey" FOREIGN KEY ("moneySourceId") REFERENCES "MoneySource" ("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Expense" ADD CONSTRAINT "Expense_moneySourceId_fkey" FOREIGN KEY ("moneySourceId") REFERENCES "MoneySource"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense"
-    ADD CONSTRAINT "Expense_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Expense" ADD CONSTRAINT "Expense_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Category"
-    ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MoneySource"
-    ADD CONSTRAINT "MoneySource_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "MoneySource" ADD CONSTRAINT "MoneySource_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BalanceHistory"
-    ADD CONSTRAINT "BalanceHistory_moneySourceId_fkey" FOREIGN KEY ("moneySourceId") REFERENCES "MoneySource" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "BalanceHistory" ADD CONSTRAINT "BalanceHistory_moneySourceId_fkey" FOREIGN KEY ("moneySourceId") REFERENCES "MoneySource"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BalanceHistory"
-    ADD CONSTRAINT "BalanceHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "BalanceHistory" ADD CONSTRAINT "BalanceHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AppSettings"
-    ADD CONSTRAINT "AppSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "AppSettings" ADD CONSTRAINT "AppSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

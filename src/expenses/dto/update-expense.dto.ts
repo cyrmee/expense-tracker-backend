@@ -1,6 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { IsDate, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsDate,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 /**
  * CreateExpenseDto is a Data Transfer Object (DTO) used for creating a new expense.
