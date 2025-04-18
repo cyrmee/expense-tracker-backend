@@ -17,6 +17,7 @@ export abstract class CurrencyAmountBaseDto {
   }
 
   abstract getCurrency(): string;
+
   abstract getAmount(): number;
 
   @ApiProperty({

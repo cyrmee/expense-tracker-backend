@@ -2,24 +2,24 @@ import {
   Controller,
   Get,
   Query,
-  UseGuards,
   Request,
-  ValidationPipe,
+  UseGuards,
   UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
+  ApiOperation,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import {
+  BudgetComparisonDto,
   DashboardOverviewDto,
   DashboardTrendsDto,
   ExpenseCompositionDto,
-  BudgetComparisonDto,
   ExpenseOverview,
   TotalBalance,
 } from './dto';

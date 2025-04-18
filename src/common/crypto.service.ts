@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createCipheriv, createDecipheriv, scrypt } from 'crypto';
 import * as crypto from 'crypto';
+import { createCipheriv, createDecipheriv, scrypt } from 'crypto';
 import { promisify } from 'util';
 
 @Injectable()
@@ -24,20 +24,6 @@ export class CryptoService {
       console.error('Failed to initialize encryption key:', error);
       throw error;
     });
-  }
-
-  private async initializeKey(): Promise<void> {
-    const secretKey = this.config.get('ENCRYPTION_SECRET_KEY');
-    const salt = this.config.get('ENCRYPTION_SALT');
-
-    if (!secretKey || !salt) {
-      throw new Error(
-        'Missing required environment variables: ENCRYPTION_SECRET_KEY or ENCRYPTION_SALT',
-      );
-    }
-
-    const keyLength = 32;
-    this.key = (await promisify(scrypt)(secretKey, salt, keyLength)) as Buffer;
   }
 
   async generateRandomToken(size: number = 32): Promise<string> {
@@ -89,5 +75,19 @@ export class CryptoService {
       console.error('Decryption error: ', error);
       throw error;
     }
+  }
+
+  private async initializeKey(): Promise<void> {
+    const secretKey = this.config.get('ENCRYPTION_SECRET_KEY');
+    const salt = this.config.get('ENCRYPTION_SALT');
+
+    if (!secretKey || !salt) {
+      throw new Error(
+        'Missing required environment variables: ENCRYPTION_SECRET_KEY or ENCRYPTION_SALT',
+      );
+    }
+
+    const keyLength = 32;
+    this.key = (await promisify(scrypt)(secretKey, salt, keyLength)) as Buffer;
   }
 }

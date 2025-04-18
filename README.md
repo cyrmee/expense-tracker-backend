@@ -70,7 +70,8 @@ JWT_SECRET=your_very_strong_jwt_secret_key_here
 JWT_ACCESS_EXPIRATION=15m
 ```
 
-For AI features to work, you'll need to obtain a Google Gemini API key from the [Google AI Studio](https://makersuite.google.com/app/apikey).
+For AI features to work, you'll need to obtain a Google Gemini API key from
+the [Google AI Studio](https://makersuite.google.com/app/apikey).
 
 ### 4. Database setup
 
@@ -196,11 +197,13 @@ Users can submit expense descriptions in natural language, and the AI will extra
 - Which money source was used
 - Additional notes about the expense
 
-Example: "Spent $45 at the grocery store yesterday using my credit card" will be automatically parsed into a structured expense entry.
+Example: "Spent $45 at the grocery store yesterday using my credit card" will be automatically parsed into a structured
+expense entry.
 
 ### Smart Category Suggestions
 
-When adding a new expense, the AI can suggest the most appropriate category based on the expense description, making categorization faster and more consistent.
+When adding a new expense, the AI can suggest the most appropriate category based on the expense description, making
+categorization faster and more consistent.
 
 These features require a valid Google Gemini API key to be configured in your `.env` file.
 

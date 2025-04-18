@@ -1,8 +1,7 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateExpenseDto,
-  ExpenseBaseDto,
   ExpenseDto,
   ParsedExpenseDto,
   UpdateExpenseDto,
@@ -26,25 +25,6 @@ export class ExpensesService {
     private readonly currencyConverter: CurrencyConverter,
     private readonly aiService: AiService,
   ) {}
-
-  private async transformToDto(
-    expense: any,
-    moneySourceCurrency: string,
-    preferredCurrency: string,
-  ): Promise<ExpenseDto> {
-    const dto = plainToClass(ExpenseDto, expense);
-
-    if (moneySourceCurrency !== preferredCurrency) {
-      const convertedAmount = await this.currencyConverter.convertAmount(
-        expense.amount,
-        moneySourceCurrency,
-        preferredCurrency,
-      );
-      dto.amountInPreferredCurrency = convertedAmount || undefined;
-    }
-
-    return dto;
-  }
 
   async getExpenses(
     userId: string,
@@ -325,5 +305,24 @@ export class ExpensesService {
     });
 
     return;
+  }
+
+  private async transformToDto(
+    expense: any,
+    moneySourceCurrency: string,
+    preferredCurrency: string,
+  ): Promise<ExpenseDto> {
+    const dto = plainToClass(ExpenseDto, expense);
+
+    if (moneySourceCurrency !== preferredCurrency) {
+      const convertedAmount = await this.currencyConverter.convertAmount(
+        expense.amount,
+        moneySourceCurrency,
+        preferredCurrency,
+      );
+      dto.amountInPreferredCurrency = convertedAmount || undefined;
+    }
+
+    return dto;
   }
 }

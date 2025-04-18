@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BalanceHistoryDto } from './dto';
 import { plainToClass } from 'class-transformer';
@@ -18,24 +18,6 @@ export class BalanceHistoryService {
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
   ) {}
-
-  private async transformToDto(
-    history: any,
-    preferredCurrency: string,
-  ): Promise<BalanceHistoryDto> {
-    const dto = plainToClass(BalanceHistoryDto, history);
-
-    if (history.currency !== preferredCurrency) {
-      const convertedBalance = await this.currencyConverter.convertAmount(
-        history.balance,
-        history.currency,
-        preferredCurrency,
-      );
-      dto.balanceInPreferredCurrency = convertedBalance || undefined;
-    }
-
-    return dto;
-  }
 
   /**
    * Find all balance history records for a specific user
@@ -177,5 +159,23 @@ export class BalanceHistoryService {
       history,
       history.user?.appSettings?.preferredCurrency || 'USD',
     );
+  }
+
+  private async transformToDto(
+    history: any,
+    preferredCurrency: string,
+  ): Promise<BalanceHistoryDto> {
+    const dto = plainToClass(BalanceHistoryDto, history);
+
+    if (history.currency !== preferredCurrency) {
+      const convertedBalance = await this.currencyConverter.convertAmount(
+        history.balance,
+        history.currency,
+        preferredCurrency,
+      );
+      dto.balanceInPreferredCurrency = convertedBalance || undefined;
+    }
+
+    return dto;
   }
 }

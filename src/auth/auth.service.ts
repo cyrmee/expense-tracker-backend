@@ -1,22 +1,21 @@
 import {
-  Injectable,
-  Inject,
-  UnauthorizedException,
   ForbiddenException,
   forwardRef,
-  Logger,
+  Inject,
+  Injectable,
   InternalServerErrorException,
-  NotFoundException,
+  Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as argon2 from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import {
-  RegisterDto,
   AuthUserResponseDto,
   ChangePasswordDto,
-  ResetPasswordDto,
   JwtAuthResponseDto,
+  RegisterDto,
+  ResetPasswordDto,
 } from './dto';
 import { AppSettingsService } from '../app-settings/app-settings.service';
 import { MailService } from '../mail/mail.service';

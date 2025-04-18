@@ -1,12 +1,11 @@
 import {
   Controller,
   Get,
-  Param,
-  Logger,
   NotFoundException,
+  Param,
+  UseGuards,
   UsePipes,
   ValidationPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { ExchangeRatesService } from './exchange-rates.service';
 import { ExchangeRateDto } from './dto';
