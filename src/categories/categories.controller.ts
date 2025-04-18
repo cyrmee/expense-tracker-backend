@@ -20,6 +20,7 @@ import {
   ApiResponse,
   ApiBody,
   ApiParam,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 
@@ -27,6 +28,7 @@ import { JwtAuthGuard } from '../auth/guards';
 import { CategoryDto, CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @ApiTags('categories')
+@ApiBearerAuth()
 @Controller('categories')
 @UseGuards(JwtAuthGuard)
 @UsePipes(new ValidationPipe({ transform: true }))

@@ -8,6 +8,7 @@ import {
   AllExceptionsFilter,
   HttpExceptionFilter,
   PrismaExceptionFilter,
+  PrismaUnknownExceptionFilter,
 } from './common/filters';
 
 async function bootstrap() {
@@ -46,6 +47,7 @@ async function bootstrap() {
     new AllExceptionsFilter(),
     new HttpExceptionFilter(),
     new PrismaExceptionFilter(),
+    new PrismaUnknownExceptionFilter(),
   );
   logger.log('Global exception filters applied');
 

@@ -60,6 +60,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       // Record not found (findUnique, etc.)
       case 'P2001':
       case 'P2018':
+      case 'P2025': // Added to handle the common "Record not found" error
         status = HttpStatus.NOT_FOUND;
         message = 'Record not found';
         errorType = 'Not Found';
@@ -79,6 +80,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
 
       // Required relation violation
       case 'P2011':
+      case 'P2012': // Added for NOT NULL constraint
         status = HttpStatus.BAD_REQUEST;
         message = 'Required field missing';
         errorType = 'Null Constraint Violation';
@@ -91,6 +93,9 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       // Invalid data provided
       case 'P2005':
       case 'P2006':
+      case 'P2007': // JSON parsing error
+      case 'P2019': // Input validation error
+      case 'P2020': // Value out of range
         status = HttpStatus.BAD_REQUEST;
         message = 'Invalid value provided';
         errorType = 'Invalid Input';
@@ -100,8 +105,33 @@ export class PrismaExceptionFilter implements ExceptionFilter {
         };
         break;
 
+      // Database connection errors
+      case 'P1000':
+      case 'P1001':
+      case 'P1002':
+        status = HttpStatus.SERVICE_UNAVAILABLE;
+        message = 'Database connection error';
+        errorType = 'Service Unavailable';
+        details = {
+          code: exception.code,
+        };
+        break;
+
+      // Query engine errors
+      case 'P2009':
+      case 'P2010':
+      case 'P2015':
+        status = HttpStatus.INTERNAL_SERVER_ERROR;
+        message = 'Database query error';
+        errorType = 'Query Error';
+        details = {
+          code: exception.code,
+        };
+        break;
+
       // Default handling for other Prisma errors
       default:
+        // Generic message for all other errors
         message = 'Database operation failed';
         details = {
           code: exception.code,
@@ -124,6 +154,13 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       if (details) {
         details.prismaCode = exception.code;
         details.meta = exception.meta;
+      }
+    } else {
+      // In production, hide internal error details for unknown errors
+      if (
+        !['P2002', 'P2003', 'P2001', 'P2018', 'P2025'].includes(exception.code)
+      ) {
+        errorResponse.details = null;
       }
     }
 
