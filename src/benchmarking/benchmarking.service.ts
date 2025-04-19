@@ -4,6 +4,7 @@ import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import { SpendingComparisonDto } from './dto/spending-comparison.dto';
 import { CategoryComparisonDto } from './dto/category-comparison.dto';
 import { plainToClass } from 'class-transformer';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class BenchmarkingService {
@@ -12,6 +13,7 @@ export class BenchmarkingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly exchangeRatesService: ExchangeRatesService,
+    private readonly aiService: AiService,
   ) {}
 
   /**
@@ -62,9 +64,8 @@ export class BenchmarkingService {
           `Not enough users (${comparisonUserCount}) for anonymous comparison. Minimum required: ${MINIMUM_USER_COUNT}`,
         );
         return plainToClass(SpendingComparisonDto, {
-          insights: [
+          insights:
             'Not enough users to generate spending insights. Try again later when more data is available.',
-          ],
           categoryComparisons: [],
           overallDifferencePercentage: 0,
           comparisonUserCount,
@@ -122,25 +123,38 @@ export class BenchmarkingService {
         preferredCurrency,
       );
 
-      // Generate insights based on the comparisons
-      const insights = this.generateInsights(
-        categoryComparisons,
-        overallDifferencePercentage,
+      // Format numeric values for display
+      const formattedUserMonthlySpending = parseFloat(
+        userMonthlySpending.toFixed(2),
+      );
+      const formattedAverageMonthlySpending = parseFloat(
+        averageMonthlySpending.toFixed(2),
+      );
+      const formattedOverallDifferencePercentage = parseFloat(
+        overallDifferencePercentage.toFixed(1),
       );
 
+      // Generate AI-powered insights based on the comparisons
+      const insights = await this.aiService.generateBenchmarkInsights(userId,{
+        categoryComparisons,
+        overallDifferencePercentage: formattedOverallDifferencePercentage,
+        userMonthlySpending: formattedUserMonthlySpending,
+        averageMonthlySpending: formattedAverageMonthlySpending,
+        comparisonUserCount,
+        currency: preferredCurrency,
+      });
+
       this.logger.log(
-        `Generated ${insights.length} spending insights for user ${userId}`,
+        `Generated AI-powered spending insights for user ${userId}`,
       );
 
       return plainToClass(SpendingComparisonDto, {
         insights,
         categoryComparisons,
-        overallDifferencePercentage: parseFloat(
-          overallDifferencePercentage.toFixed(1),
-        ),
+        overallDifferencePercentage: formattedOverallDifferencePercentage,
         comparisonUserCount,
-        userMonthlySpending: parseFloat(userMonthlySpending.toFixed(2)),
-        averageMonthlySpending: parseFloat(averageMonthlySpending.toFixed(2)),
+        userMonthlySpending: formattedUserMonthlySpending,
+        averageMonthlySpending: formattedAverageMonthlySpending,
         currency: preferredCurrency,
       });
     } catch (error) {
@@ -413,84 +427,6 @@ export class BenchmarkingService {
       (a, b) =>
         Math.abs(b.percentageDifference) - Math.abs(a.percentageDifference),
     );
-  }
-
-  /**
-   * Generate insights based on the spending comparisons
-   */
-  private generateInsights(
-    categoryComparisons: CategoryComparisonDto[],
-    overallDifferencePercentage: number,
-  ): string[] {
-    const insights: string[] = [];
-
-    // Add insight about overall spending if difference is significant
-    if (Math.abs(overallDifferencePercentage) >= 5) {
-      if (overallDifferencePercentage < 0) {
-        insights.push(
-          `Overall, you spend ${Math.abs(overallDifferencePercentage).toFixed(0)}% less than the average user.`,
-        );
-      } else {
-        insights.push(
-          `Overall, you spend ${overallDifferencePercentage.toFixed(0)}% more than the average user.`,
-        );
-      }
-    }
-
-    // Add insights for categories with significant differences
-    for (const comparison of categoryComparisons) {
-      // Only generate insights for significant differences (>10%)
-      if (Math.abs(comparison.percentageDifference) >= 10) {
-        if (comparison.percentageDifference < 0) {
-          insights.push(
-            `You spend ${Math.abs(comparison.percentageDifference).toFixed(0)}% less on ${comparison.categoryName} than other users.`,
-          );
-        } else {
-          insights.push(
-            `You spend ${comparison.percentageDifference.toFixed(0)}% more on ${comparison.categoryName} than other users.`,
-          );
-        }
-      }
-    }
-
-    // Look for categories where the user doesn't spend but others do
-    // Remove the arbitrary limit of 2 to include all relevant insights
-    const unusedCategories = categoryComparisons.filter(
-      (c) => c.userAmount === 0 && c.averageAmount > 20,
-    );
-
-    for (const category of unusedCategories) {
-      insights.push(
-        `Most users spend an average of ${category.averageAmount.toFixed(0)} ${category.currency} on ${category.categoryName}, but you have no expenses in this category.`,
-      );
-    }
-
-    // Add insight for categories where user has uniquely high spending
-    const uniqueHighSpendingCategories = categoryComparisons.filter(
-      (c) => c.percentageDifference > 200 && c.userAmount > 50,
-    );
-
-    for (const category of uniqueHighSpendingCategories) {
-      insights.push(
-        `Your ${category.categoryName} spending is significantly higher than most users. Consider reviewing your budget in this category.`,
-      );
-    }
-
-    // Add insight for top saving categories
-    const topSavingCategories = categoryComparisons
-      .filter((c) => c.percentageDifference < -30 && c.averageAmount > 30)
-      .slice(0, 3);
-
-    if (topSavingCategories.length > 0) {
-      const categoryNames = topSavingCategories
-        .map((c) => c.categoryName)
-        .join(', ');
-      insights.push(
-        `You're doing well at saving money on: ${categoryNames} compared to other users.`,
-      );
-    }
-
-    return insights;
   }
 
   /**

@@ -5,11 +5,11 @@ import { CategoryComparisonDto } from './category-comparison.dto';
 @Exclude()
 export class SpendingComparisonDto {
   @ApiProperty({
-    description: 'List of insights generated from the comparison',
-    example: ['You spend 15% less on transportation than other users.'],
+    description: 'Insights generated from the comparison as a single string',
+    example: '',
   })
   @Expose()
-  insights: string[];
+  insights: string;
 
   @ApiProperty({
     description: 'Category-by-category spending comparison',

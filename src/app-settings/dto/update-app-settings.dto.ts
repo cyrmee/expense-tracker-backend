@@ -33,4 +33,13 @@ export class UpdateAppSettingsDto {
   @IsOptional()
   @IsString()
   themePreference?: string;
+  
+  @ApiProperty({
+    description: 'Google Gemini API key for AI-powered features',
+    example: 'abc123xyz456',
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  geminiApiKey?: string;
 }

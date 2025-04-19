@@ -1,23 +1,39 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleGenAI } from '@google/genai';
 import { ParsedExpenseDto } from '../expenses/dto';
+import { CategoryComparisonDto } from '../benchmarking/dto';
+import { AppSettingsService } from '../app-settings/app-settings.service';
 
 @Injectable()
 export class AiService {
-  private readonly genAI: GoogleGenAI;
   private readonly logger = new Logger(AiService.name);
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-  ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    private readonly appSettingsService: AppSettingsService,
+  ) {}
+
+  /**
+   * Initialize a GoogleGenAI instance with user's API key
+   * @param userId The user ID to get the API key for
+   * @throws UnauthorizedException if the user doesn't have a configured API key
+   * @returns A GoogleGenAI instance initialized with the user's API key
+   */
+  private async initializeGenAIForUser(userId: string): Promise<GoogleGenAI> {
+    // Get the user's Gemini API key
+    const apiKey = await this.appSettingsService.getGeminiApiKey(userId);
+    
     if (!apiKey) {
-      this.logger.warn('GEMINI_API_KEY not set in environment variables');
+      this.logger.warn(`User ${userId} attempted to use AI features without a configured API key`);
+      throw new UnauthorizedException(
+        'AI features are not available. Please set your Gemini API key in your account settings.',
+      );
     }
-    this.genAI = new GoogleGenAI({ apiKey });
+    
+    return new GoogleGenAI({ apiKey });
   }
 
   /**
@@ -28,6 +44,9 @@ export class AiService {
     userId: string,
   ): Promise<ParsedExpenseDto> {
     try {
+      // Initialize AI client with user's API key
+      const genAI = await this.initializeGenAIForUser(userId);
+
       const [categories, moneySources] = await Promise.all([
         this.prisma.category.findMany({
           where: { OR: [{ userId }, { isDefault: true }] },
@@ -88,7 +107,7 @@ Return only a JSON object with these fields:
 Ensure the response is a valid JSON object. If any information is missing, use null for the corresponding field.`;
 
       // Call Gemini API
-      const result = await this.genAI.models.generateContent({
+      const result = await genAI.models.generateContent({
         model: 'gemini-2.0-flash',
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
@@ -104,13 +123,7 @@ Ensure the response is a valid JSON object. If any information is missing, use n
 
       // Remove markdown code fences if present
       let responseText = result.text.trim();
-      if (responseText.startsWith('```json')) {
-        responseText = responseText.substring(7);
-      }
-      if (responseText.endsWith('```')) {
-        responseText = responseText.slice(0, -3);
-      }
-      responseText = responseText.trim();
+      responseText = responseText.replace(/^```(?:json)?\n?([\s\S]*?)\n?```$/g, '$1').trim();
 
       let parsedResponse;
       try {
@@ -138,7 +151,7 @@ Ensure the response is a valid JSON object. If any information is missing, use n
         // Suggest a category based on the notes or the original text
         const descriptionForCategorization = parsedResponse.notes || text;
 
-        const categoryResult = await this.genAI.models.generateContent({
+        const categoryResult = await genAI.models.generateContent({
           model: 'gemini-2.0-flash',
           contents: [
             {
@@ -193,8 +206,97 @@ Ensure the response is a valid JSON object. If any information is missing, use n
         }),
       } as ParsedExpenseDto;
     } catch (error) {
+      // Propagate specific UnauthorizedException for API key issues
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      
       this.logger.error(`Failed to parse expense text: ${error.message}`);
       throw new Error(`Failed to parse expense: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create a single AI‑powered narrative for a spending benchmark.
+   */
+  async generateBenchmarkInsights(
+    userId: string,
+    params: {
+      categoryComparisons: CategoryComparisonDto[];
+      overallDifferencePercentage: number;
+      userMonthlySpending: number;
+      averageMonthlySpending: number;
+      comparisonUserCount: number;
+      currency: string;
+    },
+  ): Promise<string> {
+    try {
+      // Initialize AI client with user's API key
+      const genAI = await this.initializeGenAIForUser(userId);
+
+      // Build a prompt for the AI
+      const prompt = `
+You're a financial advisor with a unique style - mixing serious advice with witty observations. 📊 Based on these metrics from the last few months:
+• You spent ${params.userMonthlySpending} ${params.currency}  
+• The average user spent ${params.averageMonthlySpending} ${params.currency}  
+• That's a ${params.overallDifferencePercentage}% difference from the crowd  
+• Based on ${params.comparisonUserCount} other users  
+• Category breakdown: ${JSON.stringify(params.categoryComparisons)}
+
+Create a financial analysis using bullet points that balances tough love with encouragement:
+
+• Start with an attention-grabbing headline that's either sobering or slightly humorous depending on their overall spending 💸
+• Include 3-4 bullet points highlighting overspending areas - don't hesitate to use witty roasts for the most concerning categories ⚠️
+• Include 2-3 bullet points acknowledging areas of good financial restraint with genuine praise 👍
+• Add 3-4 bullet points with practical financial advice, mixing in both serious recommendations and lighter observations 📝
+• End with a memorable conclusion about financial consequences - either motivational or a gentle reality check depending on their overall situation 🕰️
+
+Balance your tone based on their spending patterns - more serious for concerning patterns, more playful for better financial behavior. Use emojis throughout for emphasis.
+
+Return the complete bullet-point analysis as a single formatted string.
+`;
+
+      const result = await genAI.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: {
+          temperature: 0.8, // Slightly higher for more creativity
+          maxOutputTokens: 2000,
+        },
+      });
+
+      if (!result.text) {
+        this.logger.warn(
+          'AI response for benchmark insights did not return any text',
+        );
+        return 'Unable to generate spending insights at this time.';
+      }
+
+      return result.text.trim();
+    } catch (error) {
+      // Propagate specific UnauthorizedException for API key issues
+      if (error instanceof UnauthorizedException) {
+        return `AI-powered insights unavailable: ${error.message}`;
+      }
+      
+      this.logger.error(
+        `Failed to generate benchmark insights: ${error.message}`,
+      );
+      return 'Unable to generate spending insights at this time. Please try again later.';
+    }
+  }
+
+  /**
+   * Checks if AI features are available for a user
+   * @returns true if the user has a configured API key, false otherwise
+   */
+  async isAIAvailableForUser(userId: string): Promise<boolean> {
+    try {
+      const apiKey = await this.appSettingsService.getGeminiApiKey(userId);
+      return !!apiKey;
+    } catch (error) {
+      this.logger.error(`Error checking AI availability: ${error.message}`);
+      return false;
     }
   }
 
