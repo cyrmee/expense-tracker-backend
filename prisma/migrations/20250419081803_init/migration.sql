@@ -79,6 +79,7 @@ CREATE TABLE "AppSettings" (
     "preferredCurrency" TEXT NOT NULL,
     "hideAmounts" BOOLEAN NOT NULL,
     "themePreference" TEXT NOT NULL,
+    "geminiApiKey" TEXT,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

@@ -104,6 +104,7 @@ model AppSettings {
   preferredCurrency String
   hideAmounts       Boolean
   themePreference   String
+  geminiApiKey      String?
   // One-to-one relationship with User
   user              User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   userId            String   @unique
