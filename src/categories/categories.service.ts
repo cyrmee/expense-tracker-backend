@@ -5,10 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  CreateCategoryDto as CreateCategoryDto,
-  UpdateCategoryDto,
-} from './dto';
+import { CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @Injectable()
 export class CategoriesService {
@@ -84,14 +81,27 @@ export class CategoriesService {
     const category = await this.getCategory(id, userId);
     if (!category) {
       this.logger.error(`Category ${id} not found for user ${userId}`);
-      return null;
+      throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
     if (category.isDefault) {
       this.logger.warn(
         `Deletion failed - attempted to remove default category ${id}`,
       );
-      return null;
+      throw new BadRequestException(`Default categories cannot be deleted`);
+    }
+
+    // Check if the category is referenced by any expenses
+    const expensesWithCategory = await this.prisma.expense.count({
+      where: {
+        categoryId: id,
+      },
+    });
+
+    if (expensesWithCategory > 0) {
+      throw new BadRequestException(
+        `Cannot delete category as it's currently in use by ${expensesWithCategory} expense(s)`,
+      );
     }
 
     const deletedCategory = await this.prisma.category.delete({

@@ -1,21 +1,20 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import {
-  CreateExpenseDto,
-  ExpenseBaseDto,
-  ExpenseDto,
-  ParsedExpenseDto,
-  UpdateExpenseDto,
-} from './dto';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import { CurrencyConverter } from '../common/utils';
+import { AiService } from '../ai/ai.service';
 import {
   PaginatedRequestDto,
   PaginatedResponseDto,
   QueryBuilder,
   SortOrder,
 } from '../common/dto';
-import { AiService } from '../ai/ai.service';
+import { CurrencyConverter } from '../common/utils';
+import { PrismaService } from '../prisma/prisma.service';
+import {
+  CreateExpenseDto,
+  ExpenseDto,
+  ParsedExpenseDto,
+  UpdateExpenseDto,
+} from './dto';
 
 @Injectable()
 export class ExpensesService {
@@ -155,45 +154,50 @@ export class ExpensesService {
   }
 
   async create(data: CreateExpenseDto, userId: string): Promise<void> {
-    const expense = await this.prisma.expense.create({
-      data: {
-        amount: data.amount,
-        date: data.date,
-        notes: data.notes,
-        category: {
-          connect: {
-            id: data.categoryId,
+    await this.prisma.$transaction(async (tx) => {
+      const expense = await tx.expense.create({
+        data: {
+          amount: data.amount,
+          date: data.date,
+          notes: data.notes,
+          category: {
+            connect: {
+              id: data.categoryId,
+            },
+          },
+          moneySource: {
+            connect: {
+              id: data.moneySourceId,
+            },
+          },
+          user: {
+            connect: {
+              id: userId,
+            },
           },
         },
-        moneySource: {
-          connect: {
-            id: data.moneySourceId,
+        include: {
+          moneySource: true,
+          category: true,
+          user: {
+            include: {
+              appSettings: true,
+            },
           },
         },
-        user: {
-          connect: {
-            id: userId,
-          },
-        },
-      },
-      include: {
-        moneySource: true,
-        category: true,
-        user: {
-          include: {
-            appSettings: true,
-          },
-        },
-      },
-    });
+      });
 
-    await this.prisma.moneySource.update({
-      where: { id: expense.moneySourceId },
-      data: {
-        balance: {
-          decrement: expense.amount,
+      await tx.moneySource.update({
+        where: { id: expense.moneySourceId },
+        data: {
+          balance: {
+            decrement: expense.amount,
+          },
+          budget: {
+            decrement: expense.amount,
+          },
         },
-      },
+      });
     });
 
     return;
@@ -203,14 +207,15 @@ export class ExpensesService {
     text: string,
     userId: string,
   ): Promise<ParsedExpenseDto> {
-    const parsedData = await this.aiService.parseExpenseData(text, userId);
-
-    if (!parsedData) {
-      this.logger.error('Failed to parse expense data from text');
-      throw new NotFoundException('Failed to parse expense data');
+    try {
+      const parsedData = await this.aiService.parseExpenseData(text, userId);
+      return parsedData;
+    } catch (error) {
+      this.logger.error(`Error validating expense text: ${error.message}`);
+      throw new NotFoundException(
+        `Error validating expense text: ${error.message}`,
+      );
     }
-
-    return parsedData;
   }
 
   async update(

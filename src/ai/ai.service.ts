@@ -1,17 +1,15 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
 import { GoogleGenAI } from '@google/genai';
-import { ParsedExpenseDto } from '../expenses/dto';
-import { CategoryComparisonDto } from '../benchmarking/dto';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { AppSettingsService } from '../app-settings/app-settings.service';
+import { CategoryComparisonDto } from '../benchmarking/dto';
+import { ParsedExpenseDto } from '../expenses/dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
   constructor(
-    private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly appSettingsService: AppSettingsService,
   ) {}
@@ -25,14 +23,16 @@ export class AiService {
   private async initializeGenAIForUser(userId: string): Promise<GoogleGenAI> {
     // Get the user's Gemini API key
     const apiKey = await this.appSettingsService.getGeminiApiKey(userId);
-    
+
     if (!apiKey) {
-      this.logger.warn(`User ${userId} attempted to use AI features without a configured API key`);
+      this.logger.warn(
+        `User ${userId} attempted to use AI features without a configured API key`,
+      );
       throw new UnauthorizedException(
         'AI features are not available. Please set your Gemini API key in your account settings.',
       );
     }
-    
+
     return new GoogleGenAI({ apiKey });
   }
 
@@ -123,7 +123,9 @@ Ensure the response is a valid JSON object. If any information is missing, use n
 
       // Remove markdown code fences if present
       let responseText = result.text.trim();
-      responseText = responseText.replace(/^```(?:json)?\n?([\s\S]*?)\n?```$/g, '$1').trim();
+      responseText = responseText
+        .replace(/^```(?:json)?\n?([\s\S]*?)\n?```$/g, '$1')
+        .trim();
 
       let parsedResponse;
       try {
@@ -210,7 +212,7 @@ Ensure the response is a valid JSON object. If any information is missing, use n
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      
+
       this.logger.error(`Failed to parse expense text: ${error.message}`);
       throw new Error(`Failed to parse expense: ${error.message}`);
     }
@@ -278,7 +280,7 @@ Return the complete bullet-point analysis as a single formatted string.
       if (error instanceof UnauthorizedException) {
         return `AI-powered insights unavailable: ${error.message}`;
       }
-      
+
       this.logger.error(
         `Failed to generate benchmark insights: ${error.message}`,
       );
