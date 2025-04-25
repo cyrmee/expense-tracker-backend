@@ -212,9 +212,7 @@ export class ExpensesService {
       return parsedData;
     } catch (error) {
       this.logger.error(`Error validating expense text: ${error.message}`);
-      throw new NotFoundException(
-        `Error validating expense text: ${error.message}`,
-      );
+      throw new NotFoundException(`${error.message}`);
     }
   }
 
