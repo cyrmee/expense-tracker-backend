@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0] - 2025-04-25
+
+### Changed
+
+- Removed refresh token encryption for improved performance and simplified token management
+- Updated refresh token handling to use plaintext JWT tokens
+- Simplified token validation process by removing encryption/decryption steps
+
+### Security
+
+- Maintained JTI (JWT ID) tracking for token revocation capabilities
+- No security impact as refresh tokens were already protected by JWT signing
+
 ## [1.1.0] - 2025-04-18
 
 ### Changed

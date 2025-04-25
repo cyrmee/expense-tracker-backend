@@ -1,27 +1,26 @@
 import {
-  Injectable,
-  Inject,
-  UnauthorizedException,
   ForbiddenException,
   forwardRef,
-  Logger,
+  Inject,
+  Injectable,
   InternalServerErrorException,
-  NotFoundException,
+  Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import * as argon2 from 'argon2';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import * as argon2 from 'argon2';
+import { AppSettingsService } from '../app-settings/app-settings.service';
+import { CryptoService } from '../common/crypto.service';
+import { MailService } from '../mail/mail.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
-  RegisterDto,
   AuthUserResponseDto,
   ChangePasswordDto,
-  ResetPasswordDto,
   JwtAuthResponseDto,
+  RegisterDto,
+  ResetPasswordDto,
 } from './dto';
-import { AppSettingsService } from '../app-settings/app-settings.service';
-import { MailService } from '../mail/mail.service';
-import { CryptoService } from '../common/crypto.service';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -238,40 +237,31 @@ export class AuthService {
     // If refresh token is provided, extract user ID and JTI to invalidate specific token
     if (refreshToken) {
       try {
-        // First decrypt the refresh token
-        const unencryptedToken = await this.cryptoService.decrypt(refreshToken);
-
-        // Extract userId and jti from the token
-        try {
-          const decoded = this.jwtService.decode(unencryptedToken) as {
-            sub: string;
-            jti?: string;
-          };
-          if (decoded?.sub) {
-            userIdFromToken = decoded.sub;
-            this.logger.log(
-              `Extracted userId from refresh token: ${userIdFromToken}`,
-            );
-
-            // If we have a JTI, invalidate this specific refresh token
-            if (decoded.jti) {
-              const jtiKey = `refresh_jti:${userIdFromToken}:${decoded.jti}`;
-              await this.redisClient.del(jtiKey);
-              this.logger.log(
-                `Specific refresh token invalidated for user ${userIdFromToken} with JTI ${decoded.jti}`,
-              );
-            }
-          }
-        } catch (decodeErr) {
-          this.logger.error(
-            `Could not decode refresh token: ${decodeErr.message}`,
+        // Extract userId and jti from the token directly
+        const decoded = this.jwtService.decode(refreshToken) as {
+          sub: string;
+          jti?: string;
+        };
+        if (decoded?.sub) {
+          userIdFromToken = decoded.sub;
+          this.logger.log(
+            `Extracted userId from refresh token: ${userIdFromToken}`,
           );
+
+          // If we have a JTI, invalidate this specific refresh token
+          if (decoded.jti) {
+            const jtiKey = `refresh_jti:${userIdFromToken}:${decoded.jti}`;
+            await this.redisClient.del(jtiKey);
+            this.logger.log(
+              `Specific refresh token invalidated for user ${userIdFromToken} with JTI ${decoded.jti}`,
+            );
+          }
         }
       } catch (error) {
         this.logger.error(
           `Error processing refresh token during logout: ${error.message}`,
         );
-        // Continue with logout process even if token decryption fails
+        // Continue with logout process even if token decoding fails
       }
     }
 
@@ -357,20 +347,8 @@ export class AuthService {
   // Validate refresh token and issue a new access token
   async refreshAccessToken(refreshToken: string): Promise<any> {
     try {
-      // Decrypt the incoming refresh token
-      let unencryptedToken: string;
-      try {
-        unencryptedToken = await this.cryptoService.decrypt(refreshToken);
-        this.logger.debug('Successfully decrypted refresh token');
-      } catch (decryptError) {
-        this.logger.error(
-          `Error decrypting refresh token: ${decryptError.message}`,
-        );
-        throw new UnauthorizedException('Invalid refresh token format');
-      }
-
-      // Verify the refresh token
-      const decoded = this.jwtService.verify(unencryptedToken) as {
+      // Verify the refresh token directly
+      const decoded = this.jwtService.verify(refreshToken) as {
         sub: string;
         type: string;
         jti?: string;
@@ -433,7 +411,7 @@ export class AuthService {
       // Delete the old refresh token JTI from Redis
       await this.redisClient.del(tokenKey);
 
-      // Generate a new refresh token (will be encrypted)
+      // Generate a new refresh token
       const newRefreshToken = await this.generateRefreshToken(user.id);
 
       return {
@@ -650,7 +628,7 @@ export class AuthService {
     const refreshTokenExpiry = this.configService.get<string>(
       'JWT_REFRESH_EXPIRATION',
       '7d', // 7 days in seconds
-    ); // 7 days
+    );
 
     // Generate a unique JTI for this token
     const jti = await this.cryptoService.generateRandomToken(24);
@@ -662,12 +640,9 @@ export class AuthService {
       jti, // Include the JWT ID
     };
 
-    const unencryptedToken = this.jwtService.sign(payload, {
+    const token = this.jwtService.sign(payload, {
       expiresIn: refreshTokenExpiry,
     });
-
-    // Encrypt the token before storing and sending to client
-    const encryptedToken = await this.cryptoService.encrypt(unencryptedToken);
 
     const expiryInSeconds = this.parseExpiryToSeconds(refreshTokenExpiry);
 
@@ -682,8 +657,8 @@ export class AuthService {
       { EX: expiryInSeconds },
     );
 
-    // Return the encrypted token to the client
-    return encryptedToken;
+    // Return the token directly without encryption
+    return token;
   }
 
   // Helper method to parse JWT expiry string to seconds

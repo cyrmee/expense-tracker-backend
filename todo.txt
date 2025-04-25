@@ -1,10 +1,6 @@
-TODO List: Expense Tracker Backend Improvements
-
-1. Budget Management
-    - Implement automatic budget reduction when expenses are added
-    - Ensure transaction consistency between expense creation and budget updates
-
-2. Error Handling
-    - Add specific error message when attempting to delete default categories: "Default categories cannot be deleted"
-    - Implement user-friendly notification when Gemini API key is missing: "Please set your Gemini API key in account settings"
-    - Return clear error when attempting to delete items with existing references: "Cannot delete [item] as it's currently in use by [reference]"
+TODO: Remove encryption of refresh tokens
+- Identify all places where refresh tokens are encrypted/decrypted
+- Remove encryption/decryption logic from auth service
+- Update token storage mechanism to store tokens in plaintext
+- Verify that token validation still works correctly
+- Update any related documentation
