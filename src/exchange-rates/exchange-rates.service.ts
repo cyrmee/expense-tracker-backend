@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { OpenExchangeRatesResponse } from './dto';
@@ -8,22 +8,28 @@ import { OpenExchangeRatesResponse } from './dto';
 @Injectable()
 export class ExchangeRatesService implements OnModuleInit {
   private readonly logger = new Logger(ExchangeRatesService.name);
-  private readonly apiUrl: string | undefined;
-  private readonly appId: string | undefined;
+  private readonly apiUrl: string;
+  private readonly appId: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
-    this.appId = this.configService.get<string>('OPENEXCHANGERATES_APP_ID');
-    this.apiUrl =
-      this.configService.get<string>('OPENEXCHANGERATES_API_URL') ||
-      'https://openexchangerates.org/api/latest.json';
-    if (!this.appId) {
-      this.logger.error(
-        'OPENEXCHANGERATES_APP_ID environment variable is not set',
+    const appId = this.configService.get<string>('OPENEXCHANGERATES_APP_ID');
+    if (!appId) {
+      throw new Error(
+        'OPENEXCHANGERATES_APP_ID environment variable is not defined',
       );
     }
+    this.appId = appId;
+
+    const apiUrl = this.configService.get<string>('OPENEXCHANGERATES_API_URL');
+    if (!apiUrl) {
+      throw new Error(
+        'OPENEXCHANGERATES_API_URL environment variable is not defined',
+      );
+    }
+    this.apiUrl = apiUrl;
   }
 
   async onModuleInit() {

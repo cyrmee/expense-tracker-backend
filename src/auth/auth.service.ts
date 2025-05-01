@@ -582,8 +582,12 @@ export class AuthService {
   async generateAccessToken(payload: any): Promise<string> {
     const accessTokenExpiry = this.configService.get<string>(
       'JWT_ACCESS_EXPIRATION',
-      '15m',
     );
+    if (!accessTokenExpiry) {
+      throw new Error(
+        'JWT_ACCESS_EXPIRATION environment variable is not defined',
+      );
+    }
 
     // Generate a unique JTI (JWT ID) for this token
     const jti = await this.cryptoService.generateRandomToken(24);
@@ -614,7 +618,7 @@ export class AuthService {
         }),
         { EX: expiryInSeconds },
       )
-      .catch((error) => {
+      .catch((error: { message: string }) => {
         this.logger.error(
           `Error storing access token JTI in Redis: ${error.message}`,
         );
@@ -627,8 +631,12 @@ export class AuthService {
   async generateRefreshToken(userId: string): Promise<string> {
     const refreshTokenExpiry = this.configService.get<string>(
       'JWT_REFRESH_EXPIRATION',
-      '7d', // 7 days in seconds
     );
+    if (!refreshTokenExpiry) {
+      throw new Error(
+        'JWT_REFRESH_EXPIRATION environment variable is not defined',
+      );
+    }
 
     // Generate a unique JTI for this token
     const jti = await this.cryptoService.generateRandomToken(24);

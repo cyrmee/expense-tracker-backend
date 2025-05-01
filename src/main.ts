@@ -1,9 +1,9 @@
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe, Logger } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import * as passport from 'passport';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as passport from 'passport';
+import { AppModule } from './app.module';
 import {
   AllExceptionsFilter,
   HttpExceptionFilter,
@@ -64,7 +64,10 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
   logger.log('Swagger documentation configured');
 
-  const port = process.env.PORT || 5000;
+  const port = process.env.PORT;
+  if (!port) {
+    throw new Error('PORT environment variable is not defined');
+  }
   await app.listen(port);
   const baseUrl = `http://localhost:${port}`;
 
