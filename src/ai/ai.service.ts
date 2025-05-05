@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppSettingsService } from '../app-settings/app-settings.service';
 import { CategoryComparisonDto } from '../benchmarking/dto';
 import { ParsedExpenseDto } from '../expenses/dto';
@@ -12,6 +13,7 @@ export class AiService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly appSettingsService: AppSettingsService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -21,16 +23,25 @@ export class AiService {
    * @returns A GoogleGenAI instance initialized with the user's API key
    */
   private async initializeGenAIForUser(userId: string): Promise<GoogleGenAI> {
-    // Get the user's Gemini API key
-    const apiKey = await this.appSettingsService.getGeminiApiKey(userId);
+    let apiKey = await this.appSettingsService.getGeminiApiKey(userId);
 
+    // If user key not found, try the global key
     if (!apiKey) {
-      this.logger.warn(
-        `User ${userId} attempted to use AI features without a configured API key`,
-      );
-      throw new UnauthorizedException(
-        'AI features are not available. Please set your Gemini API key in your account settings.',
-      );
+      const globalApiKey = this.configService.get<string>('GEMINI_API_KEY');
+      apiKey = globalApiKey ?? null; // Convert undefined to null
+      // If the global key is ALSO not found (i.e., apiKey is still null),
+      // throw an error immediately as the fallback mechanism failed due to missing configuration.
+      if (!apiKey) {
+        this.logger.error(
+          'AI feature requested, but no user-specific API key found and the global GEMINI_API_KEY is not configured.',
+        );
+        // Throwing UnauthorizedException might imply the *user* is unauthorized,
+        // but it's actually a server config issue. However, to maintain consistency
+        // with the existing error handling, we use it but with a specific message.
+        throw new UnauthorizedException(
+          'AI features are unavailable due to missing configuration. Please contact the administrator.',
+        );
+      }
     }
 
     return new GoogleGenAI({ apiKey });
