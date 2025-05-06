@@ -1,6 +1,0 @@
-TODO: Remove encryption of refresh tokens
-- Identify all places where refresh tokens are encrypted/decrypted
-- Remove encryption/decryption logic from auth service
-- Update token storage mechanism to store tokens in plaintext
-- Verify that token validation still works correctly
-- Update any related documentation
