@@ -20,9 +20,16 @@ import {
   ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AppSettingsService } from './app-settings.service';
 import { AppSettingsDto, UpdateAppSettingsDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards';
+import { GetAppSettingsQuery } from './queries/impl';
+import {
+  CreateAppSettingsCommand,
+  UpdateAppSettingsCommand,
+  RemoveAppSettingsCommand,
+} from './commands/impl';
 
 @ApiTags('app-settings')
 @Controller('app-settings')
@@ -33,6 +40,8 @@ export class AppSettingsController {
   constructor(
     @Inject(forwardRef(() => AppSettingsService))
     private readonly appSettingsService: AppSettingsService,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   @Get()
@@ -45,10 +54,17 @@ export class AppSettingsController {
   })
   @ApiResponse({ status: 404, description: 'App settings not found' })
   async getAppSettings(@Request() req) {
-    const settings = await this.appSettingsService.getAppSettings(req.user.id);
+    const settings = await this.queryBus.execute(
+      new GetAppSettingsQuery(req.user.id),
+    );
     if (!settings) {
       // Return default settings if none exist
-      return await this.appSettingsService.create(req.user.id); // Assuming create method initializes default settings
+      await this.commandBus.execute(
+        new CreateAppSettingsCommand(req.user.id),
+      );
+      return await this.queryBus.execute(
+        new GetAppSettingsQuery(req.user.id),
+      );
     }
     return settings;
   }
@@ -69,14 +85,31 @@ export class AppSettingsController {
     updateAppSettingsDto: UpdateAppSettingsDto,
     @Request() req,
   ) {
-    await this.appSettingsService.update(updateAppSettingsDto, req.user.id);
+    // Extract properties from DTO and pass them to the command
+    const {
+      preferredCurrency,
+      hideAmounts,
+      themePreference,
+      geminiApiKey,
+    } = updateAppSettingsDto;
+
+    await this.commandBus.execute(
+      new UpdateAppSettingsCommand(
+        req.user.id,
+        preferredCurrency,
+        hideAmounts,
+        themePreference,
+        geminiApiKey,
+      ),
+    );
+
     return {
       message: 'App settings updated successfully',
     };
   }
 
   @Delete()
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset app settings for the authenticated user' })
   @ApiResponse({
     status: 200,
@@ -85,8 +118,8 @@ export class AppSettingsController {
   })
   @ApiResponse({ status: 404, description: 'App settings not found' })
   async remove(@Request() req) {
-    await this.appSettingsService.remove(req.user.id);
-    await this.appSettingsService.create(req.user.id);
+    await this.commandBus.execute(new RemoveAppSettingsCommand(req.user.id));
+    await this.commandBus.execute(new CreateAppSettingsCommand(req.user.id));
     return {
       message: 'App settings reset successfully',
     };
