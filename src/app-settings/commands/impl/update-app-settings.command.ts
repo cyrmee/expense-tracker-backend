@@ -9,7 +9,7 @@ export class UpdateAppSettingsCommand {
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @Expose()
-  public readonly userId: string;
+  public userId: string;
 
   @ApiProperty({
     description: 'Preferred currency for the user',
@@ -18,7 +18,7 @@ export class UpdateAppSettingsCommand {
   @Expose()
   @IsOptional()
   @IsString()
-  public readonly preferredCurrency?: string;
+  public preferredCurrency?: string;
 
   @ApiProperty({
     description: 'Indicates whether amounts should be hidden',
@@ -27,7 +27,7 @@ export class UpdateAppSettingsCommand {
   @Expose()
   @IsOptional()
   @IsBoolean()
-  public readonly hideAmounts?: boolean;
+  public hideAmounts?: boolean;
 
   @ApiProperty({
     description: 'Theme preference for the application',
@@ -36,7 +36,7 @@ export class UpdateAppSettingsCommand {
   @Expose()
   @IsOptional()
   @IsString()
-  public readonly themePreference?: string;
+  public themePreference?: string;
   
   @ApiProperty({
     description: 'Google Gemini API key for AI-powered features',
@@ -45,19 +45,19 @@ export class UpdateAppSettingsCommand {
   @Expose()
   @IsOptional()
   @IsString()
-  public readonly geminiApiKey?: string;
+  public geminiApiKey?: string;
 
   constructor(
-    userId: string,
+    userId?: string,
     preferredCurrency?: string,
     hideAmounts?: boolean,
     themePreference?: string,
     geminiApiKey?: string,
   ) {
-    this.userId = userId;
-    this.preferredCurrency = preferredCurrency;
-    this.hideAmounts = hideAmounts;
-    this.themePreference = themePreference;
-    this.geminiApiKey = geminiApiKey;
+    if (userId) this.userId = userId;
+    if (preferredCurrency !== undefined) this.preferredCurrency = preferredCurrency;
+    if (hideAmounts !== undefined) this.hideAmounts = hideAmounts;
+    if (themePreference !== undefined) this.themePreference = themePreference;
+    if (geminiApiKey !== undefined) this.geminiApiKey = geminiApiKey;
   }
 }

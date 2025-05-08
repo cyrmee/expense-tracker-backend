@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreateAppSettingsDto, UpdateAppSettingsDto } from './dto';
 
 // Import commands and queries from index files
 import {
@@ -31,33 +30,18 @@ export class AppSettingsService {
 
   /**
    * Create app settings for a user
+   * @param command - The command containing user ID and optional settings
    */
-  async create(userId: string, data?: CreateAppSettingsDto): Promise<void> {
-    // Extract properties if data is provided, otherwise use defaults from command constructor
-    const preferredCurrency = data?.preferredCurrency;
-    const hideAmounts = data?.hideAmounts;
-    const themePreference = data?.themePreference;
-    
-    return this.commandBus.execute(
-      new CreateAppSettingsCommand(userId, preferredCurrency, hideAmounts, themePreference)
-    );
+  async create(command: CreateAppSettingsCommand): Promise<void> {
+    return this.commandBus.execute(command);
   }
 
   /**
    * Update app settings for a user
+   * @param command - The command containing user ID and settings to update
    */
-  async update(data: UpdateAppSettingsDto, userId: string): Promise<void> {
-    const { preferredCurrency, hideAmounts, themePreference, geminiApiKey } = data;
-    
-    return this.commandBus.execute(
-      new UpdateAppSettingsCommand(
-        userId,
-        preferredCurrency,
-        hideAmounts,
-        themePreference,
-        geminiApiKey
-      )
-    );
+  async update(command: UpdateAppSettingsCommand): Promise<void> {
+    return this.commandBus.execute(command);
   }
 
   /**
@@ -70,8 +54,9 @@ export class AppSettingsService {
 
   /**
    * Delete app settings for a user
+   * @param command - The command containing the user ID whose settings should be removed
    */
-  async remove(userId: string) {
-    return this.commandBus.execute(new RemoveAppSettingsCommand(userId));
+  async remove(command: RemoveAppSettingsCommand) {
+    return this.commandBus.execute(command);
   }
 }

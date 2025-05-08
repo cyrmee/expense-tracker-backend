@@ -22,9 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AppSettingsService } from './app-settings.service';
-import { AppSettingsDto, UpdateAppSettingsDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards';
-import { GetAppSettingsQuery } from './queries/impl';
 import {
   CreateAppSettingsCommand,
   UpdateAppSettingsCommand,
@@ -50,21 +48,17 @@ export class AppSettingsController {
   @ApiResponse({
     status: 200,
     description: "Returns the user's app settings",
-    type: AppSettingsDto,
+    // Using query result as return type
+    type: Object,
   })
   @ApiResponse({ status: 404, description: 'App settings not found' })
   async getAppSettings(@Request() req) {
-    const settings = await this.queryBus.execute(
-      new GetAppSettingsQuery(req.user.id),
-    );
+    const settings = await this.appSettingsService.getAppSettings(req.user.id);
     if (!settings) {
       // Return default settings if none exist
-      await this.commandBus.execute(
-        new CreateAppSettingsCommand(req.user.id),
-      );
-      return await this.queryBus.execute(
-        new GetAppSettingsQuery(req.user.id),
-      );
+      const createCommand = new CreateAppSettingsCommand(req.user.id);
+      await this.appSettingsService.create(createCommand);
+      return await this.appSettingsService.getAppSettings(req.user.id);
     }
     return settings;
   }
@@ -77,31 +71,17 @@ export class AppSettingsController {
     description: 'App settings updated successfully',
   })
   @ApiBody({
-    type: UpdateAppSettingsDto,
+    type: UpdateAppSettingsCommand,
     description: 'Partial app settings to update',
   })
   async update(
-    @Body()
-    updateAppSettingsDto: UpdateAppSettingsDto,
+    @Body() command: UpdateAppSettingsCommand,
     @Request() req,
   ) {
-    // Extract properties from DTO and pass them to the command
-    const {
-      preferredCurrency,
-      hideAmounts,
-      themePreference,
-      geminiApiKey,
-    } = updateAppSettingsDto;
+    // Simply set the userId directly on the command object
+    command.userId = req.user.id;
 
-    await this.commandBus.execute(
-      new UpdateAppSettingsCommand(
-        req.user.id,
-        preferredCurrency,
-        hideAmounts,
-        themePreference,
-        geminiApiKey,
-      ),
-    );
+    await this.appSettingsService.update(command);
 
     return {
       message: 'App settings updated successfully',
@@ -114,12 +94,18 @@ export class AppSettingsController {
   @ApiResponse({
     status: 200,
     description: 'App settings reset successfully',
-    type: AppSettingsDto,
+    type: Object,
   })
   @ApiResponse({ status: 404, description: 'App settings not found' })
   async remove(@Request() req) {
-    await this.commandBus.execute(new RemoveAppSettingsCommand(req.user.id));
-    await this.commandBus.execute(new CreateAppSettingsCommand(req.user.id));
+    const removeCommand = new RemoveAppSettingsCommand();
+    removeCommand.userId = req.user.id;
+    await this.appSettingsService.remove(removeCommand);
+    
+    const createCommand = new CreateAppSettingsCommand();
+    createCommand.userId = req.user.id;
+    await this.appSettingsService.create(createCommand);
+    
     return {
       message: 'App settings reset successfully',
     };

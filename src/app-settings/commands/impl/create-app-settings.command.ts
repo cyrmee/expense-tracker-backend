@@ -9,7 +9,7 @@ export class CreateAppSettingsCommand {
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @Expose()
-  public readonly userId: string;
+  public userId: string;
 
   @ApiProperty({
     description: 'Preferred currency for the user',
@@ -18,7 +18,7 @@ export class CreateAppSettingsCommand {
   @Expose()
   @IsNotEmpty()
   @IsString()
-  public readonly preferredCurrency: string;
+  public preferredCurrency: string = 'ETB';
 
   @ApiProperty({
     description: 'Indicates whether amounts should be hidden',
@@ -27,7 +27,7 @@ export class CreateAppSettingsCommand {
   @Expose()
   @IsNotEmpty()
   @IsBoolean()
-  public readonly hideAmounts: boolean = true;
+  public hideAmounts: boolean = true;
 
   @ApiProperty({
     description: 'Theme preference for the application',
@@ -36,17 +36,17 @@ export class CreateAppSettingsCommand {
   @Expose()
   @IsNotEmpty()
   @IsString()
-  public readonly themePreference: string = 'system';
+  public themePreference: string = 'system';
 
   constructor(
-    userId: string,
+    userId?: string,
     preferredCurrency?: string,
     hideAmounts?: boolean,
     themePreference?: string,
   ) {
-    this.userId = userId;
-    this.preferredCurrency = preferredCurrency || 'ETB';
-    this.hideAmounts = hideAmounts !== undefined ? hideAmounts : true;
-    this.themePreference = themePreference || 'system';
+    if (userId) this.userId = userId;
+    if (preferredCurrency) this.preferredCurrency = preferredCurrency;
+    if (hideAmounts !== undefined) this.hideAmounts = hideAmounts;
+    if (themePreference) this.themePreference = themePreference;
   }
 }
