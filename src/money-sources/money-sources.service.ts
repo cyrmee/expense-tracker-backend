@@ -160,6 +160,14 @@ export class MoneySourcesService {
 
   async create(data: CreateMoneySourceDto, userId: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
+      // If setting this money source as default, unset any existing defaults
+      if (data.isDefault) {
+        await tx.moneySource.updateMany({
+          where: { userId, isDefault: true },
+          data: { isDefault: false },
+        });
+      }
+
       const moneySource = await tx.moneySource.create({
         data: {
           name: data.name,
@@ -209,26 +217,36 @@ export class MoneySourcesService {
 
     await this.getMoneySource(id, userId);
 
-    await this.prisma.moneySource.update({
-      where: {
-        id,
-      },
-      data: {
-        name: data.name,
-        balance: data.balance,
-        currency: data.currency,
-        icon: data.icon,
-        isDefault: data.isDefault,
-        budget: data.budget,
-        updatedAt: new Date(),
-      },
-      include: {
-        user: {
-          include: {
-            appSettings: true,
+    await this.prisma.$transaction(async (tx) => {
+      // If setting this money source as default, unset any existing defaults
+      if (data.isDefault) {
+        await tx.moneySource.updateMany({
+          where: { userId, isDefault: true, id: { not: id } },
+          data: { isDefault: false },
+        });
+      }
+
+      await tx.moneySource.update({
+        where: {
+          id,
+        },
+        data: {
+          name: data.name,
+          balance: data.balance,
+          currency: data.currency,
+          icon: data.icon,
+          isDefault: data.isDefault,
+          budget: data.budget,
+          updatedAt: new Date(),
+        },
+        include: {
+          user: {
+            include: {
+              appSettings: true,
+            },
           },
         },
-      },
+      });
     });
 
     return;
