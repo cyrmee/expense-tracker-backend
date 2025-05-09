@@ -64,7 +64,7 @@ export class AppSettingsController {
   }
 
   @Patch()
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update app settings for the authenticated user' })
   @ApiResponse({
     status: 204,

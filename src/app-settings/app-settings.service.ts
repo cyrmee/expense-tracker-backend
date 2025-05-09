@@ -14,12 +14,10 @@ import {
 
 @Injectable()
 export class AppSettingsService {
-  private readonly logger = new Logger(AppSettingsService.name);
-
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-  ) {}
+  ) { }
 
   /**
    * Find app settings for a specific user
