@@ -21,6 +21,7 @@ import {
   RegisterDto,
   ResetPasswordDto,
 } from './dto';
+import { CreateAppSettingsCommand } from 'src/app-settings/commands';
 
 @Injectable()
 export class AuthService {
@@ -75,8 +76,10 @@ export class AuthService {
       },
     });
 
-    // Create default app settings for the user
-    await this.appSettingsService.create(createdUser.id);
+    // Create default app settings for the user with CreateAppSettingsCommand
+    const createCommand = new CreateAppSettingsCommand();
+    createCommand.userId = createdUser.id;
+    await this.appSettingsService.create(createCommand);
 
     this.logger.log(`User registered successfully: ${createdUser.id}`);
 

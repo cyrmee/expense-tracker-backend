@@ -10,6 +10,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import * as CommandHandlers from './commands/handlers';
 import * as QueryHandlers from './queries/handlers';
 
+// Define command and query handlers
 const CommandHandlersArray = [
   CommandHandlers.CreateAppSettingsHandler,
   CommandHandlers.UpdateAppSettingsHandler,
@@ -30,10 +31,10 @@ const QueryHandlersArray = [
   ],
   controllers: [AppSettingsController],
   providers: [
-    AppSettingsService, 
+    AppSettingsService, // Keep the service as a facade for other modules
     ...CommandHandlersArray,
     ...QueryHandlersArray,
   ],
-  exports: [AppSettingsService],
+  exports: [AppSettingsService], // Continue exporting the service for dependent modules
 })
 export class AppSettingsModule {}
