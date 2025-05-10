@@ -1,36 +1,37 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
-  Request,
-  Patch,
-  UsePipes,
-  ValidationPipe,
-  Query,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
-import { MoneySourcesService } from './money-sources.service';
-import { JwtAuthGuard } from '../auth/guards';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
-  ApiParam,
   ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards';
+import { ApiPaginationQuery } from '../common/decorators';
+import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
 import {
+  CardStyleDto,
   CreateMoneySourceDto,
   MoneySourceDto,
   UpdateMoneySourceDto,
 } from './dto';
-import { ApiPaginationQuery } from '../common/decorators';
-import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
+import { MoneySourcesService } from './money-sources.service';
 
 @ApiTags('money-sources')
 @ApiBearerAuth()
@@ -39,7 +40,6 @@ import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
 @UsePipes(new ValidationPipe({ transform: true }))
 export class MoneySourcesController {
   constructor(private readonly moneySourcesService: MoneySourcesService) {}
-
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all money sources for the current user' })
@@ -58,6 +58,19 @@ export class MoneySourcesController {
       req.user.id,
       paginatedRequestDto,
     );
+  }
+
+  @Get('card-styles')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get all card styles' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a list of all available card styles',
+    type: [CardStyleDto],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getCardStyles(): Promise<CardStyleDto[]> {
+    return await this.moneySourcesService.getCardStyles();
   }
 
   @Get(':id')
@@ -121,7 +134,6 @@ export class MoneySourcesController {
       message: 'Money source updated successfully',
     };
   }
-
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a money source' })

@@ -249,24 +249,21 @@ Ensure the response is a valid JSON object. If any information is missing, use n
 
       // Build a prompt for the AI
       const prompt = `
-You're a financial advisor with a unique style - mixing serious advice with witty observations. 📊 Based on these metrics from the last few months:
-• You spent ${params.userMonthlySpending} ${params.currency}  
-• The average user spent ${params.averageMonthlySpending} ${params.currency}  
-• That's a ${params.overallDifferencePercentage}% difference from the crowd  
-• Based on ${params.comparisonUserCount} other users  
-• Category breakdown: ${JSON.stringify(params.categoryComparisons)}
+Analyze these spending metrics:
+• User spent: ${params.userMonthlySpending} ${params.currency}  
+• Average user spent: ${params.averageMonthlySpending} ${params.currency}  
+• Difference: ${params.overallDifferencePercentage}% 
+• Based on: ${params.comparisonUserCount} users
+• Categories: ${JSON.stringify(params.categoryComparisons)}
 
-Create a financial analysis using bullet points that balances tough love with encouragement:
+Write directly as a financial advisor with:
+• An attention-grabbing headline
+• 3 points on overspending areas with tough love and witty observations
+• 2 points acknowledging good financial restraint
+• 3 practical financial recommendations with direct, honest advice
+• A memorable conclusion about financial consequences
 
-• Start with an attention-grabbing headline that's either sobering or slightly humorous depending on their overall spending 💸
-• Include 3-4 bullet points highlighting overspending areas - don't hesitate to use witty roasts for the most concerning categories ⚠️
-• Include 2-3 bullet points acknowledging areas of good financial restraint with genuine praise 👍
-• Add 3-4 bullet points with practical financial advice, mixing in both serious recommendations and lighter observations 📝
-• End with a memorable conclusion about financial consequences - either motivational or a gentle reality check depending on their overall situation 🕰️
-
-Balance your tone based on their spending patterns - more serious for concerning patterns, more playful for better financial behavior. Use emojis throughout for emphasis.
-
-Return the complete bullet-point analysis as a single formatted string.
+Balance your tone based on spending patterns. Format as bullet points. Start directly with the headline - don't use introductory phrases like "Here's an analysis".
 `;
 
       const result = await genAI.models.generateContent({

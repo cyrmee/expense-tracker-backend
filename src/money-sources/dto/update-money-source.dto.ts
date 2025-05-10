@@ -1,12 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
 import {
-  IsString,
+  IsBoolean,
   IsNotEmpty,
   IsNumber,
-  Min,
   IsOptional,
-  IsBoolean,
+  IsString,
+  IsUUID,
+  Min,
 } from 'class-validator';
 
 @Exclude()
@@ -73,4 +74,14 @@ export class UpdateMoneySourceDto {
   @IsNumber()
   @IsOptional()
   budget?: number;
+
+  @ApiProperty({
+    description: 'Card style ID for the money source appearance',
+    example: 'modern-gradient',
+    required: false,
+  })
+  @Expose()
+  @IsUUID()
+  @IsOptional()
+  cardStyleId?: string;
 }

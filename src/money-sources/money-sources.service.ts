@@ -1,23 +1,24 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import {
-  CreateMoneySourceDto,
-  MoneySourceDto,
-  UpdateMoneySourceDto,
-} from './dto';
 import { plainToClass } from 'class-transformer';
-import { CurrencyConverter } from '../common/utils';
 import {
   PaginatedRequestDto,
   PaginatedResponseDto,
   QueryBuilder,
   SortOrder,
 } from '../common/dto';
+import { CurrencyConverter } from '../common/utils';
+import { PrismaService } from '../prisma/prisma.service';
+import {
+  CardStyleDto,
+  CreateMoneySourceDto,
+  MoneySourceDto,
+  UpdateMoneySourceDto,
+} from './dto';
 
 @Injectable()
 export class MoneySourcesService {
@@ -51,6 +52,30 @@ export class MoneySourcesService {
     }
 
     return dto;
+  }
+  /**
+   * Get a random card style from the database
+   * @returns Promise<string | undefined> The ID of a random card style or undefined if none found
+   */
+  private async getRandomCardStyleId(): Promise<string | undefined> {
+    try {
+      const cardStyles = await this.prisma.cardStyle.findMany({
+        select: { id: true },
+      });
+
+      if (cardStyles.length === 0) {
+        return undefined;
+      }
+
+      const randomIndex = Math.floor(Math.random() * cardStyles.length);
+      return cardStyles[randomIndex].id;
+    } catch (error) {
+      this.logger.error(
+        `Error getting random card style: ${error.message}`,
+        error.stack,
+      );
+      return undefined;
+    }
   }
 
   async getMoneySources(
@@ -89,7 +114,6 @@ export class MoneySourcesService {
     const orderBy = {
       [sortBy]: sortOrder,
     };
-
     const moneySources = await this.prisma.moneySource.findMany({
       where: whereConditions,
       include: {
@@ -98,6 +122,7 @@ export class MoneySourcesService {
             appSettings: true,
           },
         },
+        cardStyle: true,
       },
       orderBy,
       skip: (page - 1) * pageSize,
@@ -127,7 +152,6 @@ export class MoneySourcesService {
       page,
     };
   }
-
   async getMoneySource(id: string, userId: string): Promise<MoneySourceDto> {
     const moneySource = await this.prisma.moneySource.findFirst({
       where: {
@@ -137,6 +161,7 @@ export class MoneySourcesService {
       include: {
         expenses: true,
         balanceHistories: true,
+        cardStyle: true,
         user: {
           include: {
             appSettings: true,
@@ -157,7 +182,6 @@ export class MoneySourcesService {
       moneySource.user?.appSettings?.preferredCurrency || 'USD',
     );
   }
-
   async create(data: CreateMoneySourceDto, userId: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       // If setting this money source as default, unset any existing defaults
@@ -168,20 +192,38 @@ export class MoneySourcesService {
         });
       }
 
-      const moneySource = await tx.moneySource.create({
-        data: {
-          name: data.name,
-          balance: data.balance,
-          currency: data.currency,
-          icon: data.icon,
-          isDefault: data.isDefault,
-          budget: data.budget,
-          user: {
-            connect: {
-              id: userId,
-            },
+      // If cardStyleId is not provided, assign a random one
+      let cardStyleId = data.cardStyleId;
+      if (!cardStyleId) {
+        cardStyleId = await this.getRandomCardStyleId();
+      }
+
+      // Create data object for the money source
+      const createData: any = {
+        name: data.name,
+        balance: data.balance,
+        currency: data.currency,
+        icon: data.icon || '💵', // Default icon if not provided
+        isDefault: data.isDefault || false,
+        budget: data.budget || 0,
+        user: {
+          connect: {
+            id: userId,
           },
         },
+      };
+
+      // Add card style if available
+      if (cardStyleId) {
+        createData.cardStyle = {
+          connect: {
+            id: cardStyleId,
+          },
+        };
+      }
+
+      const moneySource = await tx.moneySource.create({
+        data: createData,
         include: {
           user: {
             include: {
@@ -204,7 +246,6 @@ export class MoneySourcesService {
 
     return;
   }
-
   async update(
     id: string,
     data: UpdateMoneySourceDto,
@@ -226,19 +267,36 @@ export class MoneySourcesService {
         });
       }
 
+      // Prepare update data
+      const updateData: any = {
+        name: data.name,
+        balance: data.balance,
+        currency: data.currency,
+        icon: data.icon,
+        isDefault: data.isDefault,
+        budget: data.budget,
+        updatedAt: new Date(),
+      };
+
+      // Handle cardStyleId separately
+      if (data.cardStyleId) {
+        updateData.cardStyle = {
+          connect: {
+            id: data.cardStyleId,
+          },
+        };
+      } else if (data.cardStyleId === null) {
+        // If explicitly set to null, disconnect the cardStyle
+        updateData.cardStyle = {
+          disconnect: true,
+        };
+      }
+
       await tx.moneySource.update({
         where: {
           id,
         },
-        data: {
-          name: data.name,
-          balance: data.balance,
-          currency: data.currency,
-          icon: data.icon,
-          isDefault: data.isDefault,
-          budget: data.budget,
-          updatedAt: new Date(),
-        },
+        data: updateData,
         include: {
           user: {
             include: {
@@ -306,5 +364,23 @@ export class MoneySourcesService {
     });
 
     return;
+  }
+
+  /**
+   * Get all card styles
+   * @returns CardStyleDto[]
+   */
+  async getCardStyles(): Promise<CardStyleDto[]> {
+    try {
+      const cardStyles = await this.prisma.cardStyle.findMany();
+
+      return cardStyles.map((style) => plainToClass(CardStyleDto, style));
+    } catch (error) {
+      this.logger.error(
+        `Error fetching card styles: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 }

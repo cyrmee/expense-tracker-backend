@@ -78,10 +78,13 @@ model MoneySource {
   balanceHistories BalanceHistory[]
   user             User             @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   userId           String
+  cardStyle        CardStyle?       @relation(fields: [cardStyleId], references: [id])
+  cardStyleId      String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
   @@index([userId])
+  @@index([cardStyleId])
 }
 
 model BalanceHistory {
@@ -122,4 +125,22 @@ model ExchangeRate {
   updatedAt DateTime @updatedAt
 
   @@index([base])
+}
+
+model CardStyle {
+  id              String        @id @default(uuid())
+  name            String
+  styleId         String        @unique // e.g., "modern-gradient"
+  background      String // Tailwind class or custom style
+  textColor       String
+  cardNumberFont  String
+  border          String
+  shadow          String
+  hasChip         Boolean       @default(true)
+  chipColor       String
+  visaLogoVariant String // "white", "black", etc.
+  showBgImage     Boolean       @default(false)
+  moneySources    MoneySource[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }

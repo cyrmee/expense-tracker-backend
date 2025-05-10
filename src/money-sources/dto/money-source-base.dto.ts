@@ -61,6 +61,14 @@ export class MoneySourceBaseDto {
   budget: number;
 
   @ApiProperty({
+    description: 'Card style ID for the money source appearance',
+    example: 'modern-gradient',
+    required: false,
+  })
+  @Expose()
+  cardStyleId?: string;
+
+  @ApiProperty({
     description: 'Budget in preferred currency',
     example: 15.25,
     required: false,

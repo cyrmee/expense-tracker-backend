@@ -3,7 +3,155 @@ import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
+async function seedCardStyles(prisma: PrismaClient) {
+  const cardStyles = [
+    {
+      styleId: 'classic-blue',
+      name: 'Classic Blue',
+      background: 'bg-blue-700',
+      textColor: 'text-white',
+      cardNumberFont: 'font-mono',
+      border: 'border-none',
+      shadow: 'shadow-lg',
+      hasChip: true,
+      chipColor: 'bg-yellow-400',
+      visaLogoVariant: 'white',
+      showBgImage: false,
+    },
+    {
+      styleId: 'modern-gradient',
+      name: 'Modern Gradient',
+      background: 'bg-gradient-to-br from-purple-600 via-pink-500 to-red-400',
+      textColor: 'text-white',
+      cardNumberFont: 'font-bold',
+      border: 'border-none',
+      shadow: 'shadow-xl',
+      hasChip: true,
+      chipColor: 'bg-white',
+      visaLogoVariant: 'white',
+      showBgImage: false,
+    },
+    {
+      styleId: 'glassmorphic',
+      name: 'Glassmorphic',
+      background: 'backdrop-blur-lg bg-white/10',
+      textColor: 'text-white',
+      cardNumberFont: 'font-light',
+      border: 'border border-white/20',
+      shadow: 'shadow-2xl',
+      hasChip: true,
+      chipColor: 'bg-white/30',
+      visaLogoVariant: 'white',
+      showBgImage: false,
+    },
+    {
+      styleId: 'dark-mode',
+      name: 'Dark Mode',
+      background: 'bg-neutral-900',
+      textColor: 'text-gray-100',
+      cardNumberFont: 'font-mono',
+      border: 'border border-gray-700',
+      shadow: 'shadow-md',
+      hasChip: false,
+      chipColor: 'bg-gray-600',
+      visaLogoVariant: 'white',
+      showBgImage: false,
+    },
+    {
+      styleId: 'luxury-black-gold',
+      name: 'Luxury Black & Gold',
+      background: 'bg-black',
+      textColor: 'text-yellow-400',
+      cardNumberFont: 'font-serif',
+      border: 'border border-yellow-500',
+      shadow: 'shadow-2xl',
+      hasChip: true,
+      chipColor: 'bg-yellow-400',
+      visaLogoVariant: 'gold',
+      showBgImage: false,
+    },
+    {
+      styleId: 'nature-green',
+      name: 'Nature Green',
+      background: 'bg-gradient-to-r from-green-500 to-lime-500',
+      textColor: 'text-white',
+      cardNumberFont: 'font-medium',
+      border: 'border-none',
+      shadow: 'shadow-lg',
+      hasChip: true,
+      chipColor: 'bg-white',
+      visaLogoVariant: 'white',
+      showBgImage: false,
+    },
+    {
+      styleId: 'retro-90s',
+      name: 'Retro 90s',
+      background: 'bg-gradient-to-br from-pink-400 via-yellow-300 to-cyan-400',
+      textColor: 'text-black',
+      cardNumberFont: 'font-mono',
+      border: 'border border-black',
+      shadow: 'shadow-lg',
+      hasChip: false,
+      chipColor: 'bg-pink-300',
+      visaLogoVariant: 'black',
+      showBgImage: false,
+    },
+    {
+      styleId: 'cyberpunk-neon',
+      name: 'Neon Cyberpunk',
+      background: 'bg-gradient-to-tr from-blue-900 via-purple-800 to-pink-700',
+      textColor: 'text-cyan-300',
+      cardNumberFont: 'font-mono',
+      border: 'border border-cyan-400',
+      shadow: 'shadow-neon',
+      hasChip: true,
+      chipColor: 'bg-cyan-300',
+      visaLogoVariant: 'neon',
+      showBgImage: true,
+    },
+    {
+      styleId: 'minimal-white',
+      name: 'Minimal White',
+      background: 'bg-white',
+      textColor: 'text-gray-900',
+      cardNumberFont: 'font-light',
+      border: 'border border-gray-200',
+      shadow: 'shadow-sm',
+      hasChip: false,
+      chipColor: 'bg-gray-300',
+      visaLogoVariant: 'black',
+      showBgImage: false,
+    },
+    {
+      styleId: 'futuristic-holographic',
+      name: 'Futuristic Holographic',
+      background: 'bg-gradient-to-r from-indigo-400 via-pink-500 to-purple-500',
+      textColor: 'text-white',
+      cardNumberFont: 'font-semibold',
+      border: 'border-none',
+      shadow: 'shadow-xl',
+      hasChip: true,
+      chipColor: 'bg-white',
+      visaLogoVariant: 'white',
+      showBgImage: true,
+    },
+  ];
+
+  for (const style of cardStyles) {
+    await prisma.cardStyle.upsert({
+      where: { styleId: style.styleId },
+      update: style,
+      create: style,
+    });
+  }
+
+  console.log(`Seeded card styles`);
+}
+
 async function main() {
+  // Seed card styles first
+  await seedCardStyles(prisma);
+  
   // Create test users
   const user1 = await prisma.user.upsert({
     where: { email: 'john@example.com' },
@@ -953,6 +1101,9 @@ async function main() {
       userId: user7.id,
     },
   });
+
+  // Seed card styles
+  await seedCardStyles(prisma);
 
   console.log('Expense tracker seed data created successfully');
 }
