@@ -1,6 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { GoogleGenAI } from '@google/genai';
 import { AppSettingsService } from '../app-settings/app-settings.service';
 import { CategoryComparisonDto } from '../benchmarking/dto';
 import { ParsedExpenseDto } from '../expenses/dto';
@@ -8,8 +8,6 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AiService {
-  private readonly logger = new Logger(AiService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly appSettingsService: AppSettingsService,
@@ -32,9 +30,6 @@ export class AiService {
       // If the global key is ALSO not found (i.e., apiKey is still null),
       // throw an error immediately as the fallback mechanism failed due to missing configuration.
       if (!apiKey) {
-        this.logger.error(
-          'AI feature requested, but no user-specific API key found and the global GEMINI_API_KEY is not configured.',
-        );
         // Throwing UnauthorizedException might imply the *user* is unauthorized,
         // but it's actually a server config issue. However, to maintain consistency
         // with the existing error handling, we use it but with a specific message.
@@ -142,9 +137,6 @@ Ensure the response is a valid JSON object. If any information is missing, use n
       try {
         parsedResponse = JSON.parse(responseText);
       } catch (parseError) {
-        this.logger.error(
-          `Failed to parse JSON response: ${parseError.message}, Response Text: ${responseText}`,
-        );
         throw new Error(`Failed to parse AI response: Invalid JSON format`);
       }
 
@@ -224,7 +216,6 @@ Ensure the response is a valid JSON object. If any information is missing, use n
         throw error;
       }
 
-      this.logger.error(`Failed to parse expense text: ${error.message}`);
       throw new Error(`Failed to parse expense: ${error.message}`);
     }
   }
@@ -276,9 +267,6 @@ Balance your tone based on spending patterns. Format as bullet points. Start dir
       });
 
       if (!result.text) {
-        this.logger.warn(
-          'AI response for benchmark insights did not return any text',
-        );
         return 'Unable to generate spending insights at this time.';
       }
 
@@ -289,9 +277,6 @@ Balance your tone based on spending patterns. Format as bullet points. Start dir
         return `AI-powered insights unavailable: ${error.message}`;
       }
 
-      this.logger.error(
-        `Failed to generate benchmark insights: ${error.message}`,
-      );
       return 'Unable to generate spending insights at this time. Please try again later.';
     }
   }
@@ -305,7 +290,6 @@ Balance your tone based on spending patterns. Format as bullet points. Start dir
       const apiKey = await this.appSettingsService.getGeminiApiKey(userId);
       return !!apiKey;
     } catch (error) {
-      this.logger.error(`Error checking AI availability: ${error.message}`);
       return false;
     }
   }
@@ -323,7 +307,6 @@ Balance your tone based on spending patterns. Format as bullet points. Start dir
     }
 
     // If parsing fails, return current date
-    this.logger.warn(`Could not parse date: "${dateStr}", using current date`);
     return new Date();
   }
 }

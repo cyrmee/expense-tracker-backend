@@ -1,14 +1,13 @@
+import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CreateAppSettingsCommand } from '../impl/create-app-settings.command';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { CreateAppSettingsCommand } from '../impl/create-app-settings.command';
 
 @Injectable()
 @CommandHandler(CreateAppSettingsCommand)
 export class CreateAppSettingsHandler
-  implements ICommandHandler<CreateAppSettingsCommand, void> {
-  private readonly logger = new Logger(CreateAppSettingsHandler.name);
-
+  implements ICommandHandler<CreateAppSettingsCommand, void>
+{
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(command: CreateAppSettingsCommand): Promise<void> {
@@ -25,7 +24,7 @@ export class CreateAppSettingsHandler
     const existingSettings = await this.prisma.appSettings.findUnique({
       where: { userId },
     });
-    
+
     if (existingSettings) return;
 
     // Create new settings with defaults
@@ -37,7 +36,5 @@ export class CreateAppSettingsHandler
         },
       },
     });
-
-    this.logger.log(`Created app settings for user ${userId}`);
   }
 }

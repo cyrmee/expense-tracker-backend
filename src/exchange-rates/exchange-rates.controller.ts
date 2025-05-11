@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Param,
-  Logger,
   NotFoundException,
   UsePipes,
   ValidationPipe,

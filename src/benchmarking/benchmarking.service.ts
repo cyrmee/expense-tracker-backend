@@ -1,15 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
-import { SpendingComparisonDto } from './dto/spending-comparison.dto';
-import { CategoryComparisonDto } from './dto/category-comparison.dto';
+import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
+import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { CategoryComparisonDto } from './dto/category-comparison.dto';
+import { SpendingComparisonDto } from './dto/spending-comparison.dto';
 import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class BenchmarkingService {
-  private readonly logger = new Logger(BenchmarkingService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly exchangeRatesService: ExchangeRatesService,
@@ -18,13 +16,10 @@ export class BenchmarkingService {
 
   /**
    * Compare a user's spending patterns with anonymized data from other users
-   */
-  async compareSpendingPatterns(
+   */ async compareSpendingPatterns(
     userId: string,
     monthsToCompare: number = 3,
   ): Promise<SpendingComparisonDto> {
-    this.logger.log(`Generating spending comparison for user ${userId}`);
-
     try {
       // Get the user's preferred currency
       const preferredCurrency = await this.getUserPreferredCurrency(userId);
@@ -56,13 +51,8 @@ export class BenchmarkingService {
       );
 
       // Minimum number of users required for anonymized comparison
-      const MINIMUM_USER_COUNT = 3;
-
-      // Early return if not enough users for comparison
+      const MINIMUM_USER_COUNT = 3; // Early return if not enough users for comparison
       if (comparisonUserCount < MINIMUM_USER_COUNT) {
-        this.logger.log(
-          `Not enough users (${comparisonUserCount}) for anonymous comparison. Minimum required: ${MINIMUM_USER_COUNT}`,
-        );
         return plainToClass(SpendingComparisonDto, {
           insights:
             'Not enough users to generate spending insights. Try again later when more data is available.',
@@ -135,7 +125,7 @@ export class BenchmarkingService {
       );
 
       // Generate AI-powered insights based on the comparisons
-      const insights = await this.aiService.generateBenchmarkInsights(userId,{
+      const insights = await this.aiService.generateBenchmarkInsights(userId, {
         categoryComparisons,
         overallDifferencePercentage: formattedOverallDifferencePercentage,
         userMonthlySpending: formattedUserMonthlySpending,
@@ -143,11 +133,6 @@ export class BenchmarkingService {
         comparisonUserCount,
         currency: preferredCurrency,
       });
-
-      this.logger.log(
-        `Generated AI-powered spending insights for user ${userId}`,
-      );
-
       return plainToClass(SpendingComparisonDto, {
         insights,
         categoryComparisons,
@@ -158,9 +143,6 @@ export class BenchmarkingService {
         currency: preferredCurrency,
       });
     } catch (error) {
-      this.logger.error(
-        `Error generating spending comparison for user ${userId}: ${error.message}`,
-      );
       throw error;
     }
   }
@@ -237,9 +219,6 @@ export class BenchmarkingService {
 
       return categoryMap;
     } catch (error) {
-      this.logger.error(
-        `Error getting user expenses by category: ${error.message}`,
-      );
       throw error;
     }
   }
@@ -263,11 +242,7 @@ export class BenchmarkingService {
 
       // Minimum number of users required for anonymized comparison
       const MINIMUM_USER_COUNT = 3;
-
       if (userCount < MINIMUM_USER_COUNT) {
-        this.logger.log(
-          `Not enough users (${userCount}) for anonymous comparison. Minimum required: ${MINIMUM_USER_COUNT}`,
-        );
         return new Map<string, number>();
       }
 
@@ -333,9 +308,6 @@ export class BenchmarkingService {
 
       return categoryMap;
     } catch (error) {
-      this.logger.error(
-        `Error getting other users' expenses by category: ${error.message}`,
-      );
       throw error;
     }
   }

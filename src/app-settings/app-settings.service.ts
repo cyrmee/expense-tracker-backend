@@ -1,23 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
 // Import commands and queries from index files
 import {
   CreateAppSettingsCommand,
-  UpdateAppSettingsCommand,
   RemoveAppSettingsCommand,
+  UpdateAppSettingsCommand,
 } from './commands/impl';
-import {
-  GetAppSettingsQuery,
-  GetGeminiApiKeyQuery,
-} from './queries/impl';
+import { GetAppSettingsQuery, GetGeminiApiKeyQuery } from './queries/impl';
 
 @Injectable()
 export class AppSettingsService {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-  ) { }
+  ) {}
 
   /**
    * Find app settings for a specific user

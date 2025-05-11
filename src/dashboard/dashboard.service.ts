@@ -1,22 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import { plainToClass } from 'class-transformer';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
+  BudgetComparisonDto,
+  BudgetComparisonItemDto,
+  CategoryExpenseDto,
   DashboardOverviewDto,
   DashboardTrendsDto,
   ExpenseCompositionDto,
-  BudgetComparisonDto,
-  CategoryExpenseDto,
-  BudgetComparisonItemDto,
   ExpenseOverview,
   TotalBalance,
 } from './dto';
-import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class DashboardService {
-  private readonly logger = new Logger(DashboardService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly exchangeRatesService: ExchangeRatesService,

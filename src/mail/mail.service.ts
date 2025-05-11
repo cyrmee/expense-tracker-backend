@@ -1,11 +1,9 @@
 import { MailerService } from '@nestjs-modules/mailer';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MailService {
-  private readonly logger = new Logger(MailService.name);
-
   constructor(
     private readonly mailerService: MailerService,
     private readonly config: ConfigService,
@@ -26,10 +24,6 @@ export class MailService {
         text: emailBody,
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to send reset password email to ${email}`,
-        error.stack,
-      );
       throw error;
     }
   }
@@ -44,7 +38,6 @@ export class MailService {
         text: emailBody,
       });
     } catch (error) {
-      this.logger.error(`Failed to send OTP email to ${email}`, error.stack);
       throw error;
     }
   }

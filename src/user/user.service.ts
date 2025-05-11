@@ -1,12 +1,10 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { plainToClass } from 'class-transformer';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto, UserDto } from './dto';
-import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class UserService {
-  private readonly logger = new Logger(UserService.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   async getUsers(): Promise<UserDto[]> {
@@ -32,9 +30,7 @@ export class UserService {
         updatedAt: true,
       },
     });
-
     if (!user) {
-      this.logger.error(`User with ID ${id} not found`);
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
@@ -43,31 +39,23 @@ export class UserService {
       profilePicture: user.profilePicture || '',
     };
   }
-
   async getProfile(userId: string) {
     if (!userId) {
-      this.logger.error('Profile retrieval failed - missing user ID');
       throw new Error('User ID is required for profile lookup');
     }
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
-
     if (!user) {
-      this.logger.error(
-        `Profile retrieval failed - user with ID ${userId} not found`,
-      );
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     // Transform user object to UserDto
     return plainToClass(UserDto, user);
   }
-
   async updateProfile(userId: string, data: UpdateUserDto) {
     if (!userId) {
-      this.logger.error('Profile update failed - missing user ID');
       throw new Error('User ID is required for profile update');
     }
 
@@ -93,10 +81,8 @@ export class UserService {
 
     return;
   }
-
   async deleteUser(userId: string) {
     if (!userId) {
-      this.logger.error('User deletion failed - missing user ID');
       throw new Error('User ID is required for deletion');
     }
 

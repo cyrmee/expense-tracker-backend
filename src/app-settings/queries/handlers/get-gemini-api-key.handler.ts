@@ -1,14 +1,14 @@
+import { Injectable } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { GetGeminiApiKeyQuery } from '../impl/get-gemini-api-key.query';
-import { PrismaService } from '../../../prisma/prisma.service';
 import { CryptoService } from '../../../common/crypto.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { GetGeminiApiKeyQuery } from '../impl/get-gemini-api-key.query';
 
 @Injectable()
 @QueryHandler(GetGeminiApiKeyQuery)
-export class GetGeminiApiKeyHandler implements IQueryHandler<GetGeminiApiKeyQuery, string | null> {
-  private readonly logger = new Logger(GetGeminiApiKeyHandler.name);
-
+export class GetGeminiApiKeyHandler
+  implements IQueryHandler<GetGeminiApiKeyQuery, string | null>
+{
   constructor(
     private readonly prisma: PrismaService,
     private readonly cryptoService: CryptoService,
@@ -16,7 +16,7 @@ export class GetGeminiApiKeyHandler implements IQueryHandler<GetGeminiApiKeyQuer
 
   async execute(query: GetGeminiApiKeyQuery): Promise<string | null> {
     const { userId } = query;
-    
+
     try {
       const settings = await this.prisma.appSettings.findUnique({
         where: { userId },
@@ -29,7 +29,6 @@ export class GetGeminiApiKeyHandler implements IQueryHandler<GetGeminiApiKeyQuer
 
       return await this.cryptoService.decrypt(settings.geminiApiKey);
     } catch (error) {
-      this.logger.error(`Failed to get Gemini API key: ${error.message}`);
       return null;
     }
   }

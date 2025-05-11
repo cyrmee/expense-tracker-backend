@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,8 +8,6 @@ import { CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @Injectable()
 export class CategoriesService {
-  private readonly logger = new Logger(CategoriesService.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   async getCategories(userId: string) {
@@ -80,14 +77,10 @@ export class CategoriesService {
   async remove(id: string, userId: string) {
     const category = await this.getCategory(id, userId);
     if (!category) {
-      this.logger.error(`Category ${id} not found for user ${userId}`);
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
     if (category.isDefault) {
-      this.logger.warn(
-        `Deletion failed - attempted to remove default category ${id}`,
-      );
       throw new BadRequestException(`Default categories cannot be deleted`);
     }
 

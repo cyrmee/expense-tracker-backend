@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { AiService } from '../ai/ai.service';
 import {
@@ -18,8 +18,6 @@ import {
 
 @Injectable()
 export class ExpensesService {
-  private readonly logger = new Logger(ExpensesService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
@@ -140,9 +138,7 @@ export class ExpensesService {
         },
       },
     });
-
     if (!expense) {
-      this.logger.error(`Expense with ID ${id} not found for user ${userId}`);
       throw new NotFoundException(`Expense with ID ${id} not found`);
     }
 
@@ -211,7 +207,6 @@ export class ExpensesService {
       const parsedData = await this.aiService.parseExpenseData(text, userId);
       return parsedData;
     } catch (error) {
-      this.logger.error(`Error validating expense text: ${error.message}`);
       throw new NotFoundException(`${error.message}`);
     }
   }

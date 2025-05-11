@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
@@ -22,8 +21,6 @@ import {
 
 @Injectable()
 export class MoneySourcesService {
-  private readonly logger = new Logger(MoneySourcesService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
@@ -67,10 +64,6 @@ export class MoneySourcesService {
       const randomIndex = Math.floor(Math.random() * cardStyles.length);
       return cardStyles[randomIndex].id;
     } catch (error) {
-      this.logger.error(
-        `Error getting random card style: ${error.message}`,
-        error.stack,
-      );
       return undefined;
     }
   }
@@ -166,11 +159,7 @@ export class MoneySourcesService {
         },
       },
     });
-
     if (!moneySource) {
-      this.logger.error(
-        `Money source with ID ${id} not found for user ${userId}`,
-      );
       throw new NotFoundException(`Money source with ID ${id} not found`);
     }
 
@@ -250,7 +239,6 @@ export class MoneySourcesService {
     userId: string,
   ): Promise<void> {
     if (!id) {
-      this.logger.error('Money source update failed - missing ID');
       throw new BadRequestException('ID is required for update');
     }
 
@@ -316,9 +304,6 @@ export class MoneySourcesService {
       });
 
       if (!moneySource) {
-        this.logger.error(
-          `Add funds failed - money source with ID ${id} not found for user ${userId}`,
-        );
         throw new NotFoundException(`Money source with ID ${id} not found`);
       }
 
@@ -368,10 +353,6 @@ export class MoneySourcesService {
 
       return cardStyles.map((style) => plainToClass(CardStyleDto, style));
     } catch (error) {
-      this.logger.error(
-        `Error fetching card styles: ${error.message}`,
-        error.stack,
-      );
       throw error;
     }
   }

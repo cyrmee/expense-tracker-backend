@@ -1,22 +1,27 @@
+import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateAppSettingsCommand } from '../impl/update-app-settings.command';
-import { PrismaService } from '../../../prisma/prisma.service';
 import { CryptoService } from '../../../common/crypto.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { UpdateAppSettingsCommand } from '../impl/update-app-settings.command';
 
 @Injectable()
 @CommandHandler(UpdateAppSettingsCommand)
 export class UpdateAppSettingsHandler
-  implements ICommandHandler<UpdateAppSettingsCommand, void> {
-  private readonly logger = new Logger(UpdateAppSettingsHandler.name);
-
+  implements ICommandHandler<UpdateAppSettingsCommand, void>
+{
   constructor(
     private readonly prisma: PrismaService,
     private readonly cryptoService: CryptoService,
   ) {}
 
   async execute(command: UpdateAppSettingsCommand): Promise<void> {
-    const { userId, preferredCurrency, hideAmounts, themePreference, geminiApiKey } = command;
+    const {
+      userId,
+      preferredCurrency,
+      hideAmounts,
+      themePreference,
+      geminiApiKey,
+    } = command;
 
     // Ensure settings exist for the user
     const appSettings = await this.prisma.appSettings.findUnique({
@@ -41,41 +46,34 @@ export class UpdateAppSettingsHandler
 
     // Prepare update data
     const updateData: any = {};
-    
+
     // Only include properties that are defined in the command
     if (preferredCurrency !== undefined) {
       updateData.preferredCurrency = preferredCurrency;
     }
-    
+
     if (hideAmounts !== undefined) {
       updateData.hideAmounts = hideAmounts;
     }
-    
+
     if (themePreference !== undefined) {
       updateData.themePreference = themePreference;
-    }
-
-    // Handle Gemini API key if provided
+    } // Handle Gemini API key if provided
     if (geminiApiKey !== undefined) {
       if (geminiApiKey) {
         // Encrypt the API key before storing
-        updateData.geminiApiKey = await this.cryptoService.encrypt(geminiApiKey);
-        this.logger.log(`Updated Gemini API key for user ${userId}`);
+        updateData.geminiApiKey =
+          await this.cryptoService.encrypt(geminiApiKey);
       } else {
         // If empty string or null, remove the API key
         updateData.geminiApiKey = null;
-        this.logger.log(`Removed Gemini API key for user ${userId}`);
       }
-    }
-
-    // Update existing settings only if there are changes to make
+    } // Update existing settings only if there are changes to make
     if (Object.keys(updateData).length > 0) {
       await this.prisma.appSettings.update({
         where: { userId },
         data: updateData,
       });
-      
-      this.logger.log(`Updated app settings for user ${userId}`);
     }
   }
 }
