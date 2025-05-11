@@ -154,6 +154,7 @@ export class BalanceHistoryService {
     const history = await this.prisma.balanceHistory.create({
       data: {
         balance: data.balance,
+        amount: data.amount,
         currency: data.currency,
         date: new Date(data.date),
         createdAt: new Date(),
