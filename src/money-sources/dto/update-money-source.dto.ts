@@ -85,3 +85,15 @@ export class UpdateMoneySourceDto {
   @IsOptional()
   cardStyleId?: string;
 }
+
+export class AddFundsDto {
+  @ApiProperty({
+    description: 'Amount to add to the money source',
+    example: 100,
+    required: true,
+  })
+  @Expose()
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+}

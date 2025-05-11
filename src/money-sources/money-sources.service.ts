@@ -53,10 +53,7 @@ export class MoneySourcesService {
 
     return dto;
   }
-  /**
-   * Get a random card style from the database
-   * @returns Promise<string | undefined> The ID of a random card style or undefined if none found
-   */
+
   private async getRandomCardStyleId(): Promise<string | undefined> {
     try {
       const cardStyles = await this.prisma.cardStyle.findMany({
@@ -322,13 +319,6 @@ export class MoneySourcesService {
           `Add funds failed - money source with ID ${id} not found for user ${userId}`,
         );
         throw new NotFoundException(`Money source with ID ${id} not found`);
-      }
-
-      if (amount <= 0) {
-        this.logger.error(`Add funds failed - invalid amount: ${amount}`);
-        throw new BadRequestException(
-          'Amount must be positive when adding funds',
-        );
       }
 
       // Update with new balance

@@ -26,6 +26,7 @@ import { JwtAuthGuard } from '../auth/guards';
 import { ApiPaginationQuery } from '../common/decorators';
 import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
 import {
+  AddFundsDto,
   CardStyleDto,
   CreateMoneySourceDto,
   MoneySourceDto,
@@ -134,6 +135,34 @@ export class MoneySourcesController {
       message: 'Money source updated successfully',
     };
   }
+
+  @Patch('add-funds/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Update an existing money source' })
+  @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
+  @ApiBody({ type: AddFundsDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Funds added successfully',
+    type: MoneySourceDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Money source not found' })
+  async addFunds(
+    @Param('id') id: string,
+    @Body() addFundsDto: AddFundsDto,
+    @Request() req,
+  ) {
+    await this.moneySourcesService.addFunds(
+      id,
+      addFundsDto.amount,
+      req.user.id,
+    );
+    return {
+      message: 'Funds added successfully',
+    };
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a money source' })
