@@ -1,10 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class CurrencyConverter {
-  private readonly logger = new Logger(CurrencyConverter.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   async getExchangeRate(currency: string): Promise<number | null> {
@@ -26,18 +24,7 @@ export class CurrencyConverter {
 
     const fromRate = await this.getExchangeRate(fromCurrency);
     const toRate = await this.getExchangeRate(toCurrency);
-
     if (!fromRate || !toRate) {
-      if (!fromRate) {
-        this.logger.error(
-          `Currency conversion failed - exchange rate not found for ${fromCurrency}`,
-        );
-      }
-      if (!toRate) {
-        this.logger.error(
-          `Currency conversion failed - exchange rate not found for ${toCurrency}`,
-        );
-      }
       return null;
     }
 

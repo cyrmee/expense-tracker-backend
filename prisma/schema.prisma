@@ -90,7 +90,8 @@ model MoneySource {
 model BalanceHistory {
   id            String      @id @default(uuid())
   date          DateTime
-  balance       Float
+  balance       Float // Current balance after change
+  amount        Float // Amount added/subtracted (positive for additions, negative for subtractions)
   currency      String
   moneySource   MoneySource @relation(fields: [moneySourceId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   moneySourceId String

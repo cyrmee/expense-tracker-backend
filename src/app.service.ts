@@ -1,9 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  private readonly logger = new Logger(AppService.name);
-
   getHello(): object {
     return {
       name: 'Expense Tracker API',

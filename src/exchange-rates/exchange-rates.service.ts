@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
@@ -7,7 +7,6 @@ import { OpenExchangeRatesResponse } from './dto';
 
 @Injectable()
 export class ExchangeRatesService implements OnModuleInit {
-  private readonly logger = new Logger(ExchangeRatesService.name);
   private readonly apiUrl: string;
   private readonly appId: string;
 
@@ -65,34 +64,23 @@ export class ExchangeRatesService implements OnModuleInit {
           },
         });
       }
-
-      this.logger.log(
-        `Exchange rates updated successfully at ${new Date().toISOString()}`,
-      );
     } catch (error) {
-      this.logger.error('Failed to update exchange rates', error.stack);
+      // Error handled silently
     }
   }
-
   async getExchangeRates() {
     try {
       return await this.prisma.exchangeRate.findMany();
     } catch (error) {
-      this.logger.error('Failed to fetch exchange rates', error.stack);
       throw error;
     }
   }
-
   async getExchangeRate(currencyCode: string) {
     try {
       return await this.prisma.exchangeRate.findUnique({
         where: { id: currencyCode },
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to fetch exchange rate for ${currencyCode}`,
-        error.stack,
-      );
       throw error;
     }
   }
@@ -129,11 +117,7 @@ export class ExchangeRatesService implements OnModuleInit {
       const toRate = await this.prisma.exchangeRate.findUnique({
         where: { id: toCurrency },
       });
-
       if (!fromRate || !toRate) {
-        this.logger.error(
-          `Failed to convert: missing exchange rate for ${!fromRate ? fromCurrency : toCurrency}`,
-        );
         return amount; // Return original amount if we can't convert
       }
 
@@ -146,10 +130,6 @@ export class ExchangeRatesService implements OnModuleInit {
         ? Math.round(convertedAmount)
         : Math.round(convertedAmount * 100) / 100;
     } catch (error) {
-      this.logger.error(
-        `Error converting ${amount} from ${fromCurrency} to ${toCurrency}`,
-        error.stack,
-      );
       return amount; // Return original amount if conversion fails
     }
   }

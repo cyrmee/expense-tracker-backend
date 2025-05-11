@@ -151,7 +151,7 @@ async function seedCardStyles(prisma: PrismaClient) {
 async function main() {
   // Seed card styles first
   await seedCardStyles(prisma);
-  
+
   // Create test users
   const user1 = await prisma.user.upsert({
     where: { email: 'john@example.com' },
@@ -910,6 +910,7 @@ async function main() {
     data: {
       date: twoWeeksAgo,
       balance: 600,
+      amount: 600, // Initial balance
       currency: 'USD',
       moneySourceId: user1Cash.id,
       userId: user1.id,
@@ -920,6 +921,7 @@ async function main() {
     data: {
       date: oneWeekAgo,
       balance: 550,
+      amount: -50, // Decreased by 50
       currency: 'USD',
       moneySourceId: user1Cash.id,
       userId: user1.id,
@@ -930,6 +932,7 @@ async function main() {
     data: {
       date: now,
       balance: 500,
+      amount: -50, // Decreased by 50
       currency: 'USD',
       moneySourceId: user1Cash.id,
       userId: user1.id,
@@ -941,6 +944,7 @@ async function main() {
     data: {
       date: twoWeeksAgo,
       balance: 900,
+      amount: 900, // Initial balance
       currency: 'USD',
       moneySourceId: user3Cash.id,
       userId: user3.id,
@@ -951,6 +955,7 @@ async function main() {
     data: {
       date: now,
       balance: 800,
+      amount: -100, // Decreased by 100
       currency: 'USD',
       moneySourceId: user3Cash.id,
       userId: user3.id,
@@ -961,6 +966,7 @@ async function main() {
     data: {
       date: twoWeeksAgo,
       balance: 350,
+      amount: 350, // Initial balance
       currency: 'USD',
       moneySourceId: user4Cash.id,
       userId: user4.id,
@@ -971,6 +977,7 @@ async function main() {
     data: {
       date: now,
       balance: 300,
+      amount: -50, // Decreased by 50
       currency: 'USD',
       moneySourceId: user4Cash.id,
       userId: user4.id,
@@ -981,6 +988,7 @@ async function main() {
     data: {
       date: twoWeeksAgo,
       balance: 200,
+      amount: 200, // Initial balance
       currency: 'USD',
       moneySourceId: user5Cash.id,
       userId: user5.id,
@@ -991,6 +999,7 @@ async function main() {
     data: {
       date: now,
       balance: 150,
+      amount: -50, // Decreased by 50
       currency: 'USD',
       moneySourceId: user5Cash.id,
       userId: user5.id,
@@ -1001,6 +1010,7 @@ async function main() {
     data: {
       date: twoWeeksAgo,
       balance: 4500,
+      amount: 4500, // Initial balance
       currency: 'USD',
       moneySourceId: user6Bank.id,
       userId: user6.id,
@@ -1011,6 +1021,7 @@ async function main() {
     data: {
       date: now,
       balance: 4300,
+      amount: -200, // Decreased by 200
       currency: 'USD',
       moneySourceId: user6Bank.id,
       userId: user6.id,
@@ -1021,6 +1032,7 @@ async function main() {
     data: {
       date: twoWeeksAgo,
       balance: 500,
+      amount: 500, // Initial balance
       currency: 'USD',
       moneySourceId: user7Cash.id,
       userId: user7.id,
@@ -1031,6 +1043,7 @@ async function main() {
     data: {
       date: now,
       balance: 420,
+      amount: -80, // Decreased by 80
       currency: 'USD',
       moneySourceId: user7Cash.id,
       userId: user7.id,

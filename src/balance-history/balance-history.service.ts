@@ -1,19 +1,17 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { BalanceHistoryDto } from './dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import { CurrencyConverter } from '../common/utils';
 import {
   PaginatedRequestDto,
   PaginatedResponseDto,
   QueryBuilder,
   SortOrder,
 } from '../common/dto';
+import { CurrencyConverter } from '../common/utils';
+import { PrismaService } from '../prisma/prisma.service';
+import { BalanceHistoryDto } from './dto';
 
 @Injectable()
 export class BalanceHistoryService {
-  private readonly logger = new Logger(BalanceHistoryService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
@@ -133,11 +131,7 @@ export class BalanceHistoryService {
         },
       },
     });
-
     if (!history) {
-      this.logger.error(
-        `Balance history record not found for ID: ${id} and userId: ${userId}`,
-      );
       throw new NotFoundException('Balance history record not found');
     }
 
@@ -154,6 +148,7 @@ export class BalanceHistoryService {
     const history = await this.prisma.balanceHistory.create({
       data: {
         balance: data.balance,
+        amount: data.amount,
         currency: data.currency,
         date: new Date(data.date),
         createdAt: new Date(),

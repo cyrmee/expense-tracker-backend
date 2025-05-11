@@ -29,6 +29,13 @@ export class BalanceHistoryDto {
   balance: number;
 
   @ApiProperty({
+    description: 'Amount added at the recorded time',
+    example: 100,
+  })
+  @Expose()
+  amount: number;
+
+  @ApiProperty({
     description: 'Balance in preferred currency',
     example: 150.25,
     required: false,

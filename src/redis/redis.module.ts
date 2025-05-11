@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { redisStore } from 'cache-manager-redis-store';
 import { createClient } from '@redis/client';
+import { redisStore } from 'cache-manager-redis-store';
 
 @Module({
   imports: [
@@ -69,12 +69,8 @@ import { createClient } from '@redis/client';
         // Handle connection errors
         redisClient.on('error', (err) => {
           console.error('Redis connection error:', err);
-        });
-
-        // Log successful reconnection
-        redisClient.on('reconnecting', () => {
-          console.log('Attempting to reconnect to Redis...');
-        });
+        }); // Handle reconnection
+        redisClient.on('reconnecting', () => {});
 
         redisClient.on('ready', () => {});
 
