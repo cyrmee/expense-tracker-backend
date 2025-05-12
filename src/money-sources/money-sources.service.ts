@@ -15,7 +15,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   CardStyleDto,
   CreateMoneySourceDto,
+  CreateMonthlyBudgetDto,
   MoneySourceDto,
+  MonthlyBudgetDto,
   UpdateMoneySourceDto,
 } from './dto';
 
@@ -295,8 +297,7 @@ export class MoneySourcesService {
 
     return;
   }
-
-  async addFunds(id: string, amount: number, userId: string): Promise<void> {
+  async addFunds(id: string, amount: number, userId: string): Promise<{ reminderForBudget: boolean }> {
     await this.prisma.$transaction(async (tx) => {
       const moneySource = await tx.moneySource.findFirst({
         where: { id, userId },
@@ -328,7 +329,22 @@ export class MoneySourcesService {
       });
     });
 
-    return;
+    // Check if there's a budget for the current month
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const budget = await this.prisma.monthlyBudget.findFirst({
+      where: {
+        moneySourceId: id,
+        userId,
+        month: currentMonth,
+        year: currentYear,
+      },
+    });
+
+    // Return whether the user should be reminded to set a budget
+    return { reminderForBudget: !budget };
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -355,5 +371,91 @@ export class MoneySourcesService {
     } catch (error) {
       throw error;
     }
+  }
+
+  /**
+   * Set a monthly budget for a money source
+   */
+  async setMonthlyBudget(
+    moneySourceId: string,
+    userId: string,
+    data: CreateMonthlyBudgetDto,
+  ): Promise<void> {
+    const moneySource = await this.getMoneySource(moneySourceId, userId);
+
+    const now = new Date();
+    const month = data.month || now.getMonth() + 1; // Use current month if not provided
+    const year = data.year || now.getFullYear(); // Use current year if not provided
+
+    await this.prisma.monthlyBudget.upsert({
+      where: {
+        moneySourceId_month_year: {
+          moneySourceId,
+          month,
+          year,
+        },
+      },
+      update: {
+        amount: data.amount,
+      },
+      create: {
+        amount: data.amount,
+        month,
+        year,
+        moneySourceId,
+        userId,
+      },
+    });
+  }
+
+  /**
+   * Get monthly budget for a money source
+   */
+  async getMonthlyBudget(
+    moneySourceId: string,
+    userId: string,
+    month?: number,
+    year?: number,
+  ): Promise<MonthlyBudgetDto | null> {
+    const now = new Date();
+    const targetMonth = month || now.getMonth() + 1;
+    const targetYear = year || now.getFullYear();
+
+    const budget = await this.prisma.monthlyBudget.findFirst({
+      where: {
+        moneySourceId,
+        userId,
+        month: targetMonth,
+        year: targetYear,
+      },
+    });
+
+    return budget ? plainToClass(MonthlyBudgetDto, budget) : null;
+  }
+
+  /**
+   * Get all monthly budgets for a user
+   */
+  async getAllMonthlyBudgets(
+    userId: string,
+    month?: number,
+    year?: number,
+  ): Promise<MonthlyBudgetDto[]> {
+    const now = new Date();
+    const targetMonth = month || now.getMonth() + 1;
+    const targetYear = year || now.getFullYear();
+
+    const budgets = await this.prisma.monthlyBudget.findMany({
+      where: {
+        userId,
+        month: targetMonth,
+        year: targetYear,
+      },
+      include: {
+        moneySource: true,
+      },
+    });
+
+    return plainToClass(MonthlyBudgetDto, budgets);
   }
 }
