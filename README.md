@@ -218,7 +218,6 @@ These features require a valid Google Gemini API key to be configured in your `.
   - `redis/` - Redis module for JWT token management
   - `config/` - Application configuration
 - `prisma/` - Prisma schema, migrations, and seed data
-- `test/` - End-to-end tests
 
 ## Default Users
 
