@@ -38,7 +38,7 @@ model Expense {
   // Relationships
   category      Category    @relation(fields: [categoryId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   categoryId    String
-  moneySource   MoneySource @relation(fields: [moneySourceId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  moneySource   MoneySource @relation(fields: [moneySourceId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   moneySourceId String
   user          User        @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   userId        String
