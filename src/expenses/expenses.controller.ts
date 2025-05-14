@@ -33,6 +33,7 @@ import {
 import {
   CreateExpenseDto,
   CreateExpenseFromTextDto,
+  DeleteExpensesDto,
   ExpenseDto,
   ParsedExpenseDto,
   UpdateExpenseDto,
@@ -145,6 +146,23 @@ export class ExpensesController {
     }
     await this.expensesService.update(id, updateExpenseDto, req.user.id);
     return { message: 'Expense updated successfully' };
+  }
+  @Delete('bulk')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete multiple expenses' })
+  @ApiBody({ type: DeleteExpensesDto })
+  @ApiResponse({
+    status: 204,
+    description: 'The expenses have been successfully deleted',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'One or more expenses not found' })
+  async bulkRemove(
+    @Body() deleteExpensesDto: DeleteExpensesDto,
+    @Request() req,
+  ) {
+    await this.expensesService.bulkRemove(deleteExpensesDto.ids, req.user.id);
+    return { message: 'Expenses deleted successfully' };
   }
 
   @Delete(':id')

@@ -324,4 +324,55 @@ export class ExpensesService {
 
     return;
   }
+
+  async bulkRemove(ids: string[], userId: string): Promise<void> {
+    // Get all expenses to be deleted to validate ownership and get the money source IDs
+    const expenses = await this.prisma.expense.findMany({
+      where: {
+        id: { in: ids },
+        userId: userId,
+      },
+      include: {
+        moneySource: true,
+      },
+    });
+
+    // Verify all requested IDs belong to the user
+    if (expenses.length !== ids.length) {
+      throw new NotFoundException('One or more expenses not found or not owned by the user');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // Group expenses by money source for efficient updates
+      const moneySourceMap = new Map<string, number>();
+      
+      // Sum amounts by money source
+      expenses.forEach(expense => {
+        const currentAmount = moneySourceMap.get(expense.moneySource.id) || 0;
+        moneySourceMap.set(expense.moneySource.id, currentAmount + expense.amount);
+      });
+      
+      // Update each money source's balance
+      for (const [moneySourceId, amount] of moneySourceMap.entries()) {
+        await tx.moneySource.update({
+          where: { id: moneySourceId },
+          data: {
+            balance: {
+              increment: amount,
+            },
+          },
+        });
+      }
+      
+      // Delete all expenses in a single operation
+      await tx.expense.deleteMany({
+        where: {
+          id: { in: ids },
+          userId: userId,
+        },
+      });
+    });
+
+    return;
+  }
 }
