@@ -26,7 +26,7 @@ export class MoneySourcesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
-  ) {}
+  ) { }
 
   private async transformToDto(
     moneySource: any,
@@ -144,6 +144,7 @@ export class MoneySourcesService {
       page,
     };
   }
+
   async getMoneySource(id: string, userId: string): Promise<MoneySourceDto> {
     const moneySource = await this.prisma.moneySource.findFirst({
       where: {
@@ -170,6 +171,7 @@ export class MoneySourcesService {
       moneySource.user?.appSettings?.preferredCurrency || 'USD',
     );
   }
+
   async create(data: CreateMoneySourceDto, userId: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       // If setting this money source as default, unset any existing defaults
@@ -235,6 +237,7 @@ export class MoneySourcesService {
 
     return;
   }
+
   async update(
     id: string,
     data: UpdateMoneySourceDto,
@@ -297,6 +300,7 @@ export class MoneySourcesService {
 
     return;
   }
+
   async addFunds(id: string, amount: number, userId: string): Promise<{ reminderForBudget: boolean }> {
     await this.prisma.$transaction(async (tx) => {
       const moneySource = await tx.moneySource.findFirst({

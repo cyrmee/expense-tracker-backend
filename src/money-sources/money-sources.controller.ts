@@ -44,6 +44,7 @@ import { MoneySourcesService } from './money-sources.service';
 @UsePipes(new ValidationPipe({ transform: true }))
 export class MoneySourcesController {
   constructor(private readonly moneySourcesService: MoneySourcesService) {}
+  
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all money sources for the current user' })

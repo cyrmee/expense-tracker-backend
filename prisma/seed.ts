@@ -166,6 +166,95 @@ async function seedCardStyles(prisma: PrismaClient) {
   console.log(`Seeded card styles`);
 }
 
+// Helper function to get a random item from an array
+function getRandomItem<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+// Function to associate random card styles with money sources
+async function associateCardStylesWithMoneySources(prisma: PrismaClient) {
+  // Get all card styles and money sources
+  const cardStyles = await prisma.cardStyle.findMany();
+  const moneySources = await prisma.moneySource.findMany();
+
+  // Associate each money source with a random card style
+  for (const moneySource of moneySources) {
+    const randomStyle = getRandomItem(cardStyles);
+
+    await prisma.moneySource.update({
+      where: { id: moneySource.id },
+      data: { cardStyleId: randomStyle.id },
+    });
+  }
+
+  console.log(
+    `Associated random card styles with ${moneySources.length} money sources`,
+  );
+}
+
+// Seed monthly budgets
+async function seedMonthlyBudgets(prisma: PrismaClient) {
+  // Get all money sources
+  const moneySources = await prisma.moneySource.findMany();
+
+  // Current date information for creating monthly budgets
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  // Create monthly budgets for current month and next month for each money source
+  for (const moneySource of moneySources) {
+    // Current month budget (based on the money source's budget property)
+    await prisma.monthlyBudget.upsert({
+      where: {
+        moneySourceId_month_year: {
+          moneySourceId: moneySource.id,
+          month: currentMonth,
+          year: currentYear,
+        },
+      },
+      update: {
+        amount: moneySource.budget,
+      },
+      create: {
+        amount: moneySource.budget,
+        month: currentMonth,
+        year: currentYear,
+        moneySourceId: moneySource.id,
+        userId: moneySource.userId,
+      },
+    });
+
+    // Next month budget (slightly adjusted from current month's budget)
+    const nextMonth = (currentMonth + 1) % 12;
+    const nextMonthYear = nextMonth === 0 ? currentYear + 1 : currentYear;
+    const adjustmentFactor = Math.random() * 0.2 - 0.1; // Random adjustment between -10% and +10%
+    const nextMonthBudget = Math.round(moneySource.budget * (1 + adjustmentFactor));
+
+    await prisma.monthlyBudget.upsert({
+      where: {
+        moneySourceId_month_year: {
+          moneySourceId: moneySource.id,
+          month: nextMonth,
+          year: nextMonthYear,
+        },
+      },
+      update: {
+        amount: nextMonthBudget,
+      },
+      create: {
+        amount: nextMonthBudget,
+        month: nextMonth,
+        year: nextMonthYear,
+        moneySourceId: moneySource.id,
+        userId: moneySource.userId,
+      },
+    });
+  }
+
+  console.log(`Seeded monthly budgets for ${moneySources.length} money sources`);
+}
+
 async function main() {
   // Seed card styles first
   await seedCardStyles(prisma);
@@ -1132,9 +1221,12 @@ async function main() {
       userId: user7.id,
     },
   });
-
-  // Seed card styles
-  await seedCardStyles(prisma);
+  
+  // Associate random card styles with money sources
+  await associateCardStylesWithMoneySources(prisma);
+  
+  // Seed monthly budgets
+  await seedMonthlyBudgets(prisma);
 
   console.log('Expense tracker seed data created successfully');
 }
