@@ -4,10 +4,6 @@ import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 @Exclude()
 export class UpdateAppSettingsCommand {
-  @ApiProperty({
-    description: 'User ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
   public userId: string;
 
   @ApiProperty({
@@ -36,7 +32,7 @@ export class UpdateAppSettingsCommand {
   @IsOptional()
   @IsString()
   public themePreference?: string;
-  
+
   @ApiProperty({
     description: 'Google Gemini API key for AI-powered features',
     example: 'abc123xyz456',
