@@ -42,17 +42,28 @@ export class UpdateAppSettingsCommand {
   @IsString()
   public geminiApiKey?: string;
 
+  @ApiProperty({
+    description: 'Indicates whether the user has completed onboarding',
+    example: true,
+  })
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  onboarded?: boolean;
+
   constructor(
     userId?: string,
     preferredCurrency?: string,
     hideAmounts?: boolean,
     themePreference?: string,
     geminiApiKey?: string,
+    onboarded?: boolean,
   ) {
     if (userId) this.userId = userId;
     if (preferredCurrency !== undefined) this.preferredCurrency = preferredCurrency;
     if (hideAmounts !== undefined) this.hideAmounts = hideAmounts;
     if (themePreference !== undefined) this.themePreference = themePreference;
     if (geminiApiKey !== undefined) this.geminiApiKey = geminiApiKey;
+    if (onboarded !== undefined) this.onboarded = onboarded;
   }
 }

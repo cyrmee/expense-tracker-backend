@@ -7,12 +7,11 @@ import { UpdateAppSettingsCommand } from '../impl/update-app-settings.command';
 @Injectable()
 @CommandHandler(UpdateAppSettingsCommand)
 export class UpdateAppSettingsHandler
-  implements ICommandHandler<UpdateAppSettingsCommand, void>
-{
+  implements ICommandHandler<UpdateAppSettingsCommand, void> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cryptoService: CryptoService,
-  ) {}
+  ) { }
 
   async execute(command: UpdateAppSettingsCommand): Promise<void> {
     const {
@@ -21,6 +20,7 @@ export class UpdateAppSettingsHandler
       hideAmounts,
       themePreference,
       geminiApiKey,
+      onboarded
     } = command;
 
     // Ensure settings exist for the user
@@ -39,6 +39,10 @@ export class UpdateAppSettingsHandler
           user: {
             connect: { id: userId },
           },
+          onboarded: onboarded !== undefined ? onboarded : false,
+          geminiApiKey: geminiApiKey
+            ? await this.cryptoService.encrypt(geminiApiKey)
+            : null,
         },
       });
       return;
@@ -69,6 +73,9 @@ export class UpdateAppSettingsHandler
         updateData.geminiApiKey = null;
       }
     } // Update existing settings only if there are changes to make
+    if (onboarded !== undefined) {
+      updateData.onboarded = onboarded;
+    }
     if (Object.keys(updateData).length > 0) {
       await this.prisma.appSettings.update({
         where: { userId },

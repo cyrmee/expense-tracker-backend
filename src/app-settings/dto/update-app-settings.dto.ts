@@ -42,4 +42,13 @@ export class UpdateAppSettingsDto {
   @IsOptional()
   @IsString()
   geminiApiKey?: string;
+
+  @ApiProperty({
+    description: 'Indicates whether the user has completed onboarding',
+    example: true,
+  })
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  onboarded?: boolean;
 }

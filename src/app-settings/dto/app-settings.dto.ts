@@ -35,6 +35,13 @@ export class AppSettingsDto {
   themePreference: string;
 
   @ApiProperty({
+    description: 'Indicates whether the user has completed onboarding',
+    example: true,
+  })
+  @Expose()
+  onboarded: boolean;
+
+  @ApiProperty({
     description: 'ID of the user who owns these settings',
     example: 'b6e11e23-d43d-4a0d-a9d3-08e94d7a032b',
   })

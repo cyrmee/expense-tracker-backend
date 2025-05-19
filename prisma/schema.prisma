@@ -111,6 +111,7 @@ model AppSettings {
   hideAmounts       Boolean
   themePreference   String
   geminiApiKey      String?
+  onboarded         Boolean  @default(false)
   // One-to-one relationship with User
   user              User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   userId            String   @unique
@@ -149,13 +150,13 @@ model CardStyle {
 }
 
 model MonthlyBudget {
-  id        String     @id @default(uuid())
+  id        String   @id @default(uuid())
   amount    Float
   month     Int
   year      Int
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
   moneySource   MoneySource @relation(fields: [moneySourceId], references: [id], onDelete: Cascade)
   moneySourceId String
