@@ -251,7 +251,7 @@ Write directly as a financial advisor with:
 • An attention-grabbing headline
 • 3 points on overspending areas with tough love and witty observations
 • 2 points acknowledging good financial restraint
-• 3 practical financial recommendations with direct, honest advice
+• 3 practical financial recommendations with direct, honest advice (focus on actions the user can take within this app - do NOT suggest using other budgeting apps)
 • A memorable conclusion about financial consequences
 
 Balance your tone based on spending patterns. Format as bullet points. Start directly with the headline - don't use introductory phrases like "Here's an analysis".
