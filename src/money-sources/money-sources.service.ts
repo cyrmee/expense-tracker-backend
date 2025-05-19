@@ -188,6 +188,10 @@ export class MoneySourcesService {
         cardStyleId = await this.getRandomCardStyleId();
       }
 
+      if (data.budget && data.budget < 0) {
+        throw new BadRequestException('Budget cannot be negative');
+      }
+
       // Create data object for the money source
       const createData: any = {
         name: data.name,

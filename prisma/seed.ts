@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
@@ -378,26 +379,25 @@ async function main() {
       isVerified: true,
     },
   });
-
   // Create default categories
   const defaultCategories = [
-    { id: 'food', name: 'Food & Dining', icon: '🍴', isDefault: true },
+    { id: uuidv4(), name: 'Food & Dining', icon: '🍴', isDefault: true },
     {
-      id: 'transportation',
+      id: uuidv4(),
       name: 'Transportation',
       icon: '🚗',
       isDefault: true,
     },
-    { id: 'housing', name: 'Housing', icon: '🏠', isDefault: true },
-    { id: 'utilities', name: 'Utilities', icon: '⚡', isDefault: true },
-    { id: 'internet', name: 'Internet', icon: '📶', isDefault: true },
-    { id: 'subscriptions', name: 'Subscriptions', icon: '🔄', isDefault: true },
-    { id: 'entertainment', name: 'Entertainment', icon: '🎬', isDefault: true },
-    { id: 'shopping', name: 'Shopping', icon: '🛍️', isDefault: true },
-    { id: 'health', name: 'Health & Fitness', icon: '❤️', isDefault: true },
-    { id: 'education', name: 'Education', icon: '🎓', isDefault: true },
-    { id: 'gifts', name: 'Gifts & Donations', icon: '🎁', isDefault: true },
-    { id: 'travel', name: 'Travel & Vacation', icon: '✈️', isDefault: true },
+    { id: uuidv4(), name: 'Housing', icon: '🏠', isDefault: true },
+    { id: uuidv4(), name: 'Utilities', icon: '⚡', isDefault: true },
+    { id: uuidv4(), name: 'Internet', icon: '📶', isDefault: true },
+    { id: uuidv4(), name: 'Subscriptions', icon: '🔄', isDefault: true },
+    { id: uuidv4(), name: 'Entertainment', icon: '🎬', isDefault: true },
+    { id: uuidv4(), name: 'Shopping', icon: '🛍️', isDefault: true },
+    { id: uuidv4(), name: 'Health & Fitness', icon: '❤️', isDefault: true },
+    { id: uuidv4(), name: 'Education', icon: '🎓', isDefault: true },
+    { id: uuidv4(), name: 'Gifts & Donations', icon: '🎁', isDefault: true },
+    { id: uuidv4(), name: 'Travel & Vacation', icon: '✈️', isDefault: true },
   ];
 
   for (const category of defaultCategories) {
@@ -407,21 +407,19 @@ async function main() {
       create: category,
     });
   }
-
   const customCategory = await prisma.category.create({
     data: {
-      id: `hobby-${user2.id}`,
+      id: uuidv4(),
       name: 'Hobbies',
       icon: '🎨',
       isDefault: false,
       userId: user2.id,
     },
   });
-
   // Create custom categories for the new users
   const techCategory = await prisma.category.create({
     data: {
-      id: `tech-${user3.id}`,
+      id: uuidv4(),
       name: 'Technology',
       icon: '💻',
       isDefault: false,
@@ -431,7 +429,7 @@ async function main() {
 
   const petsCategory = await prisma.category.create({
     data: {
-      id: `pets-${user4.id}`,
+      id: uuidv4(),
       name: 'Pet Expenses',
       icon: '🐾',
       isDefault: false,
@@ -441,18 +439,17 @@ async function main() {
 
   const luxuryCategory = await prisma.category.create({
     data: {
-      id: `luxury-${user5.id}`,
+      id: uuidv4(),
       name: 'Luxury Items',
       icon: '💎',
       isDefault: false,
       userId: user5.id,
     },
   });
-
   // Create money sources
   const user1Cash = await prisma.moneySource.create({
     data: {
-      id: `cash-${user1.id}`,
+      id: uuidv4(),
       name: 'Cash',
       balance: 500,
       currency: 'USD',
@@ -462,10 +459,9 @@ async function main() {
       userId: user1.id,
     },
   });
-
   const user1Bank = await prisma.moneySource.create({
     data: {
-      id: `bank-${user1.id}`,
+      id: uuidv4(),
       name: 'Bank Account',
       balance: 3500,
       currency: 'USD',
@@ -475,10 +471,9 @@ async function main() {
       userId: user1.id,
     },
   });
-
   const user2Cash = await prisma.moneySource.create({
     data: {
-      id: `cash-${user2.id}`,
+      id: uuidv4(),
       name: 'Cash',
       balance: 800,
       currency: 'USD',
@@ -491,7 +486,7 @@ async function main() {
 
   const user2CreditCard = await prisma.moneySource.create({
     data: {
-      id: `credit-${user2.id}`,
+      id: uuidv4(),
       name: 'Credit Card',
       balance: -250,
       currency: 'USD',
@@ -501,11 +496,10 @@ async function main() {
       userId: user2.id,
     },
   });
-
   // User 3 money sources
   const user3Cash = await prisma.moneySource.create({
     data: {
-      id: `cash-${user3.id}`,
+      id: uuidv4(),
       name: 'Cash',
       balance: 800,
       currency: 'USD',
@@ -518,7 +512,7 @@ async function main() {
 
   const user3Bank = await prisma.moneySource.create({
     data: {
-      id: `bank-${user3.id}`,
+      id: uuidv4(),
       name: 'Checking Account',
       balance: 5200,
       currency: 'USD',
@@ -531,7 +525,7 @@ async function main() {
 
   const user3Savings = await prisma.moneySource.create({
     data: {
-      id: `savings-${user3.id}`,
+      id: uuidv4(),
       name: 'Savings',
       balance: 15000,
       currency: 'USD',
@@ -541,11 +535,10 @@ async function main() {
       userId: user3.id,
     },
   });
-
   // User 4 money sources
   const user4Cash = await prisma.moneySource.create({
     data: {
-      id: `cash-${user4.id}`,
+      id: uuidv4(),
       name: 'Cash',
       balance: 300,
       currency: 'USD',
@@ -558,7 +551,7 @@ async function main() {
 
   const user4Bank = await prisma.moneySource.create({
     data: {
-      id: `bank-${user4.id}`,
+      id: uuidv4(),
       name: 'Bank Account',
       balance: 2100,
       currency: 'USD',
@@ -568,11 +561,10 @@ async function main() {
       userId: user4.id,
     },
   });
-
   // User 5 money sources
   const user5Cash = await prisma.moneySource.create({
     data: {
-      id: `cash-${user5.id}`,
+      id: uuidv4(),
       name: 'Cash',
       balance: 150,
       currency: 'USD',
@@ -585,7 +577,7 @@ async function main() {
 
   const user5Bank = await prisma.moneySource.create({
     data: {
-      id: `bank-${user5.id}`,
+      id: uuidv4(),
       name: 'Checking',
       balance: 1800,
       currency: 'USD',
@@ -598,7 +590,7 @@ async function main() {
 
   const user5CreditCard = await prisma.moneySource.create({
     data: {
-      id: `credit-${user5.id}`,
+      id: uuidv4(),
       name: 'Credit Card',
       balance: -2500,
       currency: 'USD',
@@ -608,11 +600,10 @@ async function main() {
       userId: user5.id,
     },
   });
-
   // User 6 money sources
   const user6Bank = await prisma.moneySource.create({
     data: {
-      id: `bank-${user6.id}`,
+      id: uuidv4(),
       name: 'Bank Account',
       balance: 4300,
       currency: 'USD',
@@ -622,11 +613,10 @@ async function main() {
       userId: user6.id,
     },
   });
-
   // User 7 money sources
   const user7Cash = await prisma.moneySource.create({
     data: {
-      id: `cash-${user7.id}`,
+      id: uuidv4(),
       name: 'Cash',
       balance: 420,
       currency: 'USD',
@@ -639,7 +629,7 @@ async function main() {
 
   const user7Bank = await prisma.moneySource.create({
     data: {
-      id: `bank-${user7.id}`,
+      id: uuidv4(),
       name: 'Checking Account',
       balance: 3200,
       currency: 'USD',
@@ -652,7 +642,7 @@ async function main() {
 
   const user7CreditCard = await prisma.moneySource.create({
     data: {
-      id: `credit-${user7.id}`,
+      id: uuidv4(),
       name: 'Credit Card',
       balance: -750,
       currency: 'USD',
@@ -674,14 +664,26 @@ async function main() {
     now.getFullYear(),
     now.getMonth() - 2,
     now.getDate(),
-  );
+  );  // Get category references to use UUIDs
+  const foodCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Food & Dining' } });
+  const transportationCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Transportation' } });
+  const entertainmentCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Entertainment' } });
+  const housingCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Housing' } });
+  const utilitiesCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Utilities' } });
+  const internetCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Internet' } });
+  const subscriptionsCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Subscriptions' } });
+  const shoppingCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Shopping' } });
+  const healthCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Health & Fitness' } });
+  const educationCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Education' } });
+  const giftsCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Gifts & Donations' } });
+  const travelCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Travel & Vacation' } });
 
   await prisma.expense.create({
     data: {
       amount: 45.5,
       date: now,
       notes: 'Grocery shopping',
-      categoryId: 'food',
+      categoryId: foodCategory.id,
       moneySourceId: user1Cash.id,
       userId: user1.id,
     },
@@ -692,7 +694,7 @@ async function main() {
       amount: 120,
       date: lastMonth,
       notes: 'Monthly transit pass',
-      categoryId: 'transportation',
+      categoryId: transportationCategory.id,
       moneySourceId: user1Bank.id,
       userId: user1.id,
     },
@@ -703,19 +705,18 @@ async function main() {
       amount: 65.75,
       date: twoMonthsAgo,
       notes: 'Concert tickets',
-      categoryId: 'entertainment',
+      categoryId: entertainmentCategory.id,
       moneySourceId: user1Bank.id,
       userId: user1.id,
     },
   });
-
   // Create expenses for User 2
   await prisma.expense.create({
     data: {
       amount: 32.4,
       date: now,
       notes: 'Dinner with friends',
-      categoryId: 'food',
+      categoryId: foodCategory.id,
       moneySourceId: user2Cash.id,
       userId: user2.id,
     },
@@ -726,7 +727,7 @@ async function main() {
       amount: 250,
       date: lastMonth,
       notes: 'New headphones',
-      categoryId: 'shopping',
+      categoryId: shoppingCategory.id,
       moneySourceId: user2CreditCard.id,
       userId: user2.id,
     },
@@ -742,14 +743,13 @@ async function main() {
       userId: user2.id,
     },
   });
-
   // Create expenses for User 3 (High entertainment and travel spender)
   await prisma.expense.create({
     data: {
       amount: 220.5,
       date: now,
       notes: 'Concert tickets',
-      categoryId: 'entertainment',
+      categoryId: entertainmentCategory.id,
       moneySourceId: user3Bank.id,
       userId: user3.id,
     },
@@ -760,7 +760,7 @@ async function main() {
       amount: 89.99,
       date: now,
       notes: 'Streaming subscriptions',
-      categoryId: 'subscriptions',
+      categoryId: subscriptionsCategory.id,
       moneySourceId: user3Bank.id,
       userId: user3.id,
     },
@@ -771,7 +771,7 @@ async function main() {
       amount: 1250,
       date: lastMonth,
       notes: 'Weekend trip',
-      categoryId: 'travel',
+      categoryId: travelCategory.id,
       moneySourceId: user3Bank.id,
       userId: user3.id,
     },
@@ -787,13 +787,12 @@ async function main() {
       userId: user3.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 75.5,
       date: twoMonthsAgo,
       notes: 'Dinner and movie',
-      categoryId: 'entertainment',
+      categoryId: entertainmentCategory.id,
       moneySourceId: user3Cash.id,
       userId: user3.id,
     },
@@ -805,7 +804,7 @@ async function main() {
       amount: 32.45,
       date: now,
       notes: 'Grocery shopping',
-      categoryId: 'food',
+      categoryId: foodCategory.id,
       moneySourceId: user4Cash.id,
       userId: user4.id,
     },
@@ -816,7 +815,7 @@ async function main() {
       amount: 800,
       date: lastMonth,
       notes: 'Rent payment',
-      categoryId: 'housing',
+      categoryId: housingCategory.id,
       moneySourceId: user4Bank.id,
       userId: user4.id,
     },
@@ -827,7 +826,7 @@ async function main() {
       amount: 120,
       date: lastMonth,
       notes: 'Utilities bill',
-      categoryId: 'utilities',
+      categoryId: utilitiesCategory.id,
       moneySourceId: user4Bank.id,
       userId: user4.id,
     },
@@ -843,14 +842,13 @@ async function main() {
       userId: user4.id,
     },
   });
-
   // Create expenses for User 5 (High shopping and subscriptions)
   await prisma.expense.create({
     data: {
       amount: 395,
       date: now,
       notes: 'Designer clothes',
-      categoryId: 'shopping',
+      categoryId: shoppingCategory.id,
       moneySourceId: user5CreditCard.id,
       userId: user5.id,
     },
@@ -866,125 +864,114 @@ async function main() {
       userId: user5.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 59.99,
       date: lastMonth,
       notes: 'Streaming services',
-      categoryId: 'subscriptions',
+      categoryId: subscriptionsCategory.id,
       moneySourceId: user5Bank.id,
       userId: user5.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 49.99,
       date: lastMonth,
       notes: 'Premium app subscriptions',
-      categoryId: 'subscriptions',
+      categoryId: subscriptionsCategory.id,
       moneySourceId: user5Bank.id,
       userId: user5.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 120,
       date: twoMonthsAgo,
       notes: 'Online shopping - various items',
-      categoryId: 'shopping',
+      categoryId: shoppingCategory.id,
       moneySourceId: user5Bank.id,
       userId: user5.id,
     },
   });
-
   // Create expenses for User 6 (Focus on education and health)
   await prisma.expense.create({
     data: {
       amount: 250,
       date: now,
       notes: 'Online course subscription',
-      categoryId: 'education',
+      categoryId: educationCategory.id,
       moneySourceId: user6Bank.id,
       userId: user6.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 89,
       date: now,
       notes: 'Gym membership',
-      categoryId: 'health',
+      categoryId: healthCategory.id,
       moneySourceId: user6Bank.id,
       userId: user6.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 135.5,
       date: lastMonth,
       notes: 'Health supplements',
-      categoryId: 'health',
+      categoryId: healthCategory.id,
       moneySourceId: user6Bank.id,
       userId: user6.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 75,
       date: twoMonthsAgo,
       notes: 'Reference books',
-      categoryId: 'education',
+      categoryId: educationCategory.id,
       moneySourceId: user6Bank.id,
       userId: user6.id,
     },
   });
-
   // Create expenses for User 7 (Food lover)
   await prisma.expense.create({
     data: {
       amount: 95.75,
       date: now,
       notes: 'Dinner at fine restaurant',
-      categoryId: 'food',
+      categoryId: foodCategory.id,
       moneySourceId: user7CreditCard.id,
       userId: user7.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 120.3,
       date: now,
       notes: 'Specialty groceries',
-      categoryId: 'food',
+      categoryId: foodCategory.id,
       moneySourceId: user7Bank.id,
       userId: user7.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 85.45,
       date: lastMonth,
       notes: 'Food delivery',
-      categoryId: 'food',
+      categoryId: foodCategory.id,
       moneySourceId: user7CreditCard.id,
       userId: user7.id,
     },
   });
-
   await prisma.expense.create({
     data: {
       amount: 42,
       date: lastMonth,
       notes: 'Coffee and bakery',
-      categoryId: 'food',
+      categoryId: foodCategory.id,
       moneySourceId: user7Cash.id,
       userId: user7.id,
     },
@@ -995,7 +982,7 @@ async function main() {
       amount: 37.25,
       date: twoMonthsAgo,
       notes: 'Fast food',
-      categoryId: 'food',
+      categoryId: foodCategory.id,
       moneySourceId: user7Cash.id,
       userId: user7.id,
     },
