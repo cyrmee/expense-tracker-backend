@@ -189,9 +189,6 @@ export class ExpensesService {
           balance: {
             decrement: expense.amount,
           },
-          budget: {
-            decrement: expense.amount,
-          },
         },
       });
     });
