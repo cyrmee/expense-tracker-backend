@@ -4,7 +4,7 @@ import { ExportDataResponseDto, ImportDataDto } from './dto';
 
 @Injectable()
 export class DataService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /**
    * Export all user data
@@ -46,6 +46,11 @@ export class DataService {
       where: { userId },
     });
 
+    // Get all user monthly budgets
+    const monthlyBudgets = await this.prisma.monthlyBudget.findMany({
+      where: { userId },
+    });
+
     // Get user app settings
     const appSettings = await this.prisma.appSettings.findUnique({
       where: { userId },
@@ -58,6 +63,7 @@ export class DataService {
       categories,
       moneySources,
       balanceHistories,
+      monthlyBudgets,
       appSettings,
     };
   }
@@ -184,6 +190,25 @@ export class DataService {
               userId,
               date: new Date(history.date),
               id: history.id || undefined,
+            },
+          });
+        }
+      }
+
+      // Import monthly budgets
+      if (data.monthlyBudgets && data.monthlyBudgets.length > 0) {
+        // Delete existing monthly budgets
+        await tx.monthlyBudget.deleteMany({
+          where: { userId },
+        });
+
+        // Create new monthly budgets
+        for (const budget of data.monthlyBudgets) {
+          await tx.monthlyBudget.create({
+            data: {
+              ...budget,
+              userId,
+              id: budget.id || undefined,
             },
           });
         }

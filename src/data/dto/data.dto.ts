@@ -63,6 +63,13 @@ export class ExportDataResponseDto {
   balanceHistories: any[];
 
   @ApiProperty({
+    description: 'Monthly budgets',
+    type: 'array',
+    isArray: true,
+  })
+  monthlyBudgets: any[];
+
+  @ApiProperty({
     description: 'User app settings',
     type: Object,
   })
@@ -115,6 +122,15 @@ export class ImportDataDto {
   @IsArray()
   @IsOptional()
   balanceHistories?: any[];
+
+  @ApiProperty({
+    description: 'Monthly budgets',
+    type: 'array',
+    isArray: true,
+  })
+  @IsArray()
+  @IsOptional()
+  monthlyBudgets?: any[];
 
   @ApiProperty({
     description: 'User app settings',
