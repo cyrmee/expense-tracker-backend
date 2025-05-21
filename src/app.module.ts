@@ -17,7 +17,7 @@ import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AiModule } from './ai/ai.module';
-import { BenchmarkingModule } from './benchmarking/benchmarking.module';
+import { UserInsightsModule } from './user-insights/user-insights.module';
 
 @Module({
   imports: [
@@ -42,7 +42,7 @@ import { BenchmarkingModule } from './benchmarking/benchmarking.module';
       },
     ]),
     AiModule,
-    BenchmarkingModule,
+    UserInsightsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

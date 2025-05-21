@@ -1,18 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
 import { AppSettingsService } from '../app-settings/app-settings.service';
-import { CategoryComparisonDto } from '../benchmarking/dto';
+import { CategoryComparisonDto } from '../user-insights/dto';
 import { ParsedExpenseDto } from '../expenses/dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AiService {
+  private readonly _logger = new Logger(AiService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly appSettingsService: AppSettingsService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   /**
    * Initialize a GoogleGenAI instance with user's API key
@@ -221,9 +222,9 @@ Ensure the response is a valid JSON object. If any information is missing, use n
   }
 
   /**
-   * Create a single AI‑powered narrative for a spending benchmark.
+   * Create a single AI‑powered narrative for a spending insights.
    */
-  async generateBenchmarkInsights(
+  async generateUserInsights(
     userId: string,
     params: {
       categoryComparisons: CategoryComparisonDto[];
@@ -267,6 +268,8 @@ Balance your tone based on spending patterns. Format as bullet points. Start dir
       });
 
       if (!result.text) {
+        this._logger.log(`Result: ${result}`);
+        this._logger.warn('AI-generated insights are empty');
         return 'Unable to generate spending insights at this time.';
       }
 

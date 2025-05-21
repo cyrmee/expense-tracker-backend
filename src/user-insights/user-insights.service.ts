@@ -7,7 +7,7 @@ import { SpendingComparisonDto } from './dto/spending-comparison.dto';
 import { AiService } from '../ai/ai.service';
 
 @Injectable()
-export class BenchmarkingService {
+export class UserInsightsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly exchangeRatesService: ExchangeRatesService,
@@ -125,7 +125,7 @@ export class BenchmarkingService {
       );
 
       // Generate AI-powered insights based on the comparisons
-      const insights = await this.aiService.generateBenchmarkInsights(userId, {
+      const insights = await this.aiService.generateUserInsights(userId, {
         categoryComparisons,
         overallDifferencePercentage: formattedOverallDifferencePercentage,
         userMonthlySpending: formattedUserMonthlySpending,

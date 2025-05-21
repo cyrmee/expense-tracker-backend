@@ -6,15 +6,15 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards';
-import { BenchmarkingService } from './benchmarking.service';
+import { UserInsightsService as UserInsightsService } from './user-insights.service';
 import { SpendingComparisonDto } from './dto/spending-comparison.dto';
 
-@ApiTags('benchmarking')
+@ApiTags('user-insights')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
-@Controller('benchmarking')
-export class BenchmarkingController {
-  constructor(private readonly benchmarkingService: BenchmarkingService) {}
+@Controller('user-insights')
+export class UserInsightsController {
+  constructor(private readonly userInsightsService: UserInsightsService) {}
 
   @Get('spending-comparison')
   @ApiOperation({
@@ -28,6 +28,6 @@ export class BenchmarkingController {
   async compareSpendingPatterns(
     @Request() req,
   ): Promise<SpendingComparisonDto> {
-    return this.benchmarkingService.compareSpendingPatterns(req.user.id);
+    return this.userInsightsService .compareSpendingPatterns(req.user.id);
   }
 }
