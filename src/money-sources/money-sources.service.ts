@@ -104,6 +104,7 @@ export class MoneySourcesService {
     const orderBy = {
       [sortBy]: sortOrder,
     };
+
     const moneySources = await this.prisma.moneySource.findMany({
       where: whereConditions,
       include: {
@@ -116,11 +117,14 @@ export class MoneySourcesService {
       },
       orderBy,
       skip: (page - 1) * pageSize,
-      take: pageSize,
+      take: pageSize + 1, // Fetch one extra
     });
 
+    const hasMore = moneySources.length > pageSize;
+    const sourcesToTransform = hasMore ? moneySources.slice(0, pageSize) : moneySources;
+
     const data = await Promise.all(
-      moneySources.map((source) =>
+      sourcesToTransform.map((source) =>
         this.transformToDto(
           source,
           source.user?.appSettings?.preferredCurrency || 'USD',
@@ -128,16 +132,9 @@ export class MoneySourcesService {
       ),
     );
 
-    const totalCount = await this.prisma.moneySource.count({
-      where: whereConditions,
-    });
-
-    const totalPages = Math.ceil(totalCount / pageSize);
-
     return {
       data,
-      totalCount,
-      totalPages,
+      hasMore,
       pageSize,
       page,
     };

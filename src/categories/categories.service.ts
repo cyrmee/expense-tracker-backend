@@ -118,11 +118,14 @@ export class CategoriesService {
     }
 
     // Check if the category is referenced by any expenses
-    const expensesWithCategory = await this.prisma.expense.count({
+    const expenseWithCategory = await this.prisma.expense.findFirst({
       where: {
-        categoryId: id,
+      categoryId: id,
       },
+      select: { id: true }, // Only select the ID field for efficiency
     });
+    
+    const expensesWithCategory = expenseWithCategory ? 1 : 0;
 
     if (expensesWithCategory > 0) {
       throw new BadRequestException(

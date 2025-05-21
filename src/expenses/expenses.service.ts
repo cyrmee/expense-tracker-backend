@@ -22,7 +22,7 @@ export class ExpensesService {
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
     private readonly aiService: AiService,
-  ) {}
+  ) { }
 
   private async transformToDto(
     expense: any,
@@ -94,11 +94,14 @@ export class ExpensesService {
       },
       orderBy,
       skip: (page - 1) * pageSize,
-      take: pageSize,
+      take: pageSize + 1, // Fetch one extra item to check for hasMore
     });
 
+    const hasMore = expenses.length > pageSize;
+    const itemsToTransform = hasMore ? expenses.slice(0, pageSize) : expenses;
+
     const data = await Promise.all(
-      expenses.map((expense) =>
+      itemsToTransform.map((expense) =>
         this.transformToDto(
           expense,
           expense.moneySource.currency,
@@ -107,19 +110,13 @@ export class ExpensesService {
       ),
     );
 
-    const totalCount = await this.prisma.expense.count({
-      where: whereConditions,
-    });
-
-    const totalPages = Math.ceil(totalCount / pageSize);
-
     return {
       data,
-      totalCount,
-      totalPages,
+      hasMore,
       pageSize,
       page,
     };
+
   }
 
   async getExpense(id: string, userId: string): Promise<ExpenseDto> {
@@ -342,13 +339,13 @@ export class ExpensesService {
     await this.prisma.$transaction(async (tx) => {
       // Group expenses by money source for efficient updates
       const moneySourceMap = new Map<string, number>();
-      
+
       // Sum amounts by money source
       expenses.forEach(expense => {
         const currentAmount = moneySourceMap.get(expense.moneySource.id) || 0;
         moneySourceMap.set(expense.moneySource.id, currentAmount + expense.amount);
       });
-      
+
       // Update each money source's balance
       for (const [moneySourceId, amount] of moneySourceMap.entries()) {
         await tx.moneySource.update({
@@ -360,7 +357,7 @@ export class ExpensesService {
           },
         });
       }
-      
+
       // Delete all expenses in a single operation
       await tx.expense.deleteMany({
         where: {

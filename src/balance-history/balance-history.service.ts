@@ -15,7 +15,7 @@ export class BalanceHistoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly currencyConverter: CurrencyConverter,
-  ) {}
+  ) { }
 
   private async transformToDto(
     history: any,
@@ -84,11 +84,14 @@ export class BalanceHistoryService {
       },
       orderBy,
       skip: (page - 1) * pageSize,
-      take: pageSize,
+      take: pageSize + 1, // Fetch one extra to check if there's more
     });
 
+    const hasMore = histories.length > pageSize;
+    const itemsToTransform = hasMore ? histories.slice(0, pageSize) : histories;
+
     const data = await Promise.all(
-      histories.map((history) =>
+      itemsToTransform.map((history) =>
         this.transformToDto(
           history,
           history.user?.appSettings?.preferredCurrency || 'USD',
@@ -96,16 +99,9 @@ export class BalanceHistoryService {
       ),
     );
 
-    const totalCount = await this.prisma.balanceHistory.count({
-      where: whereConditions,
-    });
-
-    const totalPages = Math.ceil(totalCount / pageSize);
-
     return {
       data,
-      totalCount,
-      totalPages,
+      hasMore,
       pageSize,
       page,
     };
