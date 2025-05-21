@@ -17,15 +17,13 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.set('trust proxy', 1);
-
-  // Configure CORS to allow all origins, methods, and headers
+  // Configure CORS to allow specific origins, methods, and headers
   app.enableCors({
-    origin: true, // Allow all origins
+    origin: ['https://expense-tracker-frontend-kohl.vercel.app', 'http://localhost:3000'], // Allow production and local frontend
     credentials: true, // Allow credentials
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Allow all methods
-    allowedHeaders: '*', // Allow all headers
-    preflightContinue: true,
-    optionsSuccessStatus: 204,
+    allowedHeaders: 'Content-Type,Authorization', // Allow specific headers
+    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
   });
   logger.log('CORS middleware configured');
 
