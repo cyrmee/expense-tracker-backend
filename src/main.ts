@@ -18,16 +18,14 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.set('trust proxy', 1);
 
-  // Configure CORS with security best practices
+  // Configure CORS to allow all origins, methods, and headers
   app.enableCors({
-    origin: true, // Allow all origins as requested
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Explicitly list allowed methods
-    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'], // Restrict to necessary headers
-    exposedHeaders: ['Content-Disposition'], // Only expose headers that clients need
-    preflightContinue: false,
+    origin: true, // Allow all origins
+    credentials: true, // Allow credentials
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Allow all methods
+    allowedHeaders: '*', // Allow all headers
+    preflightContinue: true,
     optionsSuccessStatus: 204,
-    maxAge: 3600, // Cache preflight requests for 1 hour
   });
   logger.log('CORS middleware configured');
 
