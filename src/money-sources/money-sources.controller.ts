@@ -30,9 +30,7 @@ import {
   AddFundsDto,
   CardStyleDto,
   CreateMoneySourceDto,
-  CreateMonthlyBudgetDto,
   MoneySourceDto,
-  MonthlyBudgetDto,
   UpdateMoneySourceDto,
 } from './dto';
 import { MoneySourcesService } from './money-sources.service';
@@ -174,7 +172,7 @@ export class MoneySourcesController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a money source' })
   @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
   @ApiResponse({
@@ -186,77 +184,5 @@ export class MoneySourcesController {
   async remove(@Param('id') id: string, @Request() req) {
     await this.moneySourcesService.remove(id, req.user.id);
     return { message: 'Money source deleted successfully' };
-  }
-
-  @Patch(':id/monthly-budget')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Set monthly budget for a money source' })
-  @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
-  @ApiBody({ type: CreateMonthlyBudgetDto })
-  @ApiResponse({
-    status: 204,
-    description: 'Budget set successfully',
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Money source not found' })  async setMonthlyBudget(
-    @Param('id') id: string,
-    @Body() createBudgetDto: CreateMonthlyBudgetDto,
-    @Request() req,
-  ) {
-    await this.moneySourcesService.setMonthlyBudget(
-      id,
-      req.user.id,
-      createBudgetDto,
-    );
-  }
-
-  @Get(':id/monthly-budget')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get monthly budget for a money source' })
-  @ApiParam({ name: 'id', description: 'Money source ID', example: 'cash' })
-  @ApiQuery({ name: 'month', required: false, type: Number })
-  @ApiQuery({ name: 'year', required: false, type: Number })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns the monthly budget',
-    type: MonthlyBudgetDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Money source not found' })
-  async getMonthlyBudget(
-    @Param('id') id: string,
-    @Request() req,
-    @Query('month') month?: number,
-    @Query('year') year?: number,
-  ) {
-    return await this.moneySourcesService.getMonthlyBudget(
-      id,
-      req.user.id,
-      month,
-      year,
-    );
-  }
-
-  @Get('monthly-budgets')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get all monthly budgets for the user' })
-  @ApiQuery({ name: 'month', required: false, type: Number })
-  @ApiQuery({ name: 'year', required: false, type: Number })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns all monthly budgets',
-    type: [MonthlyBudgetDto],
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getAllMonthlyBudgets(
-    @Request() req,
-    @Query('month') month?: number,
-    @Query('year') year?: number,
-  ) {
-    return await this.moneySourcesService.getAllMonthlyBudgets(
-      req.user.id,
-      month,
-      year,
-    );
   }
 }

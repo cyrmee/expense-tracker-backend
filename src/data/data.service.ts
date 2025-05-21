@@ -39,31 +39,21 @@ export class DataService {
     // Get all user money sources
     const moneySources = await this.prisma.moneySource.findMany({
       where: { userId },
-    });
-
-    // Get all user balance histories
+    });    // Get all user balance histories
     const balanceHistories = await this.prisma.balanceHistory.findMany({
-      where: { userId },
-    });
-
-    // Get all user monthly budgets
-    const monthlyBudgets = await this.prisma.monthlyBudget.findMany({
       where: { userId },
     });
 
     // Get user app settings
     const appSettings = await this.prisma.appSettings.findUnique({
       where: { userId },
-    });
-
-    // Construct the response
+    });    // Construct the response
     return {
       user,
       expenses,
       categories,
       moneySources,
       balanceHistories,
-      monthlyBudgets,
       appSettings,
     };
   }
@@ -180,9 +170,7 @@ export class DataService {
         // Delete existing balance histories
         await tx.balanceHistory.deleteMany({
           where: { userId },
-        });
-
-        // Create new balance histories
+        });        // Create new balance histories
         for (const history of data.balanceHistories) {
           await tx.balanceHistory.create({
             data: {
@@ -195,24 +183,7 @@ export class DataService {
         }
       }
 
-      // Import monthly budgets
-      if (data.monthlyBudgets && data.monthlyBudgets.length > 0) {
-        // Delete existing monthly budgets
-        await tx.monthlyBudget.deleteMany({
-          where: { userId },
-        });
-
-        // Create new monthly budgets
-        for (const budget of data.monthlyBudgets) {
-          await tx.monthlyBudget.create({
-            data: {
-              ...budget,
-              userId,
-              id: budget.id || undefined,
-            },
-          });
-        }
-      }
+      // Note: Monthly budgets are no longer supported
     });
   }
 }

@@ -24,7 +24,6 @@ model User {
   categories          Category[]
   moneySources        MoneySource[]
   balanceHistories    BalanceHistory[]
-  monthlyBudgets      MonthlyBudget[]
   appSettings         AppSettings?
 
   @@index([email])
@@ -77,7 +76,6 @@ model MoneySource {
   budget           Float            @default(0)
   expenses         Expense[]
   balanceHistories BalanceHistory[]
-  monthlyBudgets   MonthlyBudget[]
   user             User             @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   userId           String
   cardStyle        CardStyle?       @relation(fields: [cardStyleId], references: [id])
@@ -147,23 +145,4 @@ model CardStyle {
   moneySources    MoneySource[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-}
-
-model MonthlyBudget {
-  id        String   @id @default(uuid())
-  amount    Float
-  month     Int
-  year      Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  moneySource   MoneySource @relation(fields: [moneySourceId], references: [id], onDelete: Cascade)
-  moneySourceId String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String
-
-  @@unique([moneySourceId, month, year])
-  @@index([userId])
-  @@index([moneySourceId])
 }
