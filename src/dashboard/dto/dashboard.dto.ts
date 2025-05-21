@@ -117,31 +117,31 @@ export class BudgetComparisonItemDto {
   budget: number;
 
   @ApiProperty({
-    description: 'Actual expenses',
+    description: 'Total expenses', // changed from 'Actual expenses'
     example: 850.25,
   })
   @Expose()
-  actual: number;
+  expense: number; // changed from 'actual'
 
   @ApiProperty({
-    description: 'Variance (budget - actual)',
+    description: 'Remaining (budget - expense)',
     example: 149.75,
   })
   @Expose()
-  variance: number;
+  remaining: number;
 
   @ApiProperty({
-    description: 'Variance percentage',
+    description: 'Remaining percentage',
     example: 14.975,
   })
   @Expose()
-  variancePercentage: number;
+  remainingPercentage: number;
 }
 
 @Exclude()
 export class BudgetComparisonDto {
   @ApiProperty({
-    description: 'Budget comparison by money source',
+    description: 'Budget vs expense by money source',
     type: [BudgetComparisonItemDto],
   })
   @Expose()
@@ -155,18 +155,18 @@ export class BudgetComparisonDto {
   totalBudget: number;
 
   @ApiProperty({
-    description: 'Total actual expenses',
+    description: 'Total expenses',
     example: 1750.5,
   })
   @Expose()
-  totalActual: number;
+  totalExpense: number;
 
   @ApiProperty({
-    description: 'Overall variance',
+    description: 'Total remaining',
     example: 249.5,
   })
   @Expose()
-  totalVariance: number;
+  totalRemaining: number;
 }
 
 export class TopCategory {

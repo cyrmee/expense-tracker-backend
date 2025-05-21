@@ -67,10 +67,10 @@ export class DashboardController {
   }
 
   @Get('budget-comparison')
-  @ApiOperation({ summary: 'Get budget comparison analysis' })
+  @ApiOperation({ summary: 'Get budget vs expense analysis' })
   @ApiResponse({
     status: 200,
-    description: 'Returns budget vs actual expense comparison data',
+    description: 'Returns budget vs expense comparison data',
     type: BudgetComparisonDto,
   })
   async getBudgetComparison(@Request() req): Promise<BudgetComparisonDto> {

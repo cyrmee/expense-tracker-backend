@@ -206,7 +206,7 @@ export class DashboardService {
     });
 
     let totalBudget = 0;
-    let totalActual = 0;
+    let totalExpense = 0; // changed from totalActual
 
     // Calculate comparisons for each money source with currency conversion
     const comparisons: BudgetComparisonItemDto[] = [];
@@ -222,41 +222,40 @@ export class DashboardService {
       );
 
       // Calculate and convert actual expenses
-      let actualInSourceCurrency = 0;
+      let expenseInSourceCurrency = 0; // changed from actualInSourceCurrency
       for (const expense of source.expenses) {
-        actualInSourceCurrency += expense.amount;
+        expenseInSourceCurrency += expense.amount;
       }
-
-      const convertedActual = await this.exchangeRatesService.convertAmount(
-        actualInSourceCurrency,
+      const convertedExpense = await this.exchangeRatesService.convertAmount(
+        expenseInSourceCurrency,
         sourceCurrency,
         preferredCurrency,
       );
 
-      // Calculate variance
-      const variance = convertedBudget - convertedActual;
-      const variancePercentage =
-        convertedBudget > 0 ? (variance / convertedBudget) * 100 : 0;
+      // Calculate remaining
+      const remaining = convertedBudget - convertedExpense;
+      const remainingPercentage =
+        convertedBudget > 0 ? (remaining / convertedBudget) * 100 : 0;
 
       totalBudget += convertedBudget;
-      totalActual += convertedActual;
+      totalExpense += convertedExpense;
 
       comparisons.push({
         moneySource: source.name,
         budget: convertedBudget,
-        actual: convertedActual,
-        variance,
-        variancePercentage,
+        expense: convertedExpense, // changed from actual
+        remaining,
+        remainingPercentage,
       });
     }
 
-    const totalVariance = totalBudget - totalActual;
+    const totalRemaining = totalBudget - totalExpense;
 
     return plainToClass(BudgetComparisonDto, {
       comparisons,
       totalBudget,
-      totalActual,
-      totalVariance,
+      totalExpense,
+      totalRemaining,
     });
   }
 
