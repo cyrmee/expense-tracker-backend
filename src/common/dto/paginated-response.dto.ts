@@ -8,14 +8,8 @@ export class PaginatedResponseDto<T> {
   @ApiProperty({ description: 'Array of data items', isArray: true })
   data: T[];
 
-  @ApiProperty({
-    description: 'Total count of items across all pages',
-    example: 100,
-  })
-  totalCount: number;
-
-  @ApiProperty({ description: 'Total number of pages', example: 10 })
-  totalPages: number;
+  @ApiProperty({ description: 'Indicates if there are more pages available', example: true })
+  hasMore: boolean;
 
   @ApiProperty({ description: 'Number of items per page', example: 10 })
   pageSize: number;
