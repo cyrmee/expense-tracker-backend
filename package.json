@@ -22,7 +22,7 @@
     "dev": "nest start --watch"
   },
   "dependencies": {
-    "@google/genai": "^0.14.1",
+    "@google/genai": "^1.0.1",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.1.0",

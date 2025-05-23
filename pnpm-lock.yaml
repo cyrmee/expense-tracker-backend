@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@google/genai':
-        specifier: ^0.14.1
-        version: 0.14.1
+        specifier: ^1.0.1
+        version: 1.0.1(@modelcontextprotocol/sdk@1.11.2)
       '@nestjs-modules/mailer':
         specifier: ^2.0.2
         version: 2.0.2(@nestjs/common@11.1.0(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.0)(nodemailer@7.0.3)
@@ -346,9 +346,11 @@ packages:
     resolution: {integrity: sha512-ZAoA40rNMPwSm+AeHpCq8STiNAwzWLJuP8Xv4CHIc9wv/PSuExjMrmjfYNj682vW0OOiZ1HKxzvjQr9XZIisQA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@google/genai@0.14.1':
-    resolution: {integrity: sha512-BZ93j4XcvsLEX5RkYE1RqrXLpuzEuH5VGY0geRrHjfpLP3ijDepGePg/iJ7kMSPOTXFYNMeTruNyoTB6TXXgnA==}
-    engines: {node: '>=18.0.0'}
+  '@google/genai@1.0.1':
+    resolution: {integrity: sha512-qf8sq9vpuKUeBKukAn43z2eC1I/Jw63b9wo6O+1x3EIroF3oDouJOtW1AzwvfO+9gzCPfLjuCUONhMKiBC8vkQ==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.11.0
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -4060,8 +4062,9 @@ snapshots:
       '@eslint/core': 0.13.0
       levn: 0.4.1
 
-  '@google/genai@0.14.1':
+  '@google/genai@1.0.1(@modelcontextprotocol/sdk@1.11.2)':
     dependencies:
+      '@modelcontextprotocol/sdk': 1.11.2
       google-auth-library: 9.15.1
       ws: 8.18.2
       zod: 3.24.4
