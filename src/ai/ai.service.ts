@@ -23,10 +23,11 @@ export class AiService {
    */
   private async initializeGenAIForUser(userId: string): Promise<GoogleGenAI> {
     let apiKey = await this.appSettingsService.getGeminiApiKey(userId);
-
+    this._logger.log(`User ${userId} API key: ${apiKey}`);
     // If user key not found, try the global key
     if (!apiKey) {
       const globalApiKey = this.configService.get<string>('GEMINI_API_KEY');
+      this._logger.log(`Global API key: ${globalApiKey}`);
       apiKey = globalApiKey ?? null; // Convert undefined to null
       // If the global key is ALSO not found (i.e., apiKey is still null),
       // throw an error immediately as the fallback mechanism failed due to missing configuration.
@@ -280,7 +281,7 @@ Balance your tone based on spending patterns. Format as bullet points. Start dir
         return `AI-powered insights unavailable: ${error.message}`;
       }
 
-      return 'Unable to generate spending insights at this time. Please try again later.';
+      return 'Unable to generate spending insights at this time. Please clear your API key in settings or set a correct one.';
     }
   }
 
