@@ -19,7 +19,7 @@ async function bootstrap() {
   app.set('trust proxy', 1);
   // Configure CORS to allow specific origins, methods, and headers
   app.enableCors({
-    origin: ['https://expense-tracker-frontend-kohl.vercel.app', 'http://localhost:3000'], // Allow production and local frontend
+    origin: true, // Allow production and local frontend
     credentials: true, // Allow credentials
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Allow all methods
     allowedHeaders: 'Content-Type,Authorization', // Allow specific headers
