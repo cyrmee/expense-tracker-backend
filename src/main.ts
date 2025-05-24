@@ -60,8 +60,6 @@ async function bootstrap() {
     .addTag('expenses', 'Expense tracking operations')
     .addTag('categories', 'Expense categories operations')
     .addBearerAuth()
-    .addServer('http://localhost:' + process.env.PORT, 'Development Server')
-    .addServer('https://api.example.com', 'Production Server')
     .build();
 
   // Configure Swagger with enhanced UI customization and dark mode
