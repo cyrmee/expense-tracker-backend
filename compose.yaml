@@ -13,7 +13,6 @@ services:
       - db_data:/var/lib/postgresql/data
     networks:
       - app_network
-    restart: always
 
   redis:
     image: redis:latest
@@ -21,7 +20,6 @@ services:
       - '6379:6379'
     networks:
       - app_network
-    restart: always
     volumes:
       - redis_data:/data
 
