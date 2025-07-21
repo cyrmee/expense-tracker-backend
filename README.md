@@ -1,6 +1,6 @@
 # Expense Tracker Backend
 
-A comprehensive expense tracker backend API built with NestJS, PostgreSQL, Prisma ORM, and Redis.
+An expense tracker backend API built with NestJS, PostgreSQL, Prisma ORM, and Redis.
 
 ## Features
 
