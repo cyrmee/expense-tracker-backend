@@ -1,8 +1,14 @@
-import { PrismaClient } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { v4 as uuidv4 } from 'uuid';
+import { PrismaClient } from '../src/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import 'dotenv/config';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+const prisma = new PrismaClient({ adapter });
 
 async function seedCardStyles(prisma: PrismaClient) {
   const cardStyles = [
