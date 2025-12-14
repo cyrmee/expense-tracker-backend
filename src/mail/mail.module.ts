@@ -30,11 +30,6 @@ import { MailService } from './mail.service';
           throw new Error('SMTP_PASS environment variable is not defined');
         }
 
-        const emailFrom = configService.get('EMAIL_FROM');
-        if (!emailFrom) {
-          throw new Error('EMAIL_FROM environment variable is not defined');
-        }
-
         return {
           transport: {
             host: smtpHost,
@@ -46,7 +41,7 @@ import { MailService } from './mail.service';
             },
           },
           defaults: {
-            from: emailFrom,
+            from: `"Expense Tracker" <${smtpUser}>`,
           },
         };
       },
