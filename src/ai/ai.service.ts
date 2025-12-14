@@ -1,10 +1,10 @@
+import { GoogleGenAI } from '@google/genai';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenAI } from '@google/genai';
 import { AppSettingsService } from '../app-settings/app-settings.service';
-import { CategoryComparisonDto } from '../user-insights/dto';
 import { ParsedExpenseDto } from '../expenses/dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { CategoryComparisonDto } from '../user-insights/dto';
 
 @Injectable()
 export class AiService {
@@ -14,6 +14,13 @@ export class AiService {
     private readonly appSettingsService: AppSettingsService,
     private readonly configService: ConfigService,
   ) { }
+
+  /**
+   * Get the Gemini model name from environment variable or default
+   */
+  private getModel(): string {
+    return this.configService.get<string>('GEMINI_MODEL') || 'gemini-2.5-flash';
+  }
 
   /**
    * Initialize a GoogleGenAI instance with user's API key
