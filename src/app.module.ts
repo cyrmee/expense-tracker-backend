@@ -15,7 +15,6 @@ import { AppSettingsModule } from './app-settings/app-settings.module';
 import { DataModule } from './data/data.module';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { MailerModule } from '@nestjs-modules/mailer';
 import { AiModule } from './ai/ai.module';
 import { UserInsightsModule } from './user-insights/user-insights.module';
 
@@ -34,7 +33,6 @@ import { UserInsightsModule } from './user-insights/user-insights.module';
     RedisModule,
     ExchangeRatesModule,
     DashboardModule,
-    MailerModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60,
