@@ -123,7 +123,7 @@ Ensure the response is a valid JSON object. If any information is missing, use n
 
       // Call Gemini API
       const result = await genAI.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: this.getModel(),
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           temperature: 0.1,
@@ -153,8 +153,14 @@ Ensure the response is a valid JSON object. If any information is missing, use n
       const date = this.parseDate(parsedResponse.date);
 
       // If no money source was specified, use default
-      if (!parsedResponse.moneySourceId && defaultMoneySource) {
-        parsedResponse.moneySourceId = defaultMoneySource.id;
+      if (!parsedResponse.moneySourceId) {
+        if (defaultMoneySource) {
+          parsedResponse.moneySourceId = defaultMoneySource.id;
+        } else if (moneySources.length > 0) {
+          parsedResponse.moneySourceId = moneySources[0].id;
+        } else {
+          throw new Error('No money sources available. Please create at least one money source first.');
+        }
       }
 
       // If no category was specified or the category isn't valid, suggest one
@@ -162,11 +168,16 @@ Ensure the response is a valid JSON object. If any information is missing, use n
         !parsedResponse.categoryId ||
         !categories.some((c) => c.id === parsedResponse.categoryId)
       ) {
+        // If no categories available, we can't proceed
+        if (categories.length === 0) {
+          throw new Error('No categories available. Please create at least one category first.');
+        }
+
         // Suggest a category based on the notes or the original text
         const descriptionForCategorization = parsedResponse.notes || text;
 
         const categoryResult = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash',
+          model: this.getModel(),
           contents: [
             {
               role: 'user',
@@ -200,7 +211,7 @@ Ensure the response is a valid JSON object. If any information is missing, use n
 
         if (matchedCategory) {
           parsedResponse.categoryId = matchedCategory.id;
-        } else if (categories.length > 0) {
+        } else {
           // Default to the first category if we still can't find a match
           parsedResponse.categoryId = categories[0].id;
         }
@@ -211,13 +222,13 @@ Ensure the response is a valid JSON object. If any information is missing, use n
         date: date,
         notes: parsedResponse.notes,
         categoryId: parsedResponse.categoryId,
-        category: await this.prisma.category.findUnique({
+        category: parsedResponse.categoryId ? await this.prisma.category.findUnique({
           where: { id: parsedResponse.categoryId },
-        }),
+        }) : null,
         moneySourceId: parsedResponse.moneySourceId,
-        moneySource: await this.prisma.moneySource.findUnique({
+        moneySource: parsedResponse.moneySourceId ? await this.prisma.moneySource.findUnique({
           where: { id: parsedResponse.moneySourceId },
-        }),
+        }) : null,
       } as ParsedExpenseDto;
     } catch (error) {
       // Propagate specific UnauthorizedException for API key issues
@@ -267,7 +278,7 @@ Balance your tone based on spending patterns. Format as bullet points. Start dir
 `;
 
       const result = await genAI.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: this.getModel(),
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           temperature: 0.8, // Slightly higher for more creativity
