@@ -50,6 +50,8 @@ async function bootstrap() {
   );
   logger.log('Global exception filters applied');
 
+  app.enableShutdownHooks();
+
   // Setup Swagger
   const config = new DocumentBuilder()
     .setTitle('Expense Tracker API')
@@ -99,10 +101,8 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document, swaggerCustomOptions);
   logger.log('Swagger documentation configured');
 
-  const port = process.env.PORT;
-  if (!port) {
-    throw new Error('PORT environment variable is not defined');
-  }
+  const port = process.env.PORT || 5000;
+
   await app.listen(port);
   const baseUrl = `http://localhost:${port}`;
 
