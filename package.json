@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "npx prisma generate && nest build && npx prisma migrate dev",
+    "build": "pnpm exec prisma generate && pnpm exec nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -18,7 +18,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "db:reset": "npx prisma migrate reset --force && npm run prisma:seed && npx prisma generate",
+    "db:reset": "pnpm exec prisma migrate reset --force && pnpm run prisma:seed && pnpm exec prisma generate",
     "dev": "nest start --watch"
   },
   "dependencies": {
