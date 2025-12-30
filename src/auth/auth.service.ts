@@ -415,7 +415,7 @@ export class AuthService {
       jti,
     };
     const token = this.jwtService.sign(tokenPayload, {
-      expiresIn: accessTokenExpiry,
+      expiresIn: accessTokenExpiry as any,
     });
     const expiryInSeconds = this.parseExpiryToSeconds(accessTokenExpiry);
     const userId = payload.sub;
@@ -449,7 +449,7 @@ export class AuthService {
       jti,
     };
     const token = this.jwtService.sign(payload, {
-      expiresIn: refreshTokenExpiry,
+      expiresIn: refreshTokenExpiry as any,
     });
     const expiryInSeconds = this.parseExpiryToSeconds(refreshTokenExpiry);
     const tokenKey = `refresh_jti:${userId}:${jti}`;

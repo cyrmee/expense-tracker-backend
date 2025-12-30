@@ -45,7 +45,7 @@ import { LocalStrategy } from './strategies/local.strategy';
         return {
           secret: jwtSecret,
           signOptions: {
-            expiresIn: jwtAccessExpiration,
+            expiresIn: jwtAccessExpiration as any,
           },
         };
       },
