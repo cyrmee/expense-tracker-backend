@@ -48,6 +48,7 @@ ENV NODE_ENV=production
 
 # If you run `prisma migrate deploy` at container start, Prisma needs the schema too.
 COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
