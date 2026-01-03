@@ -1,13 +1,16 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "types": ["jest", "node"],
-    "noEmit": true
-  },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts",
-    "**/*.spec.ts",
-    "**/*.e2e-spec.ts"
-  ]
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": [
+            "jest",
+            "node"
+        ],
+        "noEmit": true
+    },
+    "include": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "**/*.spec.ts",
+        "**/*.e2e-spec.ts"
+    ]
 }
