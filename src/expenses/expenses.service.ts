@@ -189,8 +189,6 @@ export class ExpensesService {
         },
       });
     });
-
-    return;
   }
 
   async createFromText(
@@ -292,8 +290,6 @@ export class ExpensesService {
         }
       }
     });
-
-    return;
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -315,8 +311,6 @@ export class ExpensesService {
         },
       });
     });
-
-    return;
   }
 
   async bulkRemove(ids: string[], userId: string): Promise<void> {
@@ -366,7 +360,5 @@ export class ExpensesService {
         },
       });
     });
-
-    return;
   }
 }

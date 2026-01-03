@@ -6,6 +6,7 @@ import { redisStore } from 'cache-manager-redis-store';
 
 @Module({
   imports: [
+    ConfigModule,
     CacheModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -20,21 +21,21 @@ import { redisStore } from 'cache-manager-redis-store';
           ...(configService.get('REDIS_URL')
             ? {}
             : {
-                socket: {
-                  host: configService.get('REDIS_HOST', 'localhost'),
-                  port: configService.get('REDIS_PORT', 6379),
-                  reconnectStrategy: (retries: number) => {
-                    if (retries > 10) {
-                      console.error(
-                        'Max reconnection attempts reached. Giving up.',
-                      );
-                      return new Error('Max reconnection attempts reached');
-                    }
-                    return Math.min(2 ** retries * 100, 3000);
-                  },
+              socket: {
+                host: configService.get('REDIS_HOST', 'localhost'),
+                port: configService.get('REDIS_PORT', 6379),
+                reconnectStrategy: (retries: number) => {
+                  if (retries > 10) {
+                    console.error(
+                      'Max reconnection attempts reached. Giving up.',
+                    );
+                    return new Error('Max reconnection attempts reached');
+                  }
+                  return Math.min(2 ** retries * 100, 3000);
                 },
-                password: configService.get('REDIS_PASSWORD'),
-              }),
+              },
+              password: configService.get('REDIS_PASSWORD'),
+            }),
           tls: process.env.NODE_ENV === 'production' ? {} : undefined,
         }),
       }),
@@ -47,32 +48,32 @@ import { redisStore } from 'cache-manager-redis-store';
       useFactory: async (configService: ConfigService) => {
         const redisClient = configService.get('REDIS_URL')
           ? createClient({
-              url: configService.get('REDIS_URL'),
-            })
+            url: configService.get('REDIS_URL'),
+          })
           : createClient({
-              socket: {
-                host: configService.get('REDIS_HOST', 'localhost'),
-                port: configService.get('REDIS_PORT', 6379),
-                reconnectStrategy: (retries) => {
-                  if (retries > 10) {
-                    console.error(
-                      'Max reconnection attempts reached. Giving up.',
-                    );
-                    return new Error('Max reconnection attempts reached');
-                  }
-                  return Math.min(2 ** retries * 100, 3000);
-                },
+            socket: {
+              host: configService.get('REDIS_HOST', 'localhost'),
+              port: configService.get('REDIS_PORT', 6379),
+              reconnectStrategy: (retries) => {
+                if (retries > 10) {
+                  console.error(
+                    'Max reconnection attempts reached. Giving up.',
+                  );
+                  return new Error('Max reconnection attempts reached');
+                }
+                return Math.min(2 ** retries * 100, 3000);
               },
-              password: configService.get('REDIS_PASSWORD'),
-            });
+            },
+            password: configService.get('REDIS_PASSWORD'),
+          });
 
         // Handle connection errors
         redisClient.on('error', (err) => {
           console.error('Redis connection error:', err);
         }); // Handle reconnection
-        redisClient.on('reconnecting', () => {});
+        redisClient.on('reconnecting', () => { });
 
-        redisClient.on('ready', () => {});
+        redisClient.on('ready', () => { });
 
         try {
           await redisClient.connect();
@@ -88,4 +89,4 @@ import { redisStore } from 'cache-manager-redis-store';
   ],
   exports: ['REDIS_CLIENT', CacheModule],
 })
-export class RedisModule {}
+export class RedisModule { }

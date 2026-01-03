@@ -11,7 +11,7 @@ import {
   PrismaUnknownExceptionFilter,
 } from './common/filters';
 
-async function bootstrap() {
+export async function bootstrap() {
   const logger = new Logger('Bootstrap');
   logger.log('Starting application...');
 
@@ -110,7 +110,43 @@ async function bootstrap() {
   logger.log(`Swagger documentation available at: ${baseUrl}/api/docs`);
 }
 
-bootstrap().catch((err) => {
-  const logger = new Logger('Bootstrap');
-  logger.error(`Failed to start application: ${err.message}`, err.stack);
-});
+export function shouldAutoBootstrap(
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+  requireMain: unknown = require.main,
+  currentModule: unknown = module,
+): boolean {
+  // Jest/ts-jest can import this module for tests; avoid starting a server then.
+  if (nodeEnv === 'test') {
+    return false;
+  }
+
+  // In CJS, only auto-run when executed directly.
+  if (requireMain && requireMain === currentModule) {
+    return true;
+  }
+
+  return false;
+}
+
+export async function autoBootstrap(): Promise<void> {
+  try {
+    await bootstrap();
+  } catch (err: any) {
+    const logger = new Logger('Bootstrap');
+    logger.error(`Failed to start application: ${err.message}`, err.stack);
+  }
+}
+
+export function maybeAutoBootstrap(
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+  requireMain: unknown = require.main,
+  currentModule: unknown = module,
+  runner: () => Promise<void> = autoBootstrap,
+): void {
+  if (shouldAutoBootstrap(nodeEnv, requireMain, currentModule)) {
+    // eslint-disable-next-line unicorn/prefer-top-level-await
+    void runner();
+  }
+}
+
+maybeAutoBootstrap();

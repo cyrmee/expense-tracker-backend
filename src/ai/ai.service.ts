@@ -156,8 +156,6 @@ Ensure the response is a valid JSON object. If any information is missing, use n
       if (!parsedResponse.moneySourceId) {
         if (defaultMoneySource) {
           parsedResponse.moneySourceId = defaultMoneySource.id;
-        } else if (moneySources.length > 0) {
-          parsedResponse.moneySourceId = moneySources[0].id;
         } else {
           throw new Error('No money sources available. Please create at least one money source first.');
         }
@@ -222,13 +220,13 @@ Ensure the response is a valid JSON object. If any information is missing, use n
         date: date,
         notes: parsedResponse.notes,
         categoryId: parsedResponse.categoryId,
-        category: parsedResponse.categoryId ? await this.prisma.category.findUnique({
+        category: await this.prisma.category.findUnique({
           where: { id: parsedResponse.categoryId },
-        }) : null,
+        }),
         moneySourceId: parsedResponse.moneySourceId,
-        moneySource: parsedResponse.moneySourceId ? await this.prisma.moneySource.findUnique({
+        moneySource: await this.prisma.moneySource.findUnique({
           where: { id: parsedResponse.moneySourceId },
-        }) : null,
+        }),
       } as ParsedExpenseDto;
     } catch (error) {
       // Propagate specific UnauthorizedException for API key issues
