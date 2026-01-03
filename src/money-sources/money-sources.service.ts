@@ -13,7 +13,6 @@ import {
 import { CurrencyConverter } from '../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  CardStyleDto,
   CreateMoneySourceDto,
   MoneySourceDto,
   UpdateMoneySourceDto,
@@ -49,23 +48,6 @@ export class MoneySourcesService {
     }
 
     return dto;
-  }
-
-  private async getRandomCardStyleId(): Promise<string | undefined> {
-    try {
-      const cardStyles = await this.prisma.cardStyle.findMany({
-        select: { id: true },
-      });
-
-      if (cardStyles.length === 0) {
-        return undefined;
-      }
-
-      const randomIndex = Math.floor(Math.random() * cardStyles.length);
-      return cardStyles[randomIndex].id;
-    } catch (error) {
-      return undefined;
-    }
   }
 
   async getMoneySources(
@@ -113,7 +95,6 @@ export class MoneySourcesService {
             appSettings: true,
           },
         },
-        cardStyle: true,
       },
       orderBy,
       skip: (page - 1) * pageSize,
@@ -149,7 +130,6 @@ export class MoneySourcesService {
       include: {
         expenses: true,
         balanceHistories: true,
-        cardStyle: true,
         user: {
           include: {
             appSettings: true,
@@ -177,12 +157,6 @@ export class MoneySourcesService {
         });
       }
 
-      // If cardStyleId is not provided, assign a random one
-      let cardStyleId = data.cardStyleId;
-      if (!cardStyleId) {
-        cardStyleId = await this.getRandomCardStyleId();
-      }
-
       if (data.budget && data.budget < 0) {
         throw new BadRequestException('Budget cannot be negative');
       }
@@ -201,15 +175,6 @@ export class MoneySourcesService {
           },
         },
       };
-
-      // Add card style if available
-      if (cardStyleId) {
-        createData.cardStyle = {
-          connect: {
-            id: cardStyleId,
-          },
-        };
-      }
 
       const moneySource = await tx.moneySource.create({
         data: createData,
@@ -233,8 +198,6 @@ export class MoneySourcesService {
         },
       });
     });
-
-    return;
   }
 
   async update(
@@ -268,20 +231,6 @@ export class MoneySourcesService {
         updatedAt: new Date(),
       };
 
-      // Handle cardStyleId separately
-      if (data.cardStyleId) {
-        updateData.cardStyle = {
-          connect: {
-            id: data.cardStyleId,
-          },
-        };
-      } else if (data.cardStyleId === null) {
-        // If explicitly set to null, disconnect the cardStyle
-        updateData.cardStyle = {
-          disconnect: true,
-        };
-      }
-
       await tx.moneySource.update({
         where: {
           id,
@@ -296,8 +245,6 @@ export class MoneySourcesService {
         },
       });
     });
-
-    return;
   }
   async addFunds(id: string, amount: number, userId: string): Promise<{ reminderForBudget: boolean }> {
     await this.prisma.$transaction(async (tx) => {
@@ -343,21 +290,5 @@ export class MoneySourcesService {
         id,
       },
     });
-
-    return;
-  }
-
-  /**
-   * Get all card styles
-   * @returns CardStyleDto[]
-   */
-  async getCardStyles(): Promise<CardStyleDto[]> {
-    try {
-      const cardStyles = await this.prisma.cardStyle.findMany();
-
-      return cardStyles.map((style) => plainToClass(CardStyleDto, style));
-    } catch (error) {
-      throw error;
-    }
   }
 }

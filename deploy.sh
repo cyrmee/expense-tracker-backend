@@ -76,6 +76,7 @@ data:
   FRONTEND_URL: "*"
   FROM_EMAIL: "noreply@mehretab.com"
   APP_NAME: "ExpenseTrackerApp"
+  ENCRYPTION_ALGORITHM: "aes-256-ctr"
   GEMINI_MODEL: "gemini-2.5-flash"
   JWT_ACCESS_EXPIRATION: "15m"
   JWT_REFRESH_EXPIRATION: "1d"

@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Type } from 'class-transformer';
 import { BalanceHistoryBaseDto } from '../../balance-history/dto';
 import { ExpenseBaseDto } from '../../expenses/dto';
-import { CardStyleDto } from './card-style.dto';
 
 /**
  * Swagger DTO for money source data
@@ -65,15 +64,6 @@ export class MoneySourceDto {
   })
   @Expose()
   budget: number;
-
-  @ApiProperty({
-    description: 'Card style details',
-    type: () => CardStyleDto,
-    required: false,
-  })
-  @Expose()
-  @Type(() => CardStyleDto)
-  cardStyle?: CardStyleDto;
 
   @ApiProperty({
     description: 'Budget in preferred currency',

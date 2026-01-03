@@ -1,34 +1,44 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createCipheriv, createDecipheriv, scrypt } from 'crypto';
-import * as crypto from 'crypto';
-import { promisify } from 'util';
+import * as crypto from 'node:crypto';
+import { createCipheriv, createDecipheriv, scrypt } from 'node:crypto';
+import { promisify } from 'node:util';
 
 @Injectable()
 export class CryptoService {
+  private static readonly KEY_LENGTH_BYTES = 32;
+
   private readonly algorithm: string;
   private readonly iv: Buffer;
-  private key: Buffer;
+  private key?: Buffer;
+  private keyPromise?: Promise<Buffer>;
 
   constructor(private readonly config: ConfigService) {
-    this.algorithm = 'aes-256-ctr';
+    const encryptionAlgorithm = this.config.get<string>('ENCRYPTION_ALGORITHM');
+    if (!encryptionAlgorithm) {
+      throw new Error(
+        'Missing required environment variable: ENCRYPTION_ALGORITHM',
+      );
+    }
+    this.algorithm = encryptionAlgorithm;
 
-    const encryptionIv = this.config.get('ENCRYPTION_IV');
+    const encryptionIv = this.config.get<string>('ENCRYPTION_IV');
     if (!encryptionIv) {
       throw new Error('Missing required environment variable: ENCRYPTION_IV');
     }
     this.iv = Buffer.from(encryptionIv.toString(), 'utf-8');
 
-    // Initialize key asynchronously
-    this.initializeKey().catch((error) => {
-      console.error('Failed to initialize encryption key:', error);
-      throw error;
-    });
+    // aes-* ciphers require a 16-byte IV. This keeps failures deterministic.
+    if (this.iv.length !== 16) {
+      throw new Error(
+        `Invalid ENCRYPTION_IV length: expected 16 bytes, got ${this.iv.length}`,
+      );
+    }
   }
 
-  private async initializeKey(): Promise<void> {
-    const secretKey = this.config.get('ENCRYPTION_SECRET_KEY');
-    const salt = this.config.get('ENCRYPTION_SALT');
+  private deriveKey(): Promise<Buffer> {
+    const secretKey = this.config.get<string>('ENCRYPTION_SECRET_KEY');
+    const salt = this.config.get<string>('ENCRYPTION_SALT');
 
     if (!secretKey || !salt) {
       throw new Error(
@@ -36,8 +46,21 @@ export class CryptoService {
       );
     }
 
-    const keyLength = 32;
-    this.key = (await promisify(scrypt)(secretKey, salt, keyLength)) as Buffer;
+    return promisify(scrypt)(
+      secretKey,
+      salt,
+      CryptoService.KEY_LENGTH_BYTES,
+    ) as Promise<Buffer>;
+  }
+
+  private async getKey(): Promise<Buffer> {
+    if (this.key) {
+      return this.key;
+    }
+
+    this.keyPromise ??= this.deriveKey();
+    this.key = await this.keyPromise;
+    return this.key;
   }
 
   async generateRandomToken(size: number = 32): Promise<string> {
@@ -63,8 +86,8 @@ export class CryptoService {
 
   async encrypt(text: string): Promise<string> {
     try {
-      await this.initializeKey();
-      const cipher = createCipheriv(this.algorithm, this.key, this.iv);
+      const key = await this.getKey();
+      const cipher = createCipheriv(this.algorithm, key, this.iv);
       const encryptedText = Buffer.concat([
         cipher.update(text),
         cipher.final(),
@@ -78,8 +101,8 @@ export class CryptoService {
 
   async decrypt(encryptedText: string): Promise<string> {
     try {
-      await this.initializeKey();
-      const decipher = createDecipheriv(this.algorithm, this.key, this.iv);
+      const key = await this.getKey();
+      const decipher = createDecipheriv(this.algorithm, key, this.iv);
       const decryptedText = Buffer.concat([
         decipher.update(Buffer.from(encryptedText, 'hex')),
         decipher.final(),

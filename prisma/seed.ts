@@ -1,8 +1,8 @@
+import { PrismaPg } from '@prisma/adapter-pg';
 import * as argon2 from 'argon2';
+import 'dotenv/config';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import 'dotenv/config';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -10,199 +10,7 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
-async function seedCardStyles(prisma: PrismaClient) {
-  const cardStyles = [
-    {
-      styleId: 'classic-blue',
-      name: 'Classic Blue',
-      background: JSON.stringify({ backgroundColor: '#1e40af' }),
-      textColor: '#ffffff',
-      cardNumberFont: 'monospace',
-      border: 'none',
-      shadow:
-        '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-      hasChip: true,
-      chipColor: '#facc15',
-      visaLogoVariant: 'white',
-      showBgImage: false,
-    },
-    {
-      styleId: 'modern-gradient',
-      name: 'Modern Gradient',
-      background: JSON.stringify({
-        backgroundImage:
-          'linear-gradient(to bottom right, #7c3aed, #ec4899, #ef4444)',
-      }),
-      textColor: '#ffffff',
-      cardNumberFont: 'bold',
-      border: 'none',
-      shadow:
-        '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
-      hasChip: true,
-      chipColor: '#ffffff',
-      visaLogoVariant: 'white',
-      showBgImage: false,
-    },
-    {
-      styleId: 'glassmorphic',
-      name: 'Glassmorphic',
-      background: JSON.stringify({
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        backdropFilter: 'blur(12px)',
-      }),
-      textColor: '#ffffff',
-      cardNumberFont: '300',
-      border: '1px solid rgba(255,255,255,0.2)',
-      shadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-      hasChip: true,
-      chipColor: 'rgba(255,255,255,0.3)',
-      visaLogoVariant: 'white',
-      showBgImage: false,
-    },
-    {
-      styleId: 'dark-mode',
-      name: 'Dark Mode',
-      background: JSON.stringify({ backgroundColor: '#171717' }),
-      textColor: '#f5f5f5',
-      cardNumberFont: 'monospace',
-      border: '1px solid #374151',
-      shadow: '0 4px 6px rgba(0,0,0,0.1)',
-      hasChip: false,
-      chipColor: '#4b5563',
-      visaLogoVariant: 'white',
-      showBgImage: false,
-    },
-    {
-      styleId: 'luxury-black-gold',
-      name: 'Luxury Black & Gold',
-      background: JSON.stringify({ backgroundColor: '#000000' }),
-      textColor: '#facc15',
-      cardNumberFont: 'serif',
-      border: '1px solid #f59e0b',
-      shadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-      hasChip: true,
-      chipColor: '#facc15',
-      visaLogoVariant: 'gold',
-      showBgImage: false,
-    },
-    {
-      styleId: 'nature-green',
-      name: 'Nature Green',
-      background: JSON.stringify({
-        backgroundImage: 'linear-gradient(to right, #22c55e, #84cc16)',
-      }),
-      textColor: '#ffffff',
-      cardNumberFont: '500',
-      border: 'none',
-      shadow: '0 10px 15px rgba(0,0,0,0.1)',
-      hasChip: true,
-      chipColor: '#ffffff',
-      visaLogoVariant: 'white',
-      showBgImage: false,
-    },
-    {
-      styleId: 'retro-90s',
-      name: 'Retro 90s',
-      background: JSON.stringify({
-        backgroundImage:
-          'linear-gradient(to bottom right, #ec4899, #fde047, #22d3ee)',
-      }),
-      textColor: '#000000',
-      cardNumberFont: 'monospace',
-      border: '1px solid black',
-      shadow: '0 10px 15px rgba(0,0,0,0.1)',
-      hasChip: false,
-      chipColor: '#f9a8d4',
-      visaLogoVariant: 'black',
-      showBgImage: false,
-    },
-    {
-      styleId: 'cyberpunk-neon',
-      name: 'Neon Cyberpunk',
-      background: JSON.stringify({
-        backgroundImage:
-          'linear-gradient(to top right, #1e3a8a, #6b21a8, #db2777)',
-      }),
-      textColor: '#67e8f9',
-      cardNumberFont: 'monospace',
-      border: '1px solid #22d3ee',
-      shadow: '0 0 20px rgba(103,232,249,0.8)',
-      hasChip: true,
-      chipColor: '#67e8f9',
-      visaLogoVariant: 'neon',
-      showBgImage: true,
-    },
-    {
-      styleId: 'minimal-white',
-      name: 'Minimal White',
-      background: JSON.stringify({ backgroundColor: '#ffffff' }),
-      textColor: '#111827',
-      cardNumberFont: '300',
-      border: '1px solid #e5e7eb',
-      shadow: '0 1px 2px rgba(0,0,0,0.05)',
-      hasChip: false,
-      chipColor: '#d1d5db',
-      visaLogoVariant: 'black',
-      showBgImage: false,
-    },
-    {
-      styleId: 'futuristic-holographic',
-      name: 'Futuristic Holographic',
-      background: JSON.stringify({
-        backgroundImage: 'linear-gradient(to right, #818cf8, #ec4899, #a855f7)',
-      }),
-      textColor: '#ffffff',
-      cardNumberFont: '600',
-      border: 'none',
-      shadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-      hasChip: true,
-      chipColor: '#ffffff',
-      visaLogoVariant: 'white',
-      showBgImage: true,
-    },
-  ];
-
-  for (const style of cardStyles) {
-    await prisma.cardStyle.upsert({
-      where: { styleId: style.styleId },
-      update: style,
-      create: style,
-    });
-  }
-
-  console.log(`Seeded card styles`);
-}
-
-// Helper function to get a random item from an array
-function getRandomItem<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-// Function to associate random card styles with money sources
-async function associateCardStylesWithMoneySources(prisma: PrismaClient) {
-  // Get all card styles and money sources
-  const cardStyles = await prisma.cardStyle.findMany();
-  const moneySources = await prisma.moneySource.findMany();
-
-  // Associate each money source with a random card style
-  for (const moneySource of moneySources) {
-    const randomStyle = getRandomItem(cardStyles);
-
-    await prisma.moneySource.update({
-      where: { id: moneySource.id },
-      data: { cardStyleId: randomStyle.id },
-    });
-  }
-
-  console.log(
-    `Associated random card styles with ${moneySources.length} money sources`,
-  );
-}
-
 async function main() {
-  // Seed card styles first
-  await seedCardStyles(prisma);
-
   // Create test users
   const user1 = await prisma.user.upsert({
     where: { email: 'john@example.com' },
@@ -466,7 +274,7 @@ async function main() {
     },
   });
 
-  const user3Savings = await prisma.moneySource.create({
+  await prisma.moneySource.create({
     data: {
       id: uuidv4(),
       name: 'Savings',
@@ -613,12 +421,12 @@ async function main() {
   const entertainmentCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Entertainment' } });
   const housingCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Housing' } });
   const utilitiesCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Utilities' } });
-  const internetCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Internet' } });
+  await prisma.category.findFirstOrThrow({ where: { name: 'Internet' } });
   const subscriptionsCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Subscriptions' } });
   const shoppingCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Shopping' } });
   const healthCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Health & Fitness' } });
   const educationCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Education' } });
-  const giftsCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Gifts & Donations' } });
+  await prisma.category.findFirstOrThrow({ where: { name: 'Gifts & Donations' } });
   const travelCategory = await prisma.category.findFirstOrThrow({ where: { name: 'Travel & Vacation' } });
 
   await prisma.expense.create({
@@ -1149,20 +957,19 @@ async function main() {
       hideAmounts: false,
       themePreference: 'auto',
       userId: user7.id,
-    },  });
-  
-  // Associate random card styles with money sources
-  await associateCardStylesWithMoneySources(prisma);
+    },
+  });
 
   console.log('Expense tracker seed data created successfully');
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
+(async () => { // NOSONAR
+  try {
+    await main();
+  } catch (e) {
     console.error(e);
+    process.exitCode = 1;
+  } finally {
     await prisma.$disconnect();
-    process.exit(1);
-  });
+  }
+})();

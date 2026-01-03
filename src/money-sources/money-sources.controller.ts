@@ -21,14 +21,12 @@ import {
   ApiParam,
   ApiResponse,
   ApiTags,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards';
 import { ApiPaginationQuery } from '../common/decorators';
 import { PaginatedRequestDto, PaginatedResponseDto } from '../common/dto';
 import {
   AddFundsDto,
-  CardStyleDto,
   CreateMoneySourceDto,
   MoneySourceDto,
   UpdateMoneySourceDto,
@@ -41,8 +39,8 @@ import { MoneySourcesService } from './money-sources.service';
 @Controller('money-sources')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class MoneySourcesController {
-  constructor(private readonly moneySourcesService: MoneySourcesService) {}
-  
+  constructor(private readonly moneySourcesService: MoneySourcesService) { }
+
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all money sources for the current user' })
@@ -61,19 +59,6 @@ export class MoneySourcesController {
       req.user.id,
       paginatedRequestDto,
     );
-  }
-
-  @Get('card-styles')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get all card styles' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a list of all available card styles',
-    type: [CardStyleDto],
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getCardStyles(): Promise<CardStyleDto[]> {
-    return await this.moneySourcesService.getCardStyles();
   }
 
   @Get(':id')

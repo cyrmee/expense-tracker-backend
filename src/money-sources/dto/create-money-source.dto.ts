@@ -6,7 +6,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   Min,
 } from 'class-validator';
 
@@ -68,14 +67,4 @@ export class CreateMoneySourceDto {
   @IsNumber()
   @IsOptional()
   budget: number;
-
-  @ApiProperty({
-    description: 'Card style ID for the money source appearance',
-    example: 'modern-gradient',
-    required: false,
-  })
-  @Expose()
-  @IsUUID()
-  @IsOptional()
-  cardStyleId?: string;
 }

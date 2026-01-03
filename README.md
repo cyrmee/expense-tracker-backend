@@ -68,6 +68,11 @@ APP_NAME="ExpenseTrackerApp"
 GEMINI_API_KEY=your_gemini_api_key_here
 JWT_SECRET=your_very_strong_jwt_secret_key_here
 JWT_ACCESS_EXPIRATION=15m
+
+ENCRYPTION_ALGORITHM=aes-256-ctr
+ENCRYPTION_IV=1234567890abcdef
+ENCRYPTION_SECRET_KEY=your-secure-secret-key
+ENCRYPTION_SALT=your-secure-salt
 ```
 
 For AI features to work, you'll need to obtain a Google Gemini API key from the [Google AI Studio](https://makersuite.google.com/app/apikey).
