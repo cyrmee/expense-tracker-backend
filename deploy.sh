@@ -1,5 +1,28 @@
 #!/bin/bash
 
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="${ENV_FILE:-${ROOT_DIR}/.env}"
+
+if [[ -f "$ENV_FILE" ]]; then
+  set -o allexport
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
+  set +o allexport
+else
+  echo "ERROR: .env file not found at '$ENV_FILE'. Set ENV_FILE to override." >&2
+  exit 1
+fi
+
+require_env() {
+  local name="$1"
+  if [[ -z "${!name:-}" ]]; then
+    echo "ERROR: Required env var '$name' is missing/empty (from $ENV_FILE)." >&2
+    exit 1
+  fi
+}
+
 # 1. Prep Image for Kind
 CLUSTER_NAME="dev-cluster"
 
@@ -15,15 +38,30 @@ kind load docker-image cyrme/expense-tracker-backend:latest --name $CLUSTER_NAME
 
 
 # 2. Create Secrets (Fixed comment syntax)
+require_env POSTGRES_PASSWORD
+require_env RESEND_API_KEY
+require_env GEMINI_API_KEY
+require_env JWT_SECRET
+require_env ENCRYPTION_IV
+require_env ENCRYPTION_SECRET_KEY
+require_env ENCRYPTION_SALT
+require_env OPENEXCHANGERATES_APP_ID
+require_env DATABASE_URL
+
+# Optional but commonly used by Prisma
+DIRECT_URL="${DIRECT_URL:-}"
+
 kubectl create secret generic app-secrets \
-  --from-literal=POSTGRES_PASSWORD=postgres \
-  --from-literal=RESEND_API_KEY=re_WyLguYk2_MWb18tdU5LVCzkQFghBy2Ku9 \
-  --from-literal=GEMINI_API_KEY=AIzaSyDxX33PmPQz1ioIAc2kFJqXEAdgRyWSn8g \
-  --from-literal=JWT_SECRET=edrtyuiopoiuytrertyuiofdesge \
-  --from-literal=ENCRYPTION_IV=1234567890abcdef \
-  --from-literal=ENCRYPTION_SECRET_KEY=your-secure-secret-key \
-  --from-literal=ENCRYPTION_SALT=your-secure-salt \
-  --from-literal=OPENEXCHANGERATES_APP_ID=55970962c6714499ae5f5bc1fa7fb6da \
+  --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+  --from-literal=RESEND_API_KEY="$RESEND_API_KEY" \
+  --from-literal=GEMINI_API_KEY="$GEMINI_API_KEY" \
+  --from-literal=JWT_SECRET="$JWT_SECRET" \
+  --from-literal=ENCRYPTION_IV="$ENCRYPTION_IV" \
+  --from-literal=ENCRYPTION_SECRET_KEY="$ENCRYPTION_SECRET_KEY" \
+  --from-literal=ENCRYPTION_SALT="$ENCRYPTION_SALT" \
+  --from-literal=OPENEXCHANGERATES_APP_ID="$OPENEXCHANGERATES_APP_ID" \
+  --from-literal=DATABASE_URL="$DATABASE_URL" \
+  ${DIRECT_URL:+--from-literal=DIRECT_URL="$DIRECT_URL"} \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # 3. Create ConfigMap
@@ -47,7 +85,6 @@ data:
   REDIS_URL: "redis://redis-service:6379"
   POSTGRES_USER: "postgres"
   POSTGRES_DB: "expense-tracker-db"
-  DATABASE_URL: "postgresql://postgres:postgres@postgres-service:5432/expense-tracker-db"
 EOF
 
 # 4. Deploy Redis (StatefulSet)
