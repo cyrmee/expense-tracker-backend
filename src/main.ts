@@ -1,8 +1,9 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, UnprocessableEntityException, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as passport from 'passport';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { createClient } from '@redis/client';
 import { AppModule } from './app.module';
 import {
   AllExceptionsFilter,
@@ -10,26 +11,60 @@ import {
   PrismaExceptionFilter,
   PrismaUnknownExceptionFilter,
 } from './common/filters';
+import { PrismaClient } from './generated/prisma/client';
 
-export async function bootstrap() {
+async function checkDependencies(logger: Logger): Promise<void> {
+  // Check database connectivity
+  const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL!,
+  });
+  const prisma = new PrismaClient({ adapter });
+  try {
+    await prisma.$connect();
+    await prisma.$queryRaw`SELECT 1`;
+    logger.log('Database connection verified');
+  } catch (err) {
+    logger.error(`Database is not reachable: ${err.message}`);
+    throw new Error('Cannot connect to the database. Aborting startup.');
+  } finally {
+    await prisma.$disconnect();
+  }
+
+  // Check Redis connectivity
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) {
+    throw new Error('REDIS_URL environment variable is not defined. Aborting startup.');
+  }
+  const redisClient = createClient({ url: redisUrl });
+
+  try {
+    await redisClient.connect();
+    await redisClient.ping();
+    logger.log('Redis connection verified');
+  } catch (err) {
+    logger.error(`Redis is not reachable: ${err.message}`);
+    throw new Error('Cannot connect to Redis. Aborting startup.');
+  } finally {
+    await redisClient.quit();
+  }
+}
+
+async function bootstrap() {
   const logger = new Logger('Bootstrap');
   logger.log('Starting application...');
+
+  await checkDependencies(logger);
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.set('trust proxy', 1);
   // Configure CORS to allow specific origins, methods, and headers
   app.enableCors({
-    origin: true, // Allow production and local frontend
-    credentials: true, // Allow credentials
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Allow all methods
-    allowedHeaders: 'Content-Type,Authorization', // Allow specific headers
-    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
   logger.log('CORS middleware configured');
-
-  // Initialize only passport
-  app.use(passport.initialize());
-  logger.log('JWT authentication middleware configured');
 
   // Set up global validation pipe
   app.useGlobalPipes(
@@ -37,6 +72,32 @@ export async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+      exceptionFactory: (errors) => {
+        const fieldErrors: Record<string, string[]> = {};
+
+        const flatten = (errs: any[], parentPath = '') => {
+          for (const err of errs) {
+            const field = parentPath ? `${parentPath}.${err.property}` : err.property;
+            if (err.constraints) {
+              fieldErrors[field] = Object.values(err.constraints);
+            }
+            if (err.children?.length) {
+              flatten(err.children, field);
+            }
+          }
+        };
+
+        flatten(errors);
+
+        return new UnprocessableEntityException({
+          message: 'Validation failed',
+          error: 'Validation Error',
+          fields: fieldErrors,
+        });
+      },
     }),
   );
   logger.log('Global validation pipe configured');
@@ -49,8 +110,6 @@ export async function bootstrap() {
     new PrismaUnknownExceptionFilter(),
   );
   logger.log('Global exception filters applied');
-
-  app.enableShutdownHooks();
 
   // Setup Swagger
   const config = new DocumentBuilder()
@@ -78,22 +137,9 @@ export async function bootstrap() {
       maxDisplayedTags: null, // Show all tags
       showExtensions: true, // Show vendor extensions
       showCommonExtensions: true, // Show common extensions
-      deepLinking: true, // Enable deep linking for tags and operations
-      layout: 'BaseLayout', // Use the base layout for better customization
-      syntaxHighlight: {
-        activate: true,
-        theme: 'monokai', // Use a better highlighting theme
-      },
       displayOperationId: true, // Show operation IDs
     },
     customSiteTitle: 'Expense Tracker API Docs',
-    customCss: `
-      .swagger-ui .topbar { display: none }
-      .swagger-ui .info { margin: 30px 0 }
-      .swagger-ui .scheme-container { padding: 15px 0 }
-      .swagger-ui .opblock-tag { font-size: 18px }
-      .swagger-ui .opblock .opblock-summary-operation-id { font-size: 14px }
-    `, // Enhanced CSS styling
     explorer: true, // Enable the search functionality
   };
 
@@ -101,8 +147,10 @@ export async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document, swaggerCustomOptions);
   logger.log('Swagger documentation configured');
 
-  const port = process.env.PORT || 5000;
-
+  const port = process.env.PORT;
+  if (!port) {
+    throw new Error('PORT environment variable is not defined');
+  }
   await app.listen(port);
   const baseUrl = `http://localhost:${port}`;
 
@@ -110,43 +158,7 @@ export async function bootstrap() {
   logger.log(`Swagger documentation available at: ${baseUrl}/api/docs`);
 }
 
-export function shouldAutoBootstrap(
-  nodeEnv: string | undefined = process.env.NODE_ENV,
-  requireMain: unknown = require.main,
-  currentModule: unknown = module,
-): boolean {
-  // Jest/ts-jest can import this module for tests; avoid starting a server then.
-  if (nodeEnv === 'test') {
-    return false;
-  }
-
-  // In CJS, only auto-run when executed directly.
-  if (requireMain && requireMain === currentModule) {
-    return true;
-  }
-
-  return false;
-}
-
-export async function autoBootstrap(): Promise<void> {
-  try {
-    await bootstrap();
-  } catch (err: any) {
-    const logger = new Logger('Bootstrap');
-    logger.error(`Failed to start application: ${err.message}`, err.stack);
-  }
-}
-
-export function maybeAutoBootstrap(
-  nodeEnv: string | undefined = process.env.NODE_ENV,
-  requireMain: unknown = require.main,
-  currentModule: unknown = module,
-  runner: () => Promise<void> = autoBootstrap,
-): void {
-  if (shouldAutoBootstrap(nodeEnv, requireMain, currentModule)) {
-    // eslint-disable-next-line unicorn/prefer-top-level-await
-    void runner();
-  }
-}
-
-maybeAutoBootstrap();
+bootstrap().catch((err) => {
+  const logger = new Logger('Bootstrap');
+  logger.error(`Failed to start application: ${err.message}`, err.stack);
+});
