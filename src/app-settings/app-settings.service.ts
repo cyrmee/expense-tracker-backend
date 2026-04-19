@@ -1,57 +1,88 @@
-import { Injectable } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
-
-// Import commands and queries from index files
-import {
-  CreateAppSettingsCommand,
-  RemoveAppSettingsCommand,
-  UpdateAppSettingsCommand,
-} from './commands/impl';
-import { GetAppSettingsQuery, GetGeminiApiKeyQuery } from './queries/impl';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CryptoService } from '../common/crypto.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { UpdateAppSettingsDto } from './dto';
 
 @Injectable()
 export class AppSettingsService {
   constructor(
-    private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
+    private readonly prisma: PrismaService,
+    private readonly cryptoService: CryptoService,
   ) {}
 
-  /**
-   * Find app settings for a specific user
-   */
   async getAppSettings(userId: string) {
-    return this.queryBus.execute(new GetAppSettingsQuery(userId));
+    return this.prisma.appSettings.findUnique({ where: { userId } });
   }
 
-  /**
-   * Create app settings for a user
-   * @param command - The command containing user ID and optional settings
-   */
-  async create(command: CreateAppSettingsCommand): Promise<void> {
-    return this.commandBus.execute(command);
+  async create(
+    userId: string,
+    data?: { preferredCurrency?: string; hideAmounts?: boolean; themePreference?: string },
+  ): Promise<void> {
+    const existing = await this.prisma.appSettings.findUnique({ where: { userId } });
+    if (existing) return;
+
+    await this.prisma.appSettings.create({
+      data: {
+        preferredCurrency: data?.preferredCurrency || 'ETB',
+        hideAmounts: data?.hideAmounts !== undefined ? data.hideAmounts : true,
+        themePreference: data?.themePreference || 'system',
+        user: { connect: { id: userId } },
+      },
+    });
   }
 
-  /**
-   * Update app settings for a user
-   * @param command - The command containing user ID and settings to update
-   */
-  async update(command: UpdateAppSettingsCommand): Promise<void> {
-    return this.commandBus.execute(command);
+  async update(userId: string, data: UpdateAppSettingsDto): Promise<void> {
+    const appSettings = await this.prisma.appSettings.findUnique({ where: { userId } });
+
+    if (!appSettings) {
+      await this.prisma.appSettings.create({
+        data: {
+          preferredCurrency: data.preferredCurrency || 'ETB',
+          hideAmounts: data.hideAmounts !== undefined ? data.hideAmounts : true,
+          themePreference: data.themePreference || 'system',
+          onboarded: data.onboarded !== undefined ? data.onboarded : false,
+          geminiApiKey: data.geminiApiKey ? await this.cryptoService.encrypt(data.geminiApiKey) : null,
+          user: { connect: { id: userId } },
+        },
+      });
+      return;
+    }
+
+    const updateData: any = {};
+
+    if (data.preferredCurrency !== undefined) updateData.preferredCurrency = data.preferredCurrency;
+    if (data.hideAmounts !== undefined) updateData.hideAmounts = data.hideAmounts;
+    if (data.themePreference !== undefined) updateData.themePreference = data.themePreference;
+    if (data.onboarded !== undefined) updateData.onboarded = data.onboarded;
+    if (data.geminiApiKey !== undefined) {
+      updateData.geminiApiKey = data.geminiApiKey
+        ? await this.cryptoService.encrypt(data.geminiApiKey)
+        : null;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      await this.prisma.appSettings.update({ where: { userId }, data: updateData });
+    }
   }
 
-  /**
-   * Get user's Gemini API key (decrypted)
-   * @returns The decrypted API key or null if not set
-   */
   async getGeminiApiKey(userId: string): Promise<string | null> {
-    return this.queryBus.execute(new GetGeminiApiKeyQuery(userId));
+    try {
+      const settings = await this.prisma.appSettings.findUnique({
+        where: { userId },
+        select: { geminiApiKey: true },
+      });
+
+      if (!settings || !settings.geminiApiKey) return null;
+
+      return await this.cryptoService.decrypt(settings.geminiApiKey);
+    } catch {
+      return null;
+    }
   }
 
-  /**
-   * Delete app settings for a user
-   * @param command - The command containing the user ID whose settings should be removed
-   */
-  async remove(command: RemoveAppSettingsCommand) {
-    return this.commandBus.execute(command);
+  async remove(userId: string): Promise<void> {
+    const settings = await this.prisma.appSettings.findUnique({ where: { userId } });
+    if (!settings) throw new NotFoundException('App settings not found');
+    await this.prisma.appSettings.delete({ where: { userId } });
   }
 }

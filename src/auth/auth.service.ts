@@ -9,7 +9,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
-import { CreateAppSettingsCommand } from 'src/app-settings/commands';
 import { AppSettingsService } from '../app-settings/app-settings.service';
 import { CryptoService } from '../common/crypto.service';
 import { MailService } from '../mail/mail.service';
@@ -62,9 +61,7 @@ export class AuthService {
         isVerified: false,
       },
     });
-    const createCommand = new CreateAppSettingsCommand();
-    createCommand.userId = createdUser.id;
-    await this.appSettingsService.create(createCommand);
+    await this.appSettingsService.create(createdUser.id);
     await this.requestEmailVerification(userData.email);
     const userResponse: AuthUserResponseDto = {
       id: createdUser.id,
