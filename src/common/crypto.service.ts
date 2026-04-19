@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'node:crypto';
 import { createCipheriv, createDecipheriv, scrypt } from 'node:crypto';
@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 @Injectable()
 export class CryptoService {
   private static readonly KEY_LENGTH_BYTES = 32;
+  private readonly _logger = new Logger(CryptoService.name);
 
   private readonly algorithm: string;
   private readonly iv: Buffer;
@@ -68,7 +69,7 @@ export class CryptoService {
       const buffer = await promisify(crypto.randomBytes)(size);
       return buffer.toString('hex');
     } catch (error) {
-      console.error('Error generating random token:', error);
+      this._logger.error('Error generating random token', error instanceof Error ? error.stack : error);
       throw error;
     }
   }
@@ -79,7 +80,7 @@ export class CryptoService {
       const hexString = buffer.toString('hex');
       return hexString.slice(0, 16);
     } catch (error) {
-      console.error('Error generating random password:', error);
+      this._logger.error('Error generating random password', error instanceof Error ? error.stack : error);
       throw error;
     }
   }
@@ -94,7 +95,7 @@ export class CryptoService {
       ]);
       return encryptedText.toString('hex');
     } catch (error) {
-      console.error('Encryption error: ', error);
+      this._logger.error('Encryption error', error instanceof Error ? error.stack : error);
       throw error;
     }
   }
@@ -109,7 +110,7 @@ export class CryptoService {
       ]);
       return decryptedText.toString();
     } catch (error) {
-      console.error('Decryption error: ', error);
+      this._logger.error('Decryption error', error instanceof Error ? error.stack : error);
       throw error;
     }
   }

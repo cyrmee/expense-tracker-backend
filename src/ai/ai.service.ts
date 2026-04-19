@@ -30,11 +30,9 @@ export class AiService {
    */
   private async initializeGenAIForUser(userId: string): Promise<GoogleGenAI> {
     let apiKey = await this.appSettingsService.getGeminiApiKey(userId);
-    this._logger.log(`User ${userId} API key: ${apiKey}`);
     // If user key not found, try the global key
     if (!apiKey) {
       const globalApiKey = this.configService.get<string>('GEMINI_API_KEY');
-      this._logger.log(`Global API key: ${globalApiKey}`);
       apiKey = globalApiKey ?? null; // Convert undefined to null
       // If the global key is ALSO not found (i.e., apiKey is still null),
       // throw an error immediately as the fallback mechanism failed due to missing configuration.
@@ -139,7 +137,7 @@ Ensure the response is a valid JSON object. If any information is missing, use n
       // Remove markdown code fences if present
       let responseText = result.text.trim();
       responseText = responseText
-        .replace(/^```(?:json)?\n?([\s\S]*?)\n?```$/g, '$1')
+        .replaceAll(/^```(?:json)?\n?([\s\S]*?)\n?```$/g, '$1')
         .trim();
 
       let parsedResponse;
