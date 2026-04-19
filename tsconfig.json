@@ -16,5 +16,8 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
+    "ignoreDeprecations": "6.0",
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false
   }
 }
