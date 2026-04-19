@@ -1,8 +1,7 @@
-import { Global, Module, forwardRef } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AppSettingsModule } from '../app-settings/app-settings.module';
 import { CommonModule } from '../common/common.module';
 import { MailModule } from '../mail/mail.module';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -19,7 +18,6 @@ import { LocalStrategy } from './strategies/local.strategy';
     PrismaModule,
     RedisModule,
     ConfigModule,
-    forwardRef(() => AppSettingsModule),
     MailModule,
     CommonModule,
     PassportModule.register({

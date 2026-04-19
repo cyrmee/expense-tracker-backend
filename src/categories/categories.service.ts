@@ -29,32 +29,36 @@ export class CategoriesService {
   }
 
   async create(data: CreateCategoryDto, userId: string): Promise<void> {
-    // Check if a category with the same name (case insensitive) already exists for this user
-    const existingCategory = await this.prisma.category.findFirst({
-      where: {
-        name: {
-          equals: data.name,
-          mode: 'insensitive' // Case insensitive comparison
-        },
-        OR: [{ isDefault: true }, { userId }]
-      }
-    });
+    // Run at Serializable isolation so that a concurrent create with the same
+    // name causes one of them to fail rather than both slipping through the
+    // application-level duplicate check.
+    await this.prisma.$transaction(
+      async (tx) => {
+        const existingCategory = await tx.category.findFirst({
+          where: {
+            name: { equals: data.name, mode: 'insensitive' },
+            OR: [{ isDefault: true }, { userId }],
+          },
+        });
 
-    if (existingCategory) {
-      throw new BadRequestException(`A category with the name ${data.name} already exists`);
-    }
+        if (existingCategory) {
+          throw new BadRequestException(
+            `A category with the name ${data.name} already exists`,
+          );
+        }
 
-    await this.prisma.category.create({
-      data: {
-        name: data.name,
-        icon: data.icon,
-        color: data.color,
-        user: {
-          connect: { id: userId },
-        },
-        isDefault: false, // User-created categories are never default
+        await tx.category.create({
+          data: {
+            name: data.name,
+            icon: data.icon,
+            color: data.color,
+            user: { connect: { id: userId } },
+            isDefault: false,
+          },
+        });
       },
-    });
+      { isolationLevel: 'Serializable' },
+    );
     return;
   }
 
@@ -67,42 +71,49 @@ export class CategoriesService {
       throw new BadRequestException('Invalid data');
     }
 
-    const category = await this.getCategory(id, userId);
-    if (!category)
-      throw new NotFoundException(`Category with ID ${id} not found`);
+    // Run at Serializable isolation so that a concurrent rename to the same
+    // name causes one of them to fail rather than both passing the check.
+    await this.prisma.$transaction(
+      async (tx) => {
+        const category = await tx.category.findFirst({
+          where: { id, OR: [{ isDefault: true }, { userId }] },
+        });
+        if (!category)
+          throw new NotFoundException(`Category with ID ${id} not found`);
 
-    if (category.isDefault)
-      throw new BadRequestException(
-        `Default categories cannot be modified. Please create a new category instead.`,
-      );
+        if (category.isDefault)
+          throw new BadRequestException(
+            `Default categories cannot be modified. Please create a new category instead.`,
+          );
 
-    // If the name is being changed, check for duplicates (case insensitive)
-    if (data.name && data.name !== category.name) {
-      const existingCategory = await this.prisma.category.findFirst({
-        where: {
-          id: { not: id }, // Exclude current category
-          name: {
-            equals: data.name,
-            mode: 'insensitive' // Case insensitive comparison
-          },
-          OR: [{ isDefault: true }, { userId }]
+        if (data.name && data.name !== category.name) {
+          const existingCategory = await tx.category.findFirst({
+            where: {
+              id: { not: id },
+              name: { equals: data.name, mode: 'insensitive' },
+              OR: [{ isDefault: true }, { userId }],
+            },
+          });
+
+          if (existingCategory) {
+            throw new BadRequestException(
+              `A category with the name ${data.name} already exists`,
+            );
+          }
         }
-      });
 
-      if (existingCategory) {
-        throw new BadRequestException(`A category with the name ${data.name} already exists`);
-      }
-    }
-
-    await this.prisma.category.update({
-      where: { id },
-      data: {
-        name: data.name,
-        icon: data.icon,
-        color: data.color,
-        updatedAt: new Date(),
+        await tx.category.update({
+          where: { id },
+          data: {
+            name: data.name,
+            icon: data.icon,
+            color: data.color,
+            updatedAt: new Date(),
+          },
+        });
       },
-    });
+      { isolationLevel: 'Serializable' },
+    );
 
     return;
   }

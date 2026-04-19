@@ -1,6 +1,5 @@
 import {
   ForbiddenException,
-  forwardRef,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -9,7 +8,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
-import { AppSettingsService } from '../app-settings/app-settings.service';
 import { CryptoService } from '../common/crypto.service';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -27,8 +25,6 @@ export class AuthService {
     private readonly prisma: PrismaService,
     @Inject('REDIS_CLIENT') private readonly redisClient: any,
     private readonly configService: ConfigService,
-    @Inject(forwardRef(() => AppSettingsService))
-    private readonly appSettingsService: AppSettingsService,
     private readonly mailService: MailService,
     private readonly cryptoService: CryptoService,
     private readonly jwtService: JwtService,
@@ -44,33 +40,48 @@ export class AuthService {
   }
 
   async register(userData: RegisterDto): Promise<AuthUserResponseDto> {
-    const existingUser = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: userData.email }],
-      },
-    });
-    if (existingUser) {
-      throw new ForbiddenException('User with this email already exists');
-    }
     const hash = await argon2.hash(userData.password);
-    const createdUser = await this.prisma.user.create({
-      data: {
-        email: userData.email,
-        name: userData.name,
-        hash,
-        isVerified: false,
-      },
+
+    // Create user and appSettings atomically — if either fails the whole
+    // registration is rolled back, leaving no orphaned records.
+    const createdUser = await this.prisma.$transaction(async (tx) => {
+      const existingUser = await tx.user.findFirst({
+        where: { email: userData.email },
+      });
+      if (existingUser) {
+        throw new ForbiddenException('User with this email already exists');
+      }
+
+      const user = await tx.user.create({
+        data: {
+          email: userData.email,
+          name: userData.name,
+          hash,
+          isVerified: false,
+        },
+      });
+
+      await tx.appSettings.create({
+        data: {
+          preferredCurrency: 'ETB',
+          hideAmounts: true,
+          themePreference: 'system',
+          user: { connect: { id: user.id } },
+        },
+      });
+
+      return user;
     });
-    await this.appSettingsService.create(createdUser.id);
+
     await this.requestEmailVerification(userData.email);
-    const userResponse: AuthUserResponseDto = {
+
+    return {
       id: createdUser.id,
       email: createdUser.email,
       name: createdUser.name,
       isVerified: createdUser.isVerified,
       isActive: createdUser.isActive,
     };
-    return userResponse;
   }
 
   async requestEmailVerification(email: string): Promise<boolean> {
@@ -104,6 +115,12 @@ export class AuthService {
     if (!userId) {
       throw new UnauthorizedException('Invalid or expired otp');
     }
+
+    // Consume the OTP before touching the DB so it cannot be reused even if
+    // the DB update fails.  If the update does fail the user must request a
+    // new OTP, which is safer than leaving a reusable token in Redis.
+    await this.redisClient.del(verificationKey);
+
     try {
       const user = await this.prisma.user.update({
         where: { id: userId },
@@ -116,7 +133,6 @@ export class AuthService {
           isActive: true,
         },
       });
-      await this.redisClient.del(verificationKey);
       const payload = {
         sub: user.id,
         email: user.email,
@@ -349,18 +365,23 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<boolean> {
+    const resetKey = `password_reset:${dto.token}`;
+    const userId = await this.redisClient.get(resetKey);
+    if (!userId) {
+      return false;
+    }
+
+    // Consume the reset token before updating the DB so it cannot be reused
+    // even if the password update fails.  If the update fails the user must
+    // request a new reset link, which is safer than a reusable token.
+    await this.redisClient.del(resetKey);
+
     try {
-      const resetKey = `password_reset:${dto.token}`;
-      const userId = await this.redisClient.get(resetKey);
-      if (!userId) {
-        return false;
-      }
       const hash = await argon2.hash(dto.password);
       await this.prisma.user.update({
         where: { id: userId },
         data: { hash },
       });
-      await this.redisClient.del(resetKey);
       return true;
     } catch (error) {
       return false;

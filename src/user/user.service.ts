@@ -63,21 +63,23 @@ export class UserService {
       where: { id: userId },
     });
 
-    const updatedUser = await this.prisma.user.update({
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // If the email is changing, mark the account as unverified in the same
+    // update so there is never a window where the email is changed but the
+    // account still appears verified.
+    const isEmailChanging =
+      data.email !== undefined && data.email !== user.email;
+
+    await this.prisma.user.update({
       where: { id: userId },
       data: {
         ...data,
+        ...(isEmailChanging ? { isVerified: false } : {}),
       },
     });
-
-    if (user?.email !== updatedUser?.email) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          isVerified: false,
-        },
-      });
-    }
 
     return;
   }

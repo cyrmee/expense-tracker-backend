@@ -18,51 +18,45 @@ export class AppSettingsService {
     userId: string,
     data?: { preferredCurrency?: string; hideAmounts?: boolean; themePreference?: string },
   ): Promise<void> {
-    const existing = await this.prisma.appSettings.findUnique({ where: { userId } });
-    if (existing) return;
-
-    await this.prisma.appSettings.create({
-      data: {
+    await this.prisma.appSettings.upsert({
+      where: { userId },
+      create: {
         preferredCurrency: data?.preferredCurrency || 'ETB',
         hideAmounts: data?.hideAmounts !== undefined ? data.hideAmounts : true,
         themePreference: data?.themePreference || 'system',
         user: { connect: { id: userId } },
       },
+      update: {}, // no-op: keep existing settings if they already exist
     });
   }
 
   async update(userId: string, data: UpdateAppSettingsDto): Promise<void> {
-    const appSettings = await this.prisma.appSettings.findUnique({ where: { userId } });
-
-    if (!appSettings) {
-      await this.prisma.appSettings.create({
-        data: {
-          preferredCurrency: data.preferredCurrency || 'ETB',
-          hideAmounts: data.hideAmounts !== undefined ? data.hideAmounts : true,
-          themePreference: data.themePreference || 'system',
-          onboarded: data.onboarded !== undefined ? data.onboarded : false,
-          geminiApiKey: data.geminiApiKey ? await this.cryptoService.encrypt(data.geminiApiKey) : null,
-          user: { connect: { id: userId } },
-        },
-      });
-      return;
-    }
+    const encryptedApiKey =
+      data.geminiApiKey !== undefined
+        ? data.geminiApiKey
+          ? await this.cryptoService.encrypt(data.geminiApiKey)
+          : null
+        : undefined;
 
     const updateData: any = {};
-
     if (data.preferredCurrency !== undefined) updateData.preferredCurrency = data.preferredCurrency;
     if (data.hideAmounts !== undefined) updateData.hideAmounts = data.hideAmounts;
     if (data.themePreference !== undefined) updateData.themePreference = data.themePreference;
     if (data.onboarded !== undefined) updateData.onboarded = data.onboarded;
-    if (data.geminiApiKey !== undefined) {
-      updateData.geminiApiKey = data.geminiApiKey
-        ? await this.cryptoService.encrypt(data.geminiApiKey)
-        : null;
-    }
+    if (encryptedApiKey !== undefined) updateData.geminiApiKey = encryptedApiKey;
 
-    if (Object.keys(updateData).length > 0) {
-      await this.prisma.appSettings.update({ where: { userId }, data: updateData });
-    }
+    await this.prisma.appSettings.upsert({
+      where: { userId },
+      create: {
+        preferredCurrency: data.preferredCurrency || 'ETB',
+        hideAmounts: data.hideAmounts !== undefined ? data.hideAmounts : true,
+        themePreference: data.themePreference || 'system',
+        onboarded: data.onboarded !== undefined ? data.onboarded : false,
+        geminiApiKey: encryptedApiKey !== undefined ? encryptedApiKey : null,
+        user: { connect: { id: userId } },
+      },
+      update: updateData,
+    });
   }
 
   async getGeminiApiKey(userId: string): Promise<string | null> {
